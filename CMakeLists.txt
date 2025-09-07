@@ -12,6 +12,7 @@ add_executable(${PROJECT_NAME}
     src/PostgresDB.cpp
     src/PyLoader.cpp
     src/TelegramSender.cpp
+    src/JsonReader.cpp
 )
 
 find_package(PostgreSQL REQUIRED)
