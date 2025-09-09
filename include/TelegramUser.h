@@ -41,6 +41,8 @@ public:
 
     template<typename Type>
     void notify(Type&&) const;
+
+    std::string get_id() const;
 };
 
 template<typename Type>
