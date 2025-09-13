@@ -152,6 +152,16 @@ void BotTelegram::check_message(){
                 auto ptr = TelegramSender::get_instance();
                 ptr->call(id, type_msg::send, result);
             }
+            else if(command == "/my_cards"){
+                auto user = users.find(id);
+                std::string result = "Ваши карточки:\n";
+                auto cards = user->second.get_cards();
+                for(const auto& obj : cards){
+                    result += obj;
+                }
+                auto ptr = TelegramSender::get_instance();
+                ptr->call(id, type_msg::send, result);
+            }
             else{
                 auto ptr = TelegramSender::get_instance();
                 ptr->call(id, type_msg::send, std::string("Неверная команда"));

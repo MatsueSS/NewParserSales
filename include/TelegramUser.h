@@ -39,6 +39,8 @@ public:
     template<typename Type>
     bool is_has_product(Type&&) const;
 
+    std::unordered_set<std::string> get_cards() const;
+
     template<typename Type>
     void notify(Type&&) const;
 
