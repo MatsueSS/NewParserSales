@@ -25,7 +25,8 @@ int main(void)
     // auto ptr = TelegramSender::get_instance();
     // ptr->call(std::string(""), type_msg::read, std::string("512291604"));
 
-    BotTelegram bot("512291608");
+    
+    BotTelegram bot(get_last_offset());
     while(true){
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }

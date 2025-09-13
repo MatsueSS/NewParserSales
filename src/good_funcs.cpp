@@ -38,3 +38,14 @@ void update_offset(const std::string& offset) noexcept {
     nfile << token << '\n' << id << '\n' << url1 << '\n' << url2 << '\n' << offset << '\n';
     nfile.close();
 }
+
+std::string get_last_offset() noexcept{
+    std::string temp, offset;
+    std::ifstream file("../.env");
+    std::getline(file, temp);
+    std::getline(file, temp);
+    std::getline(file, temp);
+    std::getline(file, temp);
+    std::getline(file, offset);
+    return offset;
+}

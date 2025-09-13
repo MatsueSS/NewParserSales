@@ -7,10 +7,39 @@
 #include <chrono>
 #include <iostream>
 #include <fstream>
+#include <regex>
 
 BotTelegram::BotTelegram(std::string offset) 
     : flag(true), worker(&BotTelegram::check_message, this), offset(std::move(offset)) 
-{}
+
+{
+    std::string conn = get_conn();
+    PostgresDB db;
+    std::vector<std::vector<std::string>> res;
+    try{
+        db.connect(conn);
+        res = db.fetch(std::string("SELECT id, cards FROM users;"), std::vector<std::string>{});
+    } catch(BadConnectionDBexception& e){
+        db.connect(conn);
+        res = db.fetch(std::string("SELECT id, cards FROM users;"), std::vector<std::string>{});
+    } catch(ErrorQueryResultDBexception& e){
+        std::cout << e.what() << '\n';
+        res = db.fetch(std::string("SELECT id, cards FROM users;"), std::vector<std::string>{});
+    }
+    for(const auto& row : res){
+        std::string link = row[1], id = row[0];
+        TelegramUser user(id);
+        std::regex elementRegex(R"(\"([^"]+)\")");
+        std::smatch match;
+        auto begin = link.cbegin();
+        auto end = link.cend();
+        while(std::regex_search(begin, end, match, elementRegex)){
+            user.add_product(std::string(match[1]));
+            begin = match.suffix().first;
+        }
+        add_user(std::move(user));
+    }
+}
 
 BotTelegramException::BotTelegramException(std::string str) : msg(std::move(str)) {}
 
@@ -57,29 +86,56 @@ void BotTelegram::check_message(){
         std::this_thread::sleep_for(std::chrono::seconds(1));
         auto v = JsonReader::read("jq -r '.result[] | {text: .message.text, id:.message.from.id, update_id: .update_id}' ../res/result_"+ offset +".json", type_json::message);
         if(!v.empty()){
-            std::cout << std::stoi(v[v.size()-2]) << '\n';
             std::string id = v[2];
             auto message = get_command_and_data(v[1]);
             std::string command = message.first;
             std::string data = message.second;
+            
+            id = id.substr(0, id.length() - 1);
 
             if(command == "/start"){
                 users.insert({id, TelegramUser(id)});
                 auto ptr = TelegramSender::get_instance();
                 ptr->call(id, type_msg::send, std::string("Привет, теперь тебе доступен ряд команд для манипуляции с карточками\n"));
-                
+                PostgresDB db;
+                db.connect(get_conn());
+                db.execute(std::string("INSERT INTO users VALUES($1)"), std::vector<std::string>{id});                
             }
             else if(command == "/add_card"){
                 auto user = users.find(id);
                 user->second.add_product(std::string(data));
                 auto ptr = TelegramSender::get_instance();
                 ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
+                PostgresDB db;
+                std::string conn = get_conn();
+                try{
+                    db.connect(conn);
+                    db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+                } catch(BadConnectionDBexception& e) {
+                    db.connect(conn);
+                    db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+                } catch(ErrorQueryResultDBexception& e) {
+                    std::cout << e.what() << '\n';
+                    db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+                }
             }
             else if(command == "/del_card"){
                 auto user = users.find(id);
                 user->second.del_product(data);
                 auto ptr = TelegramSender::get_instance();
                 ptr->call(id, type_msg::send, std::string("Карточка удалена\n"));
+                PostgresDB db;
+                std::string conn = get_conn();
+                try{
+                    db.connect(conn);
+                    db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+                } catch(BadConnectionDBexception& e) {
+                    db.connect(conn);
+                    db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+                } catch(ErrorQueryResultDBexception& e) {
+                    std::cout << e.what() << '\n';
+                    db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+                }
             }
             else if(command == "/status"){
                 auto user = users.find(id);
