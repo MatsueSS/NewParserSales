@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
     src/JsonReader.cpp
     src/TelegramUser.cpp
     src/good_funcs.cpp
+    src/BotTelegram.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

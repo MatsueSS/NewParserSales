@@ -22,7 +22,7 @@ try:
     html = driver.page_source
 
     # Сохраняем в файл
-    with open("5ka_bakaleya.html", "w", encoding="utf-8") as f:
+    with open("../res/5ka_bakaleya.html", "w", encoding="utf-8") as f:
         f.write(html)
 
     print("HTML сохранён в 5ka_bakaleya.html")

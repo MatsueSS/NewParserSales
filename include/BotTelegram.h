@@ -4,6 +4,7 @@
 #include "TelegramUser.h"
 
 #include <unordered_map>
+#include <thread>
 
 class BotTelegramException : public std::exception{
 protected:
@@ -18,18 +19,25 @@ public:
 class BotTelegram{
 private:
     std::unordered_map<std::string, TelegramUser> users;
-    std::jthread worker;
+    std::atomic<bool> flag;
+    std::thread worker;
+    std::string offset;
 
-    void check_message(std::stop_token) const;
+    void check_message();
+    void offset_reload();
+
+    std::pair<std::string, std::string> get_command_and_data(const std::string& message) noexcept;
+
+    void stop();
 
 public:
-    BotTelegram();
+    BotTelegram(std::string);
 
     BotTelegram(const BotTelegram&) = delete;
     BotTelegram& operator=(const BotTelegram&) = delete;
 
-    BotTelegram(BotTelegram&&) noexcept = default;
-    BotTelegram& operator=(BotTelegram&&) noexcept = default;
+    BotTelegram(BotTelegram&&) noexcept;
+    BotTelegram& operator=(BotTelegram&&) noexcept;
 
     template<typename Type>
     void add_user(Type&&);
@@ -43,7 +51,7 @@ public:
     template<typename Type>
     void notify_all(Type&&) const;
 
-    ~BotTelegram() = default;
+    ~BotTelegram();
 };
 
 template<typename Type>
@@ -65,7 +73,7 @@ void BotTelegram::del_user(Type&& user){
 template<typename Type>
 bool BotTelegram::is_has_user(Type&& user) const {
     if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
-        throw BotTelegramException("Value-type must be a string\n")
+        throw BotTelegramException("Value-type must be a string\n");
 
     return users.count(user);
 }

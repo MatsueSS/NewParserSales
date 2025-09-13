@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import json
 from datetime import datetime
 
-with open("5ka_bakaleya.html", "r", encoding="utf-8") as file:
+with open("../res/5ka_bakaleya.html", "r", encoding="utf-8") as file:
     html_doc = file.read()
 
 soup = BeautifulSoup(html_doc, "lxml")

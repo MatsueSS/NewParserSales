@@ -36,7 +36,7 @@ void TelegramSender::query(std::string id, type_msg type, std::string offset) no
     {
     case type_msg::read:
     {
-        url = url + "/getUpdates?offset=" + offset;
+        url += "/getUpdates?offset=" + offset;
         std::ofstream file("../res/result_" + offset + ".json");
         CURL* curl = curl_easy_init();
         if(curl){
@@ -46,6 +46,7 @@ void TelegramSender::query(std::string id, type_msg type, std::string offset) no
             CURLcode res = curl_easy_perform(curl);
             curl_easy_cleanup(curl);
         }
+        file.close();
         break;
     }
     case type_msg::send:
