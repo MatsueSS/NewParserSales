@@ -5,7 +5,6 @@
 #include "PostgresDB.h"
 
 #include <chrono>
-#include <iostream>
 #include <fstream>
 #include <regex>
 
@@ -60,7 +59,7 @@ BotTelegram& BotTelegram::operator=(BotTelegram&& obj) noexcept{
         return *this;
 
     stop();
-    offset = std::move(offset);
+    offset = std::move(obj.offset);
     flag = obj.flag.load();
     worker = std::move(obj.worker);
     obj.flag = false;
@@ -102,6 +101,11 @@ void BotTelegram::check_message(){
                 db.execute(std::string("INSERT INTO users VALUES($1)"), std::vector<std::string>{id});                
             }
             else if(command == "/add_card"){
+                if(data.size() == 0){
+                    auto ptr = TelegramSender::get_instance();
+                    ptr->call(id, type_msg::send, std::string("Вы ввели пустые данные\n"));
+                    continue;
+                }
                 auto user = users.find(id);
                 user->second.add_product(std::string(data));
                 auto ptr = TelegramSender::get_instance();
@@ -120,6 +124,11 @@ void BotTelegram::check_message(){
                 }
             }
             else if(command == "/del_card"){
+                if(data.size() == 0){
+                    auto ptr = TelegramSender::get_instance();
+                    ptr->call(id, type_msg::send, std::string("Вы ввели пустые данные\n"));
+                    continue;
+                }
                 auto user = users.find(id);
                 user->second.del_product(data);
                 auto ptr = TelegramSender::get_instance();
