@@ -15,14 +15,32 @@ today = datetime.today().strftime("%Y-%m-%d")
 
 for obj in group:
     item = {}
-    text = obj.find("p", class_="chakra-text productListItem_title__2OiE4 css-xwxdk9")
-    price = obj.find("p", class_="chakra-text priceContainer_color__R0Wjs css-1etcqld")
-    if(text and price):
-        print(text.text, price.text)
-        item["text"] = text.text
-        item["price"] = price.text
-        products.append(item)
 
+    # название товара
+    title_tag = obj.find("p", class_="chakra-text productListItem_title__2OiE4 css-xwxdk9")
+    item["title"] = title_tag.get_text(strip=True) if title_tag else ""
+
+    # блоки цен
+    price_blocks = obj.find_all("div", class_="priceContainer_price__kqnwL")
+    prices = []
+    for block in price_blocks:
+        parts = block.find_all("p")
+        rub = parts[0].get_text(strip=True)
+        kop = parts[1].get_text(strip=True) if len(parts) > 2 else "00"
+        currency = parts[-1].get_text(strip=True)
+        full_price = f"{rub}.{kop}{currency}"  # например "119.99₽"
+        prices.append(full_price)
+
+    # распределяем цены по полям
+    if len(prices) == 2:
+        item["old_price"] = prices[1]
+    elif len(prices) >= 3:
+        item["old_price"] = prices[2]
+        item["discount_price"] = prices[1]
+
+    products.append(item)
+
+# формируем JSON
 data = {
     "date": today,
     "products": products

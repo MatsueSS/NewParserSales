@@ -22,7 +22,6 @@ BotTelegram::BotTelegram(std::string offset)
         db.connect(conn);
         res = db.fetch(std::string("SELECT id, cards FROM users;"), std::vector<std::string>{});
     } catch(ErrorQueryResultDBexception& e){
-        std::cout << e.what() << '\n';
         res = db.fetch(std::string("SELECT id, cards FROM users;"), std::vector<std::string>{});
     }
     for(const auto& row : res){
@@ -119,7 +118,6 @@ void BotTelegram::check_message(){
                     db.connect(conn);
                     db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
                 } catch(ErrorQueryResultDBexception& e) {
-                    std::cout << e.what() << '\n';
                     db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
                 }
             }
@@ -142,7 +140,6 @@ void BotTelegram::check_message(){
                     db.connect(conn);
                     db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
                 } catch(ErrorQueryResultDBexception& e) {
-                    std::cout << e.what() << '\n';
                     db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
                 }
             }
@@ -153,10 +150,16 @@ void BotTelegram::check_message(){
                 std::ifstream file("../res/products.json");
                 data = nlohmann::json::parse(file);
                 for(const auto& obj : data["products"]){
-                    std::string card = obj["text"];
-                    std::string price = obj["price"];
-                    if(user->second.is_has_product(card))
-                        result += (card + " " + price + '\n');
+                    std::string card = obj["title"];
+                    std::string price = obj["old_price"];
+                    if(obj.contains("discount_price")){
+                        std::string discount = obj["discount_price"];
+                        if(user->second.is_has_product(card))
+                            result += (card + "\nцена: " + price + "\nскидка: " + discount + '\n');
+                    }
+                    else{
+                        result += (card + " цена: " + price + '\n');
+                    }
                 }
                 auto ptr = TelegramSender::get_instance();
                 ptr->call(id, type_msg::send, result);
@@ -166,7 +169,7 @@ void BotTelegram::check_message(){
                 std::string result = "Ваши карточки:\n";
                 auto cards = user->second.get_cards();
                 for(const auto& obj : cards){
-                    result += obj;
+                    result += obj + "\n";
                 }
                 auto ptr = TelegramSender::get_instance();
                 ptr->call(id, type_msg::send, result);
