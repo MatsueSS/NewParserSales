@@ -59,7 +59,7 @@ for i, url in enumerate(urls, start=1):
 
     # сохраняем HTML
     html = driver.page_source
-    filename = f"../htmls/page_{i}.html"
+    filename = f"../urls/page_{i}.html"
     with open(filename, "w", encoding="utf-8") as f:
         f.write(html)
 
