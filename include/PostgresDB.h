@@ -154,8 +154,10 @@ bool PostgresDB::execute(Type&& query, Container&& container) const
         [](PGresult* res){ PQclear(res); }
     );
 
-    if(!result || PQresultStatus(result.get()) != PGRES_COMMAND_OK)
-        throw ErrorQueryResultDBexception("Error query complete\n");
+    if(!result || PQresultStatus(result.get()) != PGRES_COMMAND_OK){
+        std::string err = result ? PQresultErrorMessage(result.get()) : "Null result";
+        throw ErrorQueryResultDBexception("Error query complete: " + err);
+    }
     
     return PQresultStatus(result.get()) == PGRES_COMMAND_OK;
 }

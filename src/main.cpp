@@ -3,6 +3,7 @@
 
 #include "good_funcs.h"
 #include "BotTelegram.h"
+#include "Reader.h"
 
 int main(void)
 {
@@ -30,6 +31,9 @@ int main(void)
     // while(true){
     //     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     // }
+
+    Reader reader;
+    reader.make_note(get_conn());
 
     return 0;
 }
