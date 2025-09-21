@@ -4,6 +4,7 @@
 #include "good_funcs.h"
 #include "BotTelegram.h"
 #include "Reader.h"
+#include "Interface.h"
 
 int main(void)
 {
@@ -32,8 +33,10 @@ int main(void)
     //     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     // }
 
-    Reader reader;
-    reader.make_note(get_conn());
+    Interface inter(get_last_offset());
+    while(true){
+        inter.start_process();
+    }
 
     return 0;
 }

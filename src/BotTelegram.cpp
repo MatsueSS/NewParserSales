@@ -147,13 +147,15 @@ void BotTelegram::check_message(){
                 auto user = users.find(id);
                 std::string result = "Ваши скидки:\n";
                 nlohmann::json data;
-                std::ifstream file("../res/products.json");
+                std::ifstream file("../res/products_discount.json");
                 data = nlohmann::json::parse(file);
                 for(const auto& obj : data["products"]){
                     std::string card = obj["title"];
-                    std::string price = obj["old_price"];
-                    if(obj.contains("discount_price")){
-                        std::string discount = obj["discount_price"];
+                    if(!user->second.is_has_product(card))
+                        continue;
+                    std::string price = obj["price"];
+                    if(obj.contains("discount")){
+                        std::string discount = obj["discount"];
                         if(user->second.is_has_product(card))
                             result += (card + "\nцена: " + price + "\nскидка: " + discount + '\n');
                     }

@@ -2,13 +2,14 @@
 #include "PostgresDB.h"
 #include "PyLoader.h"
 #include "json.hpp"
+#include "good_funcs.h"
 
 #define COUNT_RESOURSE 22
 
 #include <fstream>
 #include <iostream>
 
-void Reader::make_note(std::string pq) {
+void Reader::make_note(const std::string& pq) {
     PostgresDB db;
     db.connect(pq);
     PyLoader::load("bash -c 'python3 ../py_scripts/2.py'");
@@ -35,6 +36,30 @@ void Reader::make_note(std::string pq) {
         }
     }
 }
+
+void Reader::make_a_json(const std::string& str){
+    nlohmann::json new_data;
+    new_data["date"] = get_date_str_now();
+
+    PostgresDB db;
+    db.connect(str);
+
+    auto cards = db.fetch(std::string("SELECT title, price, discount, date FROM cards WHERE discount IS NOT NULL AND date >= CURRENT_DATE - INTERVAL '7 days'"), std::vector<std::string>{});
+
+    new_data["products"] = nlohmann::json::array(); // создаём массив один раз
+
+    for(const auto& vec : cards){
+        nlohmann::json product;
+        product["title"] = vec[0];
+        product["price"] = vec[1];
+        product["discount"] = vec[2];
+        new_data["products"].push_back(product);
+    }
+
+    std::ofstream file("../res/products_discount.json");
+    file << new_data.dump(4);
+}
+
 
 std::string Reader::clean_price(const std::string& s) {
     std::string out;

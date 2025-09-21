@@ -1,7 +1,10 @@
 #ifndef _READER_H_
 #define _READER_H_
 
+//needed to transfer data from json objects to database objects
+
 #include <string>
+#include <chrono>
 
 class Reader{
 private:
@@ -17,7 +20,10 @@ public:
     Reader& operator=(const Reader&) = default;
 
     //take psql profile 
-    void make_note(std::string);
+    void make_note(const std::string&);
+
+    //take psql profile
+    void make_a_json(const std::string&);
 };
 
 #endif //_READER_H_

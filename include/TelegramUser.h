@@ -76,6 +76,9 @@ void TelegramUser::notify(Type&& str) const {
     if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
         throw TelegramUserException("Value-Type must be a string\n");
 
+    if(!lovely_product.count(str))
+        return;
+
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::forward<Type>(str));
 }

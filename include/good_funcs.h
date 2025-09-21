@@ -7,6 +7,7 @@
 std::string get_id() noexcept;
 std::string get_conn() noexcept;
 std::chrono::year_month_day get_date_now() noexcept;
+std::string get_date_str_now() noexcept;
 void update_offset(const std::string& offset) noexcept;
 std::string get_last_offset() noexcept;
 
