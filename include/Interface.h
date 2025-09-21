@@ -1,0 +1,23 @@
+#ifndef _INTERFACE_H_
+#define _INTERFACE_H_
+
+#include "BotTelegram.h"
+
+class Interface{
+    std::unique_ptr<BotTelegram> ptr;
+
+    bool control_date() const;
+    
+public:
+    Interface(std::string);
+
+    Interface(const Interface&) = delete;
+    Interface& operator=(const Interface&) = delete;
+
+    Interface(Interface&&) noexcept = default;
+    Interface& operator=(Interface&&) noexcept = default;
+
+    void start_process() const;
+};
+
+#endif //_INTERFACE_H_
