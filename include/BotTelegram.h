@@ -26,6 +26,13 @@ private:
     void check_message();
     void offset_reload();
 
+    void command_start(std::string&&);
+    void command_add_card(std::string&&, std::string&&);
+    void command_del_card(std::string&&, std::string&&);
+    void command_status(std::string&&);
+    void command_my_cards(std::string&&);
+    void command_forecast(std::string&&, std::string&&);
+
     std::pair<std::string, std::string> get_command_and_data(const std::string& message) noexcept;
 
     void stop();

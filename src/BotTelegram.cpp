@@ -3,10 +3,13 @@
 #include "good_funcs.h"
 #include "json.hpp"
 #include "PostgresDB.h"
+#include "Forecast.h"
 
 #include <chrono>
 #include <fstream>
 #include <regex>
+#include <vector>
+#include <iostream>
 
 BotTelegram::BotTelegram(std::string offset) 
     : flag(true), worker(&BotTelegram::check_message, this), offset(std::move(offset)) 
@@ -92,89 +95,22 @@ void BotTelegram::check_message(){
             id = id.substr(0, id.length() - 1);
 
             if(command == "/start"){
-                users.insert({id, TelegramUser(id)});
-                auto ptr = TelegramSender::get_instance();
-                ptr->call(id, type_msg::send, std::string("Привет, теперь тебе доступен ряд команд для манипуляции с карточками\n"));
-                PostgresDB db;
-                db.connect(get_conn());
-                db.execute(std::string("INSERT INTO users VALUES($1)"), std::vector<std::string>{id});                
+                command_start(std::move(id));
             }
             else if(command == "/add_card"){
-                if(data.size() == 0){
-                    auto ptr = TelegramSender::get_instance();
-                    ptr->call(id, type_msg::send, std::string("Вы ввели пустые данные\n"));
-                    continue;
-                }
-                auto user = users.find(id);
-                user->second.add_product(std::string(data));
-                auto ptr = TelegramSender::get_instance();
-                ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
-                PostgresDB db;
-                std::string conn = get_conn();
-                try{
-                    db.connect(conn);
-                    db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
-                } catch(BadConnectionDBexception& e) {
-                    db.connect(conn);
-                    db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
-                } catch(ErrorQueryResultDBexception& e) {
-                    db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
-                }
+                command_add_card(std::move(id), std::move(data));
             }
             else if(command == "/del_card"){
-                if(data.size() == 0){
-                    auto ptr = TelegramSender::get_instance();
-                    ptr->call(id, type_msg::send, std::string("Вы ввели пустые данные\n"));
-                    continue;
-                }
-                auto user = users.find(id);
-                user->second.del_product(data);
-                auto ptr = TelegramSender::get_instance();
-                ptr->call(id, type_msg::send, std::string("Карточка удалена\n"));
-                PostgresDB db;
-                std::string conn = get_conn();
-                try{
-                    db.connect(conn);
-                    db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
-                } catch(BadConnectionDBexception& e) {
-                    db.connect(conn);
-                    db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
-                } catch(ErrorQueryResultDBexception& e) {
-                    db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
-                }
+                command_del_card(std::move(id), std::move(data));
             }
             else if(command == "/status"){
-                auto user = users.find(id);
-                std::string result = "Ваши скидки:\n";
-                nlohmann::json data;
-                std::ifstream file("../res/products_discount.json");
-                data = nlohmann::json::parse(file);
-                for(const auto& obj : data["products"]){
-                    std::string card = obj["title"];
-                    if(!user->second.is_has_product(card))
-                        continue;
-                    std::string price = obj["price"];
-                    if(obj.contains("discount")){
-                        std::string discount = obj["discount"];
-                        if(user->second.is_has_product(card))
-                            result += (card + "\nцена: " + price + "\nскидка: " + discount + '\n');
-                    }
-                    else{
-                        result += (card + " цена: " + price + '\n');
-                    }
-                }
-                auto ptr = TelegramSender::get_instance();
-                ptr->call(id, type_msg::send, result);
+                command_status(std::move(id));
             }
             else if(command == "/my_cards"){
-                auto user = users.find(id);
-                std::string result = "Ваши карточки:\n";
-                auto cards = user->second.get_cards();
-                for(const auto& obj : cards){
-                    result += obj + "\n";
-                }
-                auto ptr = TelegramSender::get_instance();
-                ptr->call(id, type_msg::send, result);
+                command_my_cards(std::move(id));
+            }
+            else if(command == "/forecast"){
+                command_forecast(std::move(id), std::move(data));
             }
             else{
                 auto ptr = TelegramSender::get_instance();
@@ -203,4 +139,156 @@ void BotTelegram::offset_reload(){
     oset++;
     offset = std::to_string(oset);
     update_offset(offset);
+}
+
+void BotTelegram::command_start(std::string&& id){
+    users.insert({id, TelegramUser(id)});
+    auto ptr = TelegramSender::get_instance();
+    ptr->call(id, type_msg::send, std::string("Привет, теперь тебе доступен ряд команд для манипуляции с карточками\n"));
+    PostgresDB db;
+    try{
+        db.connect(get_conn());
+    } catch(BadConnectionDBexception& e){
+        db.connect(get_conn());
+    }
+    try{
+        db.execute(std::string("INSERT INTO users VALUES($1)"), std::vector<std::string>{id});
+    } catch (BadConnectionDBexception& e){
+        db.connect(get_conn());
+        db.execute(std::string("INSERT INTO users VALUES($1)"), std::vector<std::string>{id});
+    } catch (ErrorQueryResultDBexception& e){
+        std::cout << e.what() << '\n';
+        db.execute(std::string("INSERT INTO users VALUES($1)"), std::vector<std::string>{id});
+    }
+}
+
+void BotTelegram::command_add_card(std::string&& id, std::string&& data){
+    if(data.empty()){
+        auto ptr = TelegramSender::get_instance();
+        ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        offset_reload();
+        return;
+    }
+    auto user = users.find(id);
+    user->second.add_product(std::string(data));
+    auto ptr = TelegramSender::get_instance();
+    ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
+    PostgresDB db;
+    std::string conn = get_conn();
+    try{
+        db.connect(conn);
+        db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+    } catch(BadConnectionDBexception& e) {
+        db.connect(conn);
+        db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+    } catch(ErrorQueryResultDBexception& e) {
+        db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+    }
+}
+
+void BotTelegram::command_del_card(std::string&& id, std::string&& data){
+    if(data.empty()){
+        auto ptr = TelegramSender::get_instance();
+        ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        offset_reload();
+        return;
+    }
+    auto user = users.find(id);
+    user->second.del_product(data);
+    auto ptr = TelegramSender::get_instance();
+    ptr->call(id, type_msg::send, std::string("Карточка удалена\n"));
+    PostgresDB db;
+    std::string conn = get_conn();
+    try{
+        db.connect(conn);
+        db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+    } catch(BadConnectionDBexception& e) {
+        db.connect(conn);
+        db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+    } catch(ErrorQueryResultDBexception& e) {
+        db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+    }
+}
+
+void BotTelegram::command_status(std::string&& id){
+auto user = users.find(id);
+    std::string result = "Ваши скидки:\n";
+    nlohmann::json data;
+    std::ifstream file("../res/products_discount.json");
+    data = nlohmann::json::parse(file);
+    for(const auto& obj : data["products"]){
+        std::string card = obj["title"];
+        if(!user->second.is_has_product(card))
+            return;
+        std::string price = obj["price"];
+        if(obj.contains("discount")){
+            std::string discount = obj["discount"];
+            if(user->second.is_has_product(card))
+                result += (card + "\nцена: " + price + "\nскидка: " + discount + '\n');
+        }
+        else{
+            result += (card + " цена: " + price + '\n');
+        }
+    }
+    auto ptr = TelegramSender::get_instance();
+    ptr->call(id, type_msg::send, result);
+}
+
+void BotTelegram::command_my_cards(std::string&& id){
+    auto user = users.find(id);
+    std::string result = "Ваши карточки:\n";
+    auto cards = user->second.get_cards();
+    for(const auto& obj : cards){
+        result += obj + "\n";
+    }
+    auto ptr = TelegramSender::get_instance();
+    ptr->call(id, type_msg::send, result);
+}
+
+void BotTelegram::command_forecast(std::string&& id, std::string&& data){
+    if(data.empty()){
+        auto ptr = TelegramSender::get_instance();
+        ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        offset_reload();
+        return;
+    }
+    PostgresDB db;
+    db.connect(get_conn());
+    std::vector<std::vector<std::string>> query_result;
+    try{
+        query_result = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
+    } catch(BadConnectionDBexception& e){
+        db.connect(get_conn());
+        query_result = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
+    } catch(ErrorQueryResultDBexception& e){
+        std::cout << e.what() << '\n';
+        query_result = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
+    }
+    if(query_result.empty()){
+        auto ptr = TelegramSender::get_instance();
+        ptr->call(id, type_msg::send, std::string("Данной карточки нет в базе данных\n"));
+        offset_reload();
+        return;
+    }
+    std::vector<int> frequency;
+    std::vector<std::chrono::sys_days> dates;
+    for(const auto& obj : query_result){
+        auto date = converte_string(obj[0]);
+        auto days = std::chrono::sys_days{date};
+        dates.emplace_back(days);
+    }
+    for(int i = 1; i < dates.size(); ++i){
+        auto diff = (dates[i]-dates[i-1]).count()/7;
+        frequency.emplace_back(diff);
+    }
+    if(frequency.size() < 5){
+        auto ptr = TelegramSender::get_instance();
+        ptr->call(id, type_msg::send, std::string("Слишком мало данных для прогнозирования\n"));
+        offset_reload();
+        return;
+    }
+    Forecast f;
+    double prob = f.geometric_probability(std::move(frequency), 1);
+    auto ptr = TelegramSender::get_instance();
+    ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(prob * 100)) + "%"));
 }

@@ -29,6 +29,9 @@ public:
 
     template<typename Container>
     double dispersion(Container&&) const;
+
+    template<typename Container>
+    double geometric_probability(Container&&, int k) const;
 };
 
 template<typename Container>
@@ -52,6 +55,12 @@ double Forecast::dispersion(Container&& container) const {
         disper += (container[i] - mean)*(container[i]-mean);
     }
     return disper/container.size();
+}
+
+template<typename Container>
+double geometric_probability(Container&& container, int k){
+    double prob = 1/median(std::forward<Container>(container));
+    return pow(1-prob, k)*prob;
 }
 
 #endif //_FORECAST_H_

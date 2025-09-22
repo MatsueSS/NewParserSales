@@ -68,3 +68,22 @@ std::string get_date_str_now() noexcept{
 
     return oss.str(); // формат YYYY-MM-DD
 }
+
+std::string converte_ymd(const std::chrono::year_month_day& ymd) noexcept {
+    int year = int(ymd.year());
+    unsigned month = unsigned(ymd.month());
+    unsigned day = unsigned(ymd.day());
+    std::ostringstream oss;
+    oss << year << "-"
+        << std::setw(2) << std::setfill('0') << month << "-"
+        << std::setw(2) << std::setfill('0') << day;
+    return oss.str();
+}
+
+std::chrono::year_month_day converte_string(const std::string& str) noexcept{
+    unsigned int year, month, day;
+    char delim1, delim2;
+    std::istringstream iss(str);
+    iss >> year >> delim1 >> month >> delim2 >> day;
+    return std::chrono::year{static_cast<int>(year)} / std::chrono::month{month} / std::chrono::day{day};
+}
