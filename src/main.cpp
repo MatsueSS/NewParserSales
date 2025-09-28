@@ -38,11 +38,5 @@ int main(void)
         inter.start_process();
     }
 
-    // Reader r;
-    // r.make_a_json(get_conn());
-
-    // Reader r;
-    // r.make_note(get_conn());
-
     return 0;
 }

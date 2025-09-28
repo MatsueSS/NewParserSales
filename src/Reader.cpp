@@ -4,8 +4,6 @@
 #include "json.hpp"
 #include "good_funcs.h"
 
-#define COUNT_RESOURSE 22
-
 #include <fstream>
 #include <iostream>
 
@@ -14,34 +12,23 @@ void Reader::make_note(const std::string& pq) {
     db.connect(pq);
     PyLoader::load("bash -c 'python3 ../py_scripts/2.py'");
     
-    for(int i = 1; i <= COUNT_RESOURSE; ++i){
-        nlohmann::json data;
-        std::ifstream file("../res/products_" + std::to_string(i) + ".json");
-        data = nlohmann::json::parse(file);
-        std::string date;
-        if(data.contains("date") && data["date"].is_string() && !data["date"].get<std::string>().empty()){
-            date = data["date"];
-        } else {
-            date = "NULL"; // или можно пропускать вставку
+    nlohmann::json data;
+    std::ifstream file("../sensetive_res/products.json");
+    data = nlohmann::json::parse(file);
+    std::string date = data["date"];
+    for(const auto& obj : data["products"]){
+        if(!obj.contains("title"))
+            continue;
+        std::string title = obj["title"];
+        std::string price = obj["price"];
+        price = clean_price(price);
+        if(obj.contains("discount")){
+            std::string discount = obj["discount"];
+            discount = clean_price(discount);
+            db.execute(std::string("INSERT INTO cards (title, price, discount, date) VALUES ($1, $2, $3, $4);"), std::vector<std::string>{title, price, discount, date});
         }
-        if(data.contains("products") && data["products"].is_array() && !data["products"].empty()){
-            for(const auto& obj : data["products"]){
-                if(!obj.contains("title"))
-                    continue;
-                std::string title = obj["title"];
-                if(obj.contains("price")){
-                    std::string price = obj["price"];
-                    std::string discount = obj["discount"];
-                    price = clean_price(price);
-                    discount = clean_price(discount);
-                    db.execute(std::string("INSERT INTO cards (title, price, discount, \"date\") VALUES ($1, $2, $3, $4);"), std::vector<std::string>{title, price, discount, date});
-                }
-                else{
-                    std::string price = obj["discount"];
-                    price = clean_price(price);
-                    db.execute(std::string("INSERT INTO cards (title, price, \"date\") VALUES ($1, $2, $3)"), std::vector<std::string>{title, price, date});
-                }
-            }
+        else{
+            db.execute(std::string("INSERT INTO cards (title, price, date) VALUES ($1, $2, $3);"), std::vector<std::string>{title, price, date});
         }
     }
 }
@@ -75,7 +62,7 @@ void Reader::make_a_json(const std::string& str){
         new_data["products"].push_back(product);
     }
 
-    std::ofstream file("../res/products_discount.json");
+    std::ofstream file("../sensitive_res/products_discount.json");
     file << new_data.dump(4);
 }
 

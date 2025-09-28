@@ -214,7 +214,7 @@ void BotTelegram::command_status(std::string&& id){
     auto user = users.find(id);
     std::string result = "Ваши скидки:\n";
     nlohmann::json data;
-    std::ifstream file("../res/products_discount.json");
+    std::ifstream file("../sensetive_res/products_discount.json");
     data = nlohmann::json::parse(file);
     for(const auto& obj : data["products"]){
         std::string card = obj["title"];

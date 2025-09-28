@@ -43,7 +43,7 @@ void Interface::start_process() const {
         reader.make_note(get_conn());
         reader.make_a_json(get_conn());
 
-        std::ifstream file("../res/products_discount.json");
+        std::ifstream file("../sensetive_res/products_discount.json");
         nlohmann::json j = nlohmann::json::parse(file);
 
         for(const auto& obj : j["products"]){
