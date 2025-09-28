@@ -25,3 +25,12 @@ In the good_funcs module, you need to define all the functions as you'll build t
 -----load-----
 
 need use dir load
+
+-----commands-----
+
+recommendations - recommends popular product cards
+add_card - added a card(need a card)
+del_card - deleted a card(need a card)
+status - show u sales
+my_cards - show ur cards
+forecast - forecast(need a card)
