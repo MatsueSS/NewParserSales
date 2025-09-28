@@ -6,6 +6,11 @@
 #include <string>
 #include <chrono>
 
+struct card{
+    std::string title;
+    std::string price, discount;
+};
+
 class Reader{
 private:
     std::string clean_price(const std::string&);

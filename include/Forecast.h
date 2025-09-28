@@ -4,6 +4,7 @@
 #include <numeric>
 #include <exception>
 #include <string>
+#include <cmath>
 
 class ForecastException : public std::exception {
 protected:
@@ -58,9 +59,9 @@ double Forecast::dispersion(Container&& container) const {
 }
 
 template<typename Container>
-double geometric_probability(Container&& container, int k){
+double Forecast::geometric_probability(Container&& container, int k) const {
     double prob = 1/median(std::forward<Container>(container));
-    return pow(1-prob, k)*prob;
+    return std::pow(1-prob, k)*prob;
 }
 
 #endif //_FORECAST_H_

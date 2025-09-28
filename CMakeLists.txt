@@ -18,6 +18,7 @@ add_executable(${PROJECT_NAME}
     src/BotTelegram.cpp
     src/Reader.cpp
     src/Interface.cpp
+    src/Forecast.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

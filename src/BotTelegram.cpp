@@ -211,7 +211,7 @@ void BotTelegram::command_del_card(std::string&& id, std::string&& data){
 }
 
 void BotTelegram::command_status(std::string&& id){
-auto user = users.find(id);
+    auto user = users.find(id);
     std::string result = "Ваши скидки:\n";
     nlohmann::json data;
     std::ifstream file("../res/products_discount.json");
@@ -219,7 +219,7 @@ auto user = users.find(id);
     for(const auto& obj : data["products"]){
         std::string card = obj["title"];
         if(!user->second.is_has_product(card))
-            return;
+            continue;;
         std::string price = obj["price"];
         if(obj.contains("discount")){
             std::string discount = obj["discount"];

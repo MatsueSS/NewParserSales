@@ -18,20 +18,29 @@ void Reader::make_note(const std::string& pq) {
         nlohmann::json data;
         std::ifstream file("../res/products_" + std::to_string(i) + ".json");
         data = nlohmann::json::parse(file);
-        std::string date = data["date"];
-        for(const auto& obj : data["products"]){
-            std::string title = obj["title"];
-            if(obj.contains("price")){
-                std::string price = obj["price"];
-                std::string discount = obj["discount"];
-                price = clean_price(price);
-                discount = clean_price(discount);
-                db.execute(std::string("INSERT INTO cards (title, price, discount, \"date\") VALUES ($1, $2, $3, $4);"), std::vector<std::string>{title, price, discount, date});
-            }
-            else{
-                std::string price = obj["discount"];
-                price = clean_price(price);
-                db.execute(std::string("INSERT INTO cards (title, price, \"date\") VALUES ($1, $2, $3)"), std::vector<std::string>{title, price, date});
+        std::string date;
+        if(data.contains("date") && data["date"].is_string() && !data["date"].get<std::string>().empty()){
+            date = data["date"];
+        } else {
+            date = "NULL"; // или можно пропускать вставку
+        }
+        if(data.contains("products") && data["products"].is_array() && !data["products"].empty()){
+            for(const auto& obj : data["products"]){
+                if(!obj.contains("title"))
+                    continue;
+                std::string title = obj["title"];
+                if(obj.contains("price")){
+                    std::string price = obj["price"];
+                    std::string discount = obj["discount"];
+                    price = clean_price(price);
+                    discount = clean_price(discount);
+                    db.execute(std::string("INSERT INTO cards (title, price, discount, \"date\") VALUES ($1, $2, $3, $4);"), std::vector<std::string>{title, price, discount, date});
+                }
+                else{
+                    std::string price = obj["discount"];
+                    price = clean_price(price);
+                    db.execute(std::string("INSERT INTO cards (title, price, \"date\") VALUES ($1, $2, $3)"), std::vector<std::string>{title, price, date});
+                }
             }
         }
     }
@@ -48,11 +57,21 @@ void Reader::make_a_json(const std::string& str){
 
     new_data["products"] = nlohmann::json::array(); // создаём массив один раз
 
-    for(const auto& vec : cards){
+    std::unordered_map<std::string, card> map;
+
+    for(const auto& obj : cards){
+        card c;
+        c.title = obj[0];
+        c.price = obj[1];
+        c.discount = obj[2];
+        map.insert({obj[0], c});
+    }
+
+    for(const auto& vec : map){
         nlohmann::json product;
-        product["title"] = vec[0];
-        product["price"] = vec[1];
-        product["discount"] = vec[2];
+        product["title"] = vec.second.title;
+        product["price"] = vec.second.price;
+        product["discount"] = vec.second.discount;
         new_data["products"].push_back(product);
     }
 

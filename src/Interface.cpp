@@ -48,7 +48,7 @@ void Interface::start_process() const {
 
         for(const auto& obj : j["products"]){
             std::string title = obj["title"], discount = obj["discount"];
-            ptr->notify_all(title + " " + discount);
+            ptr->notify_all(title);
         }
     }
 }

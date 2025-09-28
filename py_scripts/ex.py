@@ -52,10 +52,12 @@ def scroll_to_bottom(driver, pause_time=1):
 for i, url in enumerate(urls, start=1):
     driver.get(url)
 
-    time.sleep(25)
+    time.sleep(10)
 
     # прокрутка до конца
     scroll_to_bottom(driver, pause_time=1)
+
+    time.sleep(30)
 
     # сохраняем HTML
     html = driver.page_source

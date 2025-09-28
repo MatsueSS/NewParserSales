@@ -45,7 +45,3 @@ for i in range(1, 23):
         "products": products
     }
 
-    with open(f"../res/products_{i}.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
-sys.exit(0)
