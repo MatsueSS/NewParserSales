@@ -2,9 +2,11 @@
 #define _BOT_TELEGRAM_H_
 
 #include "TelegramUser.h"
+#include "Matrix.h"
 
 #include <unordered_map>
 #include <thread>
+#include <vector>
 
 class BotTelegramException : public std::exception{
 protected:
@@ -19,6 +21,7 @@ public:
 class BotTelegram{
 private:
     std::unordered_map<std::string, TelegramUser> users;
+    std::vector<IUserObserver*> observers;
     std::atomic<bool> flag;
     std::thread worker;
     std::string offset;
@@ -32,13 +35,17 @@ private:
     void command_status(std::string&&);
     void command_my_cards(std::string&&);
     void command_forecast(std::string&&, std::string&&);
+    void command_recommendations(std::string&&);
 
     std::pair<std::string, std::string> get_command_and_data(const std::string& message) noexcept;
 
     void stop();
 
+    void notify_user_added(const TelegramUser& user);
+    void notify_user_updated(const TelegramUser& user);
+
 public:
-    BotTelegram(std::string);
+    explicit BotTelegram(std::string);
 
     BotTelegram(const BotTelegram&) = delete;
     BotTelegram& operator=(const BotTelegram&) = delete;
@@ -58,6 +65,9 @@ public:
     template<typename Type>
     void notify_all(Type&&) const;
 
+    void add_observer(IUserObserver* obs);
+    void remove_observer(IUserObserver* obs);
+
     ~BotTelegram();
 };
 
@@ -66,7 +76,10 @@ void BotTelegram::add_user(Type&& user){
     if constexpr(!std::is_same<std::decay_t<Type>, TelegramUser>::value)
         throw BotTelegramException("Value-Type must be a TelegramUser\n");
 
-    users.insert({user.get_id(), std::forward<Type>(user)});
+    auto id = user.get_id();
+    auto [it, inserted] = users.insert({id, std::forward<Type>(user)});
+    if(inserted)
+        notify_user_added(it->second);
 }
 
 template<typename Type>

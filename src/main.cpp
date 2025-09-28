@@ -6,6 +6,8 @@
 #include "Reader.h"
 #include "Interface.h"
 
+#include "Matrix.h"
+
 int main(void)
 {
     // TelegramUser user(std::move(get_id()));
@@ -37,6 +39,13 @@ int main(void)
     while(true){
         inter.start_process();
     }
+
+    // BotTelegram bot(get_last_offset());
+    // Matrix m;
+    // bot.add_observer(&m);
+    // while(true){
+    //     std::this_thread::sleep_for(std::chrono::microseconds(10000));
+    // }
 
     return 0;
 }

@@ -15,6 +15,9 @@ BotTelegram::BotTelegram(std::string offset)
     : flag(true), worker(&BotTelegram::check_message, this), offset(std::move(offset)) 
 
 {
+    Matrix* m = new Matrix;
+    this->add_observer(m);
+
     std::string conn = get_conn();
     PostgresDB db;
     std::vector<std::vector<std::string>> res;
@@ -44,7 +47,8 @@ BotTelegram::BotTelegram(std::string offset)
 
 BotTelegramException::BotTelegramException(std::string str) : msg(std::move(str)) {}
 
-BotTelegram::~BotTelegram(){
+BotTelegram::~BotTelegram()
+{
     flag = false;
     if(worker.joinable())
         worker.join();
@@ -56,7 +60,8 @@ BotTelegram::BotTelegram(BotTelegram&& obj) noexcept
     obj.flag = false;
 }
 
-BotTelegram& BotTelegram::operator=(BotTelegram&& obj) noexcept{
+BotTelegram& BotTelegram::operator=(BotTelegram&& obj) noexcept
+{
     if(this == &obj)
         return *this;
 
@@ -68,7 +73,8 @@ BotTelegram& BotTelegram::operator=(BotTelegram&& obj) noexcept{
     return *this;
 }
 
-void BotTelegram::stop(){
+void BotTelegram::stop()
+{
     if(flag)
         flag = false;
 
@@ -76,11 +82,13 @@ void BotTelegram::stop(){
         worker.join();
 }
 
-const char* BotTelegramException::what() const noexcept{
+const char* BotTelegramException::what() const noexcept
+{
     return msg.c_str();
 }
 
-void BotTelegram::check_message(){
+void BotTelegram::check_message()
+{
     while(flag.load()){
         auto ptr = TelegramSender::get_instance();
         ptr->call(std::string(""), type_msg::read, std::string(offset));
@@ -112,6 +120,9 @@ void BotTelegram::check_message(){
             else if(command == "/forecast"){
                 command_forecast(std::move(id), std::move(data));
             }
+            else if(command == "/recommendations"){
+                command_recommendations(std::move(id));
+            }
             else{
                 auto ptr = TelegramSender::get_instance();
                 ptr->call(id, type_msg::send, std::string("Неверная команда"));
@@ -122,7 +133,8 @@ void BotTelegram::check_message(){
     }
 }
 
-std::pair<std::string, std::string> BotTelegram::get_command_and_data(const std::string& message) noexcept{
+std::pair<std::string, std::string> BotTelegram::get_command_and_data(const std::string& message) noexcept
+{
     std::string command, data;
     std::size_t spacePos = message.find(' ');
     if(spacePos != std::string::npos){
@@ -134,14 +146,16 @@ std::pair<std::string, std::string> BotTelegram::get_command_and_data(const std:
     return {command, data};
 }
 
-void BotTelegram::offset_reload(){
+void BotTelegram::offset_reload()
+{
     long long oset = std::stoll(offset);
     oset++;
     offset = std::to_string(oset);
     update_offset(offset);
 }
 
-void BotTelegram::command_start(std::string&& id){
+void BotTelegram::command_start(std::string&& id)
+{
     users.insert({id, TelegramUser(id)});
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::string("Привет, теперь тебе доступен ряд команд для манипуляции с карточками\n"));
@@ -162,7 +176,8 @@ void BotTelegram::command_start(std::string&& id){
     }
 }
 
-void BotTelegram::command_add_card(std::string&& id, std::string&& data){
+void BotTelegram::command_add_card(std::string&& id, std::string&& data)
+{
     if(data.empty()){
         auto ptr = TelegramSender::get_instance();
         ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
@@ -186,7 +201,8 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data){
     }
 }
 
-void BotTelegram::command_del_card(std::string&& id, std::string&& data){
+void BotTelegram::command_del_card(std::string&& id, std::string&& data)
+{
     if(data.empty()){
         auto ptr = TelegramSender::get_instance();
         ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
@@ -210,7 +226,8 @@ void BotTelegram::command_del_card(std::string&& id, std::string&& data){
     }
 }
 
-void BotTelegram::command_status(std::string&& id){
+void BotTelegram::command_status(std::string&& id)
+{
     auto user = users.find(id);
     std::string result = "Ваши скидки:\n";
     nlohmann::json data;
@@ -234,7 +251,8 @@ void BotTelegram::command_status(std::string&& id){
     ptr->call(id, type_msg::send, result);
 }
 
-void BotTelegram::command_my_cards(std::string&& id){
+void BotTelegram::command_my_cards(std::string&& id)
+{
     auto user = users.find(id);
     std::string result = "Ваши карточки:\n";
     auto cards = user->second.get_cards();
@@ -245,7 +263,8 @@ void BotTelegram::command_my_cards(std::string&& id){
     ptr->call(id, type_msg::send, result);
 }
 
-void BotTelegram::command_forecast(std::string&& id, std::string&& data){
+void BotTelegram::command_forecast(std::string&& id, std::string&& data)
+{
     if(data.empty()){
         auto ptr = TelegramSender::get_instance();
         ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
@@ -291,4 +310,43 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data){
     double prob = f.geometric_probability(std::move(frequency), 1);
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(prob * 100)) + "%"));
+}
+
+void BotTelegram::command_recommendations(std::string&& id)
+{
+    auto res = observers[0]->recommendation(id);
+    std::string result = "Рекомендуемые карточки\n";
+    int count = 0;
+    for(const auto& v : res){
+        if(count == 3)
+            break;
+        result += v + '\n';
+        count++;
+    }
+    auto ptr = TelegramSender::get_instance();
+    ptr->call(id, type_msg::send, result);
+}
+
+void BotTelegram::notify_user_added(const TelegramUser& user)
+{
+    for(auto obs : observers){
+        obs->on_user_added(user);
+    }
+}
+
+void BotTelegram::notify_user_updated(const TelegramUser& user)
+{
+    for(auto obs : observers){
+        obs->on_user_updated(user);
+    }
+}
+
+void BotTelegram::add_observer(IUserObserver* obs)
+{
+    observers.push_back(obs);
+}
+
+void BotTelegram::remove_observer(IUserObserver* obs)
+{
+    observers.erase(std::remove(observers.begin(), observers.end(), obs), observers.end());
 }

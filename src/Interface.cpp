@@ -4,15 +4,18 @@
 #include "PyLoader.h"
 #include "Reader.h"
 #include "json.hpp"
+#include "Matrix.h"
 
 #include <iostream>
 #include <sstream>
 #include <chrono>
 #include <fstream>
 
-Interface::Interface(std::string str) : ptr(std::make_unique<BotTelegram>(std::move(str))) {}
+Interface::Interface(std::string str) : ptr(std::make_unique<BotTelegram>(std::move(str))) 
+{}
 
-bool Interface::control_date() const {
+bool Interface::control_date() const 
+{
     auto res = JsonReader::read(std::string("jq -r '.date' ../res/products_discount.json"), type_json::products);
     std::string date_str = res[0];
     std::istringstream ss(date_str);

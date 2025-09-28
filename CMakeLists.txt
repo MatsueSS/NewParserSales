@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME}
     src/Reader.cpp
     src/Interface.cpp
     src/Forecast.cpp
+    src/Matrix.cpp
 )
 
 find_package(PostgreSQL REQUIRED)
