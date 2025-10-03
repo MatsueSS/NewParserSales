@@ -25,6 +25,9 @@ In the good_funcs module, you need to define all the functions as you'll build t
 -----load-----
 
 need use dir load
+mkdir sensitive_res
+mdkir res
+mkdir urls
 
 -----commands-----
 
@@ -34,3 +37,7 @@ del_card - deleted a card(need a card)
 status - show u sales
 my_cards - show ur cards
 forecast - forecast(need a card)
+
+-----author words-----
+
+One design decision is worth mentioning. I want to touch on the recommendations because it's one of the less obvious aspects of my program. The recommendations are built on the Observer pattern. It turns out that the bot is the one that modifies the observers, and the Matrix class is the observer. The recommendations are based on popular cards.

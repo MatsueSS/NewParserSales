@@ -1,5 +1,7 @@
 #include "Matrix.h"
 
+#include <queue>
+
 MatrixException::MatrixException(std::string str) : msg(std::move(str)) {}
 
 const char* MatrixException::what() const noexcept 
@@ -39,15 +41,14 @@ std::vector<std::string> Matrix::recommendation(const std::string& id)
                 freq[card]++;
         }
     }
-    int max_score = 0;
-    for (const auto& [card, score] : freq) {
-        if (score > max_score) {
-            max_score = score;
-            result.clear();
-            result.push_back(card);
-        } else if (score == max_score) {
-            result.push_back(card);
-        }
+
+    std::priority_queue<std::pair<int, std::string>> que;
+    for(const auto& obj : freq)
+        que.push({obj.second, obj.first});
+
+    while(result.size() != 3 && !que.empty()){
+        result.push_back(que.top().second);
+        que.pop();
     }
 
     return result;
