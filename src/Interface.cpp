@@ -16,7 +16,7 @@ Interface::Interface(std::string str) : ptr(std::make_unique<BotTelegram>(std::m
 
 bool Interface::control_date() const 
 {
-    auto res = JsonReader::read(std::string("jq -r '.date' ../res/products_discount.json"), type_json::products);
+    auto res = JsonReader::read(std::string("jq -r '.date' ../sensetive_res/products_discount.json"), type_json::products);
     std::string date_str = res[0];
     std::istringstream ss(date_str);
     char delimiter;
@@ -54,4 +54,5 @@ void Interface::start_process() const {
             ptr->notify_all(title);
         }
     }
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 }

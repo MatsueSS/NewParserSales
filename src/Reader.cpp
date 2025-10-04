@@ -62,7 +62,7 @@ void Reader::make_a_json(const std::string& str){
         new_data["products"].push_back(product);
     }
 
-    std::ofstream file("../sensitive_res/products_discount.json");
+    std::ofstream file("../sensetive_res/products_discount.json");
     file << new_data.dump(4);
 }
 

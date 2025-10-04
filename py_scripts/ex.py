@@ -31,33 +31,49 @@ urls = [
 ]
 
 options = webdriver.ChromeOptions()
-# options.add_argument("--headless")  # без окна браузера
+# options.add_argument("--headless")
 driver = webdriver.Chrome(options=options)
 
-def scroll_to_bottom(driver, pause_time=1):
-    """Плавно прокручивает страницу до конца."""
+def scroll_to_bottom(driver, pause_time=1, max_wait=20):
+    """
+    Прокручивает страницу до конца, пока подгружаются новые элементы.
+    Ждёт появления новых карточек товаров.
+    """
     last_height = driver.execute_script("return document.body.scrollHeight")
+    start_time = time.time()
 
     while True:
-        # прокрутка вниз
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(pause_time)
 
-        # вычисляем новую высоту
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:  # если больше нечего грузить
-            break
-        last_height = new_height
+        # ждём появления новых карточек (ожидаем, что их станет больше)
+        try:
+            WebDriverWait(driver, 10).until(
+                lambda d: d.execute_script("return document.body.scrollHeight") > last_height
+            )
+            last_height = driver.execute_script("return document.body.scrollHeight")
+            start_time = time.time()  # сбрасываем таймер ожидания
+        except:
+            # если долго нет изменений — выходим
+            if time.time() - start_time > max_wait:
+                print("[!] Достигнут конец страницы.")
+                break
 
 for i, url in enumerate(urls, start=1):
+    print(f"[→] Открываю: {url}")
     driver.get(url)
 
-    time.sleep(10)
+    # ждём начальной загрузки карточек
+    try:
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".css-0"))
+        )
+    except Exception as e:
+        print(f"[!] Не удалось дождаться карточек на {url}: {e}")
+        continue
 
-    # прокрутка до конца
-    scroll_to_bottom(driver, pause_time=1)
-
-    time.sleep(30)
+    # плавная прокрутка
+    scroll_to_bottom(driver, pause_time=1, max_wait=20)
 
     # сохраняем HTML
     html = driver.page_source
@@ -68,5 +84,5 @@ for i, url in enumerate(urls, start=1):
     print(f"[+] Сохранена страница {url} → {filename}")
 
 driver.quit()
-
 sys.exit(0)
+
