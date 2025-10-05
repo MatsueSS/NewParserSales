@@ -41,8 +41,11 @@ private:
 
     void stop();
 
-    void notify_user_added(const TelegramUser& user);
-    void notify_user_updated(const TelegramUser& user);
+    template<typename Type>
+    void notify_user_added(Type&& user);
+
+    template<typename Type>
+    void notify_user_updated(Type&& user);
 
 public:
     explicit BotTelegram(std::string);
@@ -105,6 +108,28 @@ void BotTelegram::notify_all(Type&& notifi) const {
 
     for(const auto& obj : users)
         obj.second.notify(notifi);
+}
+
+template<typename Type>
+void BotTelegram::notify_user_added(Type&& user)
+{
+    if constexpr(!std::is_same<std::decay_t<Type>, TelegramUser>::value)
+        throw BotTelegramException("Value-Type must be a TelegramUser\n");
+
+    for(auto obs : observers){
+        obs->on_user_added(std::forward<Type>(user));
+    }
+}
+
+template<typename Type>
+void BotTelegram::notify_user_updated(Type&& user)
+{
+    if constexpr(!std::is_same<std::decay_t<Type>, TelegramUser>::value)
+        throw BotTelegramException("Value-Type must be a TelegramUser\n");
+
+    for(auto obs : observers){
+        obs->on_user_updated(std::forward<Type>(user));
+    }
 }
 
 #endif //_BOT_TELEGRAM_H_

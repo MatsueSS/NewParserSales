@@ -327,20 +327,6 @@ void BotTelegram::command_recommendations(std::string&& id)
     ptr->call(id, type_msg::send, result);
 }
 
-void BotTelegram::notify_user_added(const TelegramUser& user)
-{
-    for(auto obs : observers){
-        obs->on_user_added(user);
-    }
-}
-
-void BotTelegram::notify_user_updated(const TelegramUser& user)
-{
-    for(auto obs : observers){
-        obs->on_user_updated(user);
-    }
-}
-
 void BotTelegram::add_observer(IUserObserver* obs)
 {
     observers.push_back(obs);
