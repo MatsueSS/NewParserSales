@@ -19,7 +19,18 @@ void Matrix::on_user_added(const TelegramUser& user)
     }
 }
 
+void Matrix::on_user_added(TelegramUser&& user)
+{
+    if(!matrix.count(user.get_id()))
+        matrix[user.get_id()] = std::unordered_set<std::string>(user.get_cards().begin(), user.get_cards().end());
+}
+
 void Matrix::on_user_updated(const TelegramUser& user)
+{
+    matrix[user.get_id()] = std::unordered_set<std::string>(user.get_cards().begin(), user.get_cards().end());
+}
+
+void Matrix::on_user_updated(TelegramUser&& user)
 {
     matrix[user.get_id()] = std::unordered_set<std::string>(user.get_cards().begin(), user.get_cards().end());
 }

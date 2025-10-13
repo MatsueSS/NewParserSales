@@ -4,7 +4,10 @@
 #include <numeric>
 #include <exception>
 #include <string>
+#include <iterator>
 #include <cmath>
+#include <algorithm>
+#include <functional>
 
 class ForecastException : public std::exception {
 protected:
@@ -24,19 +27,42 @@ public:
 };
 
 class Forecast{
+private:
+    double combinations(unsigned n, unsigned k) const;
+    double integrate(std::function<double(double)> f, double a, double b, int n = 1000) const;
+
 public:
     template<typename Container>
-    double median(Container&&) const;
+    auto mean(Container&& container) const
+        -> decltype((void)(container.size()), double{});
 
     template<typename Container>
-    double dispersion(Container&&) const;
+    auto dispersion(Container&& container) const
+        -> decltype((void)(container.size()), double{});
 
     template<typename Container>
-    double geometric_probability(Container&&, int k) const;
+    auto median(Container&& container) const
+        -> decltype((void)(container.size()), double{});
+
+    template<typename Container>
+    auto geometric_probability(Container&& container, int k) const
+        ->decltype((void)(container.size()), double{});
+
+    template<typename Container>
+    double binomial_probability(Container&& container, unsigned k) const;
+
+    template<typename Container>
+    double poisson_probability(Container&& container, unsigned k) const;
+
+    double exponential_probability(double a, double b, double lambda) const;
+    double normal_probability(double a, double b, double mean, double sigma) const;
+    double uniform_probability(double a, double b, double x1, double x2) const;
 };
 
 template<typename Container>
-double Forecast::median(Container&& container) const {
+auto Forecast::mean(Container&& container) const 
+    -> decltype((void)(container.size()), double{})
+{
     if(container.size() == 0)
         throw ZeroDivisionForecastException("Zero division\n");
 
@@ -46,22 +72,53 @@ double Forecast::median(Container&& container) const {
 }
 
 template<typename Container>
-double Forecast::dispersion(Container&& container) const {
+auto Forecast::median(Container&& container) const
+    -> decltype((void)(container.size()), double{})
+{
+    auto temp = container;
+    std::sort(temp.begin(), temp.end());
+    if(temp.size() % 2 == 0)
+        return (temp[temp.size()/2-1]+temp[temp.size()/2])/2;
+    return temp[temp.size()];
+}
+
+template<typename Container>
+auto Forecast::dispersion(Container&& container) const 
+    -> decltype((void)(container.size()), double{})
+{
     if(container.size() == 0)
         throw ZeroDivisionForecastException("Zero division\n");
 
     double mean = median(container);
     double disper = 0;
-    for(int i = 0; i < container.size(); ++i){
-        disper += (container[i] - mean)*(container[i]-mean);
+    for(const auto& obj: container){
+        disper += *obj;
     }
     return disper/container.size();
 }
 
 template<typename Container>
-double Forecast::geometric_probability(Container&& container, int k) const {
-    double prob = 1/median(std::forward<Container>(container));
+auto Forecast::geometric_probability(Container&& container, int k) const 
+    ->decltype((void)(container.size()), double{})
+{
+    double prob = 1/mean(std::forward<Container>(container));
     return std::pow(1-prob, k)*prob;
+}
+
+template<typename Container>
+double Forecast::binomial_probability(Container&& container, unsigned k) const
+{
+    int n = container.size();
+    double probability = mean(std::forward<Container>(container))/(double)n;
+    return combinations(n, k)*std::pow(probability, k)*std::pow(1-probability, n-k);
+}
+
+template<typename Container>
+double Forecast::poisson_probability(Container&& container, unsigned k) const
+{
+    int n = container.size();
+    double mean_val = mean(std::forward<Container>(container));
+    return std::pow(mean_val, k)*exp(-mean_val)/std::tgamma(k+1);
 }
 
 #endif //_FORECAST_H_

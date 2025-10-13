@@ -7,7 +7,7 @@ from datetime import datetime
 products_set = set()
 today = datetime.today().strftime("%Y-%m-%d")
 
-for i in range(1, 23):
+for i in range(1, 26):
     with open(f"../urls/page_{i}.html", "r", encoding="utf-8") as file:
         html_doc = file.read()
 

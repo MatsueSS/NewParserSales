@@ -38,12 +38,7 @@ int main(void)
         inter.start_process();
     }
 
-    // BotTelegram bot(get_last_offset());
-    // Matrix m;
-    // bot.add_observer(&m);
-    // while(true){
-    //     std::this_thread::sleep_for(std::chrono::microseconds(10000));
-    // }
+    
 
     return 0;
 }

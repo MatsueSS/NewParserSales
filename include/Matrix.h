@@ -12,7 +12,11 @@ class IUserObserver{
 public:
     virtual ~IUserObserver() = default;
     virtual void on_user_added(const TelegramUser& user) = 0;
+    virtual void on_user_added(TelegramUser&& user) = 0;
+
     virtual void on_user_updated(const TelegramUser& user) = 0;
+    virtual void on_user_updated(TelegramUser&& user) = 0;
+    
     virtual std::vector<std::string> recommendation(const std::string& id) = 0;
 };
 
@@ -42,7 +46,10 @@ private:
 
 public:
     void on_user_added(const TelegramUser& user) override;
+    void on_user_added(TelegramUser&& user) override;
+
     void on_user_updated(const TelegramUser& user) override;    
+    void on_user_updated(TelegramUser&& user) override;
 
     Matrix() = default;
 
