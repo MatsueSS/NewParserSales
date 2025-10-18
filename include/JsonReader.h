@@ -1,6 +1,8 @@
 #ifndef _JSON_READER_H_
 #define _JSON_READER_H_
 
+//Here is the code that allows you to make jq requests.
+
 #include <vector>
 #include <string>
 #include <memory>

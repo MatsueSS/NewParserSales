@@ -1,6 +1,8 @@
 #ifndef _BOT_TELEGRAM_H_
 #define _BOT_TELEGRAM_H_
 
+//Here is the code that describes the bot in Telegram.
+
 #include "TelegramUser.h"
 #include "Matrix.h"
 

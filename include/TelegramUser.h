@@ -1,6 +1,8 @@
 #ifndef _TELEGRAM_USER_
 #define _TELEGRAM_USER_
 
+//Here is the code that describes the bot user.
+
 #include "TelegramSender.h"
 
 #include <unordered_set>
@@ -52,7 +54,7 @@ void TelegramUser::add_product(Type&& str){
     if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
         throw TelegramUserException("Value-Type must be a string\n");
 
-    lovely_product.insert(std::forward<Type>(str));
+    lovely_product.emplace(std::forward<Type>(str));
 }
 
 template<typename Type>

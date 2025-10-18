@@ -1,6 +1,8 @@
 #ifndef _FORECAST_H_
 #define _FORECAST_H_
 
+//Typical methods for working with probability and sampling are described here.
+
 #include <numeric>
 #include <exception>
 #include <string>

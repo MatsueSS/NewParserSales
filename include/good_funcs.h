@@ -1,6 +1,8 @@
 #ifndef _GOOD_FUNCS_H_
 #define _GOOD_FUNCS_H_
 
+//Here are some handy features that I use often.
+
 #include <string>
 #include <chrono>
 

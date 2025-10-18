@@ -1,6 +1,8 @@
 #ifndef _POSTGRES_DB_H_
 #define _POSTGRES_DB_H_
 
+//Here is the code that allows you to query the database for psql
+
 #include <postgresql/libpq-fe.h>
 #include <functional>
 #include <memory>

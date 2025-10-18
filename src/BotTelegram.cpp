@@ -186,10 +186,10 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
     }
     auto user = users.find(id);
     static std::unordered_map<std::string, std::vector<std::string>> hash_map {
-        {"яблоко", {"Яблоки Global Village Роял Гала", "Яблоки Global Village Голден фасованные", "Яблоки красные", "Яблоки Голден", "Яблоки Гренни Смит", "Яблоки фасованные", "Яблоко Global Village красное", "Яблоко сезонное"}},
-        {"яблоки", {"Яблоки Global Village Роял Гала", "Яблоки Global Village Голден фасованные", "Яблоки красные", "Яблоки Голден", "Яблоки Гренни Смит", "Яблоки фасованные", "Яблоко Global Village красное", "Яблоко сезонное"}},
-        {"Яблоко", {"Яблоки Global Village Роял Гала", "Яблоки Global Village Голден фасованные", "Яблоки красные", "Яблоки Голден", "Яблоки Гренни Смит", "Яблоки фасованные", "Яблоко Global Village красное", "Яблоко сезонное"}},
-        {"Яблоки", {"Яблоки Global Village Роял Гала", "Яблоки Global Village Голден фасованные", "Яблоки красные", "Яблоки Голден", "Яблоки Гренни Смит", "Яблоки фасованные", "Яблоко Global Village красное", "Яблоко сезонное"}},
+        {"яблоко", {"Яблоки Global Village Роял Гала", "Яблоки Global Village Голден фасованные", "Яблоки красные", "Яблоки Голден", "Яблоки Гренни Смит", "Яблоки фасованные", "Яблоко Global Village красное", "Яблоко сезонное", "Яблоки Ред Делишес"}},
+        {"яблоки", {"Яблоки Global Village Роял Гала", "Яблоки Global Village Голден фасованные", "Яблоки красные", "Яблоки Голден", "Яблоки Гренни Смит", "Яблоки фасованные", "Яблоко Global Village красное", "Яблоко сезонное", "Яблоки Ред Делишес"}},
+        {"Яблоко", {"Яблоки Global Village Роял Гала", "Яблоки Global Village Голден фасованные", "Яблоки красные", "Яблоки Голден", "Яблоки Гренни Смит", "Яблоки фасованные", "Яблоко Global Village красное", "Яблоко сезонное", "Яблоки Ред Делишес"}},
+        {"Яблоки", {"Яблоки Global Village Роял Гала", "Яблоки Global Village Голден фасованные", "Яблоки красные", "Яблоки Голден", "Яблоки Гренни Смит", "Яблоки фасованные", "Яблоко Global Village красное", "Яблоко сезонное", "Яблоки Ред Делишес"}},
         {"Молоко 3.2%", {"Молоко Правильное Молоко пастеризованное 3.2-4% БЗМЖ 2л", "Молоко стерилизованное Агуша детское 3.2% с 3 лет 500г", "Молоко Станция Молочная пастеризованное 3.2% БЗМЖ 1.55л", "Молоко Село Зеленое пастеризованное 3.2% БЗМЖ 1.947л", "Молоко Простоквашино пастеризованное 3.2% БЗМЖ 1.4л", "Молоко М ультрапастеризованное 3.2% БЗМЖ 950г", "Молоко С Нашей Фермы ультрапастеризованное 3.2% БЗМЖ 925мл", "Молоко Лебедяньмолоко 3.2% БЗМЖ 1400г", "Молоко Станция молочная топленое 3.2% БЗМЖ 900мл", "Молоко Вкуснотеево пастеризованное 3.2% БЗМЖ 900г", "Молоко ЭкоНива ультрапастеризованное 3.2% БЗМЖ 1л", "Молоко Лебедяньмолоко 3.2% БЗМЖ 900г", "Молоко Станция Молочная ультрапастеризованное 3.2% БЗМЖ 970мл", "Молоко Домик в деревне пастеризованное 3.2% БЗМЖ 1.44кг", "Молоко ЭкоНива детское ультрапастеризованное 3.2% БЗМЖ 200мл", "Молоко Сарафаново детское ультрапастеризованное 3.2% БЗМЖ 970мл", "Молоко Добрино питьевое пастеризованное 3.2% БЗМЖ 900г", "Молоко ЭкоНива пастеризованное цельное 3.3–6% БЗМЖ 1л"}},
         {"молоко 3.2%", {"Молоко Правильное Молоко пастеризованное 3.2-4% БЗМЖ 2л", "Молоко стерилизованное Агуша детское 3.2% с 3 лет 500г", "Молоко Станция Молочная пастеризованное 3.2% БЗМЖ 1.55л", "Молоко Село Зеленое пастеризованное 3.2% БЗМЖ 1.947л", "Молоко Простоквашино пастеризованное 3.2% БЗМЖ 1.4л", "Молоко М ультрапастеризованное 3.2% БЗМЖ 950г", "Молоко С Нашей Фермы ультрапастеризованное 3.2% БЗМЖ 925мл", "Молоко Лебедяньмолоко 3.2% БЗМЖ 1400г", "Молоко Станция молочная топленое 3.2% БЗМЖ 900мл", "Молоко Вкуснотеево пастеризованное 3.2% БЗМЖ 900г", "Молоко ЭкоНива ультрапастеризованное 3.2% БЗМЖ 1л", "Молоко Лебедяньмолоко 3.2% БЗМЖ 900г", "Молоко Станция Молочная ультрапастеризованное 3.2% БЗМЖ 970мл", "Молоко Домик в деревне пастеризованное 3.2% БЗМЖ 1.44кг", "Молоко ЭкоНива детское ультрапастеризованное 3.2% БЗМЖ 200мл", "Молоко Сарафаново детское ультрапастеризованное 3.2% БЗМЖ 970мл", "Молоко Добрино питьевое пастеризованное 3.2% БЗМЖ 900г", "Молоко ЭкоНива пастеризованное цельное 3.3–6% БЗМЖ 1л"}},
         {"Молоко 2.5%", {"Молоко Станция Молочная пастеризованное 2.5% БЗМЖ 900мл", "Молоко Домик в деревне пастеризованное 2.5% БЗМЖ 930мл", "Молоко Искренне Ваш пастеризованное 2.5% БЗМЖ 930г", "Молоко Станция молочная ультрапастеризованное 2.5% БЗМЖ 970мл", "Молоко козье Село Зеленое цельное ультрапастеризованное 2.8-5.6% БЗМЖ 200г", "Молоко Экомилк пастеризованное 2.5% БЗМЖ 900мл", "Молоко Вкус & Польза пастеризованное 2.5% БЗМЖ 900г", "Молоко Сарафаново детское ультрапастеризованное 2.5% БЗМЖ 970мл", "Молоко Сарафаново пастеризованное 2.5% БЗМЖ 930мл"}},
@@ -231,27 +231,42 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         // {"огурцы солёные"},
         // {"тушёнка"}
     };
-    auto it = hash_map.find(std::string(data));
-    if(it != hash_map.end()){
-        for(const auto& obj : it->second){
-            user->second.add_product(obj);
-        }
-    } else{
-        user->second.add_product(std::string(data));
-    }
-    auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
+
     PostgresDB db;
     std::string conn = get_conn();
     try{
         db.connect(conn);
-        db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
     } catch(BadConnectionDBexception& e) {
         db.connect(conn);
-        db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
-    } catch(ErrorQueryResultDBexception& e) {
-        db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
     }
+
+    auto it = hash_map.find(std::string(data));
+    if(it != hash_map.end()){
+        for(const auto& obj : it->second){
+            user->second.add_product(obj);
+            try{
+                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+            } catch(BadConnectionDBexception& e){
+                db.connect(conn);
+                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+            } catch(ErrorQueryResultDBexception& e){
+                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+            }
+        }
+    }
+    else{
+        user->second.add_product(std::string(data));
+        try{
+            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+        } catch(BadConnectionDBexception& e){
+            db.connect(conn);
+            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+        } catch(ErrorQueryResultDBexception& e) {
+            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+        }
+    }
+    auto ptr = TelegramSender::get_instance();
+    ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
 }
 
 void BotTelegram::command_del_card(std::string&& id, std::string&& data)

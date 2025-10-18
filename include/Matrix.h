@@ -1,6 +1,8 @@
 #ifndef _MATRIX_H_
 #define _MATRIX_H_
 
+//Here is the code that allows you to read recommendations for users
+
 #include "TelegramUser.h"
 
 #include <unordered_map>
