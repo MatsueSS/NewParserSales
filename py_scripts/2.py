@@ -7,18 +7,18 @@ from datetime import datetime
 products_set = set()
 today = datetime.today().strftime("%Y-%m-%d")
 
-for i in range(1, 26):
+for i in range(1, 29):
     with open(f"../urls/page_{i}.html", "r", encoding="utf-8") as file:
         html_doc = file.read()
 
     soup = BeautifulSoup(html_doc, "lxml")
-    group = soup.find_all("div", class_="css-0")
+    group = soup.find_all("div", class_="css-6n4fw9")
 
     for obj in group:
-        title = obj.find("p", class_="chakra-text mainInformation_title__ziiEa css-1jdqp4k")
+        title = obj.find("p", class_="css-y50q0q")
 
-        discount = obj.find("p", class_="chakra-text priceContainer_price__AY8C_ css-6uvdux")
-        old_price = obj.find("p", class_="chakra-text priceContainer_catalogUsualPrice__m97fW css-bx74j9")
+        discount = obj.find("span", class_="css-1kmcjcs")
+        old_price = obj.find("span", class_="css-8696l")
 
         if discount and old_price:
             # есть скидка → старая цена + новая цена

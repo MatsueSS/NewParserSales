@@ -156,7 +156,9 @@ void BotTelegram::offset_reload()
 
 void BotTelegram::command_start(std::string&& id)
 {
-    users.insert({id, TelegramUser(id)});
+    TelegramUser user(id);
+    this->add_user(user);
+    
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::string("Привет, теперь тебе доступен ряд команд для манипуляции с карточками\n"));
     PostgresDB db;
@@ -166,14 +168,15 @@ void BotTelegram::command_start(std::string&& id)
         db.connect(get_conn());
     }
     try{
-        db.execute(std::string("INSERT INTO users VALUES($1)"), std::vector<std::string>{id});
+        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
     } catch (BadConnectionDBexception& e){
         db.connect(get_conn());
-        db.execute(std::string("INSERT INTO users VALUES($1)"), std::vector<std::string>{id});
+        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
     } catch (ErrorQueryResultDBexception& e){
         std::cout << e.what() << '\n';
-        db.execute(std::string("INSERT INTO users VALUES($1)"), std::vector<std::string>{id});
+        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
     }
+    
 }
 
 void BotTelegram::command_add_card(std::string&& id, std::string&& data)
@@ -260,9 +263,9 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
             db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
         } catch(BadConnectionDBexception& e){
             db.connect(conn);
-            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
         } catch(ErrorQueryResultDBexception& e) {
-            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
         }
     }
     auto ptr = TelegramSender::get_instance();
@@ -343,13 +346,13 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
     db.connect(get_conn());
     std::vector<std::vector<std::string>> query_result;
     try{
-        query_result = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
+        query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
     } catch(BadConnectionDBexception& e){
         db.connect(get_conn());
-        query_result = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
+        query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
     } catch(ErrorQueryResultDBexception& e){
         std::cout << e.what() << '\n';
-        query_result = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
+        query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
     }
     if(query_result.empty()){
         auto ptr = TelegramSender::get_instance();
@@ -368,14 +371,14 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         auto diff = (dates[i]-dates[i-1]).count()/7;
         frequency.emplace_back(diff);
     }
-    if(frequency.size() < 5){
-        auto ptr = TelegramSender::get_instance();
-        ptr->call(id, type_msg::send, std::string("Слишком мало данных для прогнозирования\n"));
-        offset_reload();
-        return;
-    }
+    // if(frequency.size() < 5){
+    //     auto ptr = TelegramSender::get_instance();
+    //     ptr->call(id, type_msg::send, std::string("Слишком мало данных для прогнозирования\n"));
+    //     offset_reload();
+    //     return;
+    // }
     Forecast f;
-    double prob = f.geometric_probability(std::move(frequency), 1);
+    double prob = f.geometric_probability(std::move(frequency), 0);
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(prob * 100)) + "%"));
 }
