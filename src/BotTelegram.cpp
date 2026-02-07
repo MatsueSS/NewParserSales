@@ -244,7 +244,9 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
     }
 
     auto it = hash_map.find(std::string(data));
+    bool found = false;
     if(it != hash_map.end()){
+        found = true;
         for(const auto& obj : it->second){
             user->second.add_product(obj);
             try{
@@ -258,18 +260,38 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         }
     }
     else{
-        user->second.add_product(std::string(data));
+        std::vector<std::vector<std::string>> result_query_found;
         try{
-            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
-        } catch(BadConnectionDBexception& e){
+            result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{data});
+        } catch (BadConnectionDBexception& e){
             db.connect(conn);
-            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
-        } catch(ErrorQueryResultDBexception& e) {
-            db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+            result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{data});
+        } catch (ErrorQueryResultDBexception& e){
+            result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{data});
+        }
+        if(result_query_found.empty() == 0){
+            //critical error
+            result_query_found.push_back(std::vector<std::string>{std::string{"0"}});
+        }
+        if(result_query_found[0][0] == "f"){
+            found = false;
+        } else {
+            user->second.add_product(std::string(data));
+            try{
+                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+            } catch(BadConnectionDBexception& e){
+                db.connect(conn);
+                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+            } catch(ErrorQueryResultDBexception& e) {
+                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+            }
         }
     }
     auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
+    if(found)
+        ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
+    else
+        ptr->call(id, type_msg::send, std::string("Не удалось найти такую карточку в базу данных. Проверьте корректность названия карточки или же обратитесь к администратору\n"));
 }
 
 void BotTelegram::command_del_card(std::string&& id, std::string&& data)

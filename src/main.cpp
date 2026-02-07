@@ -5,6 +5,7 @@
 #include "BotTelegram.h"
 #include "Reader.h"
 #include "Interface.h"
+#include "PostgresDB.h"
 
 int main(void)
 {
@@ -37,8 +38,6 @@ int main(void)
     while(true){
         inter.start_process();
     }
-
-    
 
     return 0;
 }

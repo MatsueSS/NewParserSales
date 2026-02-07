@@ -1,6 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -53,8 +51,7 @@ options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--disable-extensions")
 options.add_argument("--disable-plugins")
 options.add_argument("--disable-images")
-# Осторожно с отключением JavaScript - может сломать сайт
-# options.add_argument("--disable-javascript")
+options.add_argument("--disable-javascript")  # Осторожно: может сломать функциональность
 
 # Случайный User-Agent
 user_agents = [
@@ -67,14 +64,7 @@ options.add_argument(f'--user-agent={random.choice(user_agents)}')
 # Если нужно, раскомментируйте headless
 # options.add_argument("--headless")
 
-# ИСПРАВЛЕННАЯ СТРОКА: используем webdriver-manager
-try:
-    service = ChromeService(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-    print("[✓] ChromeDriver успешно установлен и запущен")
-except Exception as e:
-    print(f"[!] Ошибка при запуске ChromeDriver: {e}")
-    sys.exit(1)
+driver = webdriver.Chrome(options=options)
 
 def scroll_to_bottom(driver, pause_time=1, max_wait=20):
     """
@@ -127,3 +117,4 @@ for i, url in enumerate(urls, start=1):
 
 driver.quit()
 sys.exit(0)
+
