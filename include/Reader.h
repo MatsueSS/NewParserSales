@@ -25,7 +25,7 @@ public:
     Reader& operator=(const Reader&) = default;
 
     //take psql profile 
-    void make_note(const std::string&);
+    void make_note(const std::string&, const std::string&, const std::string&);
 
     //take psql profile
     void make_a_json(const std::string&);

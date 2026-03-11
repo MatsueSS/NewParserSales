@@ -41,9 +41,10 @@ void Interface::start_process() const {
     bool flag = control_date();
     if(flag){
         PyLoader::load("bash -c 'python3 ../py_scripts/ex.py'");
+        //PyLoader::load("bash -c 'python3 ../py_scripts/proxy_test.py'");
         PyLoader::load("bash -c 'python3 ../py_scripts/2.py'");
         Reader reader;
-        reader.make_note(get_conn());
+        reader.make_note(get_conn(), "cards", "products");
         reader.make_a_json(get_conn());
 
         std::ifstream file("../sensetive_res/products_discount.json");

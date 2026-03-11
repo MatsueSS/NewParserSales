@@ -7,64 +7,83 @@ import random
 import sys
 
 urls = [
-    "https://5ka.ru/search/?text=choco",
-    "https://5ka.ru/search/?text=%D1%81%D0%BF%D0%B0%D0%B3%D0%B5%D1%82%D1%82%D0%B8",
-    "https://5ka.ru/search/?text=%D1%80%D0%B8%D1%81",
-    "https://5ka.ru/search/?text=%D1%8F%D0%B1%D0%BB%D0%BE%D0%BA%D0%BE",
-    "https://5ka.ru/search/?text=%D0%B1%D0%B0%D0%BD%D0%B0%D0%BD%D1%8B",
-    "https://5ka.ru/search/?text=%D1%87%D0%B0%D0%B9",
-    "https://5ka.ru/search/?text=%D0%A1%D1%82%D0%B8%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9%20%D0%BF%D0%BE%D1%80%D0%BE%D1%88%D0%BE%D0%BA",
-    "https://5ka.ru/search/?text=%D0%BF%D1%8E%D1%80%D0%B5",
-    "https://5ka.ru/search/?text=%D0%BA%D1%83%D0%BA%D1%83%D1%80%D1%83%D0%B7%D0%B0",
-    "https://5ka.ru/search/?text=%D0%BA%D1%80%D0%B5%D0%BA%D0%B5%D1%80",
-    "https://5ka.ru/search/?text=%D0%BC%D0%BE%D0%BB%D0%BE%D0%BA%D0%BE",
-    "https://5ka.ru/search/?text=%D0%B3%D0%BE%D1%80%D0%BE%D1%88%D0%B5%D0%BA",
-    "https://5ka.ru/search/?text=%D0%BC%D1%8B%D1%81%D0%BB%D0%B8",
-    "https://5ka.ru/search/?text=%D1%81%D1%80%D0%B5%D0%B4%D1%81%D1%82%D0%B2%D0%BE%20%D0%B4%D0%BB%D1%8F%20%D0%BC%D1%8B%D1%82%D1%8C%D1%8F%20%D0%BF%D0%BE%D1%81%D1%83%D0%B4%D1%8B",
-    "https://5ka.ru/search/?text=%D1%81%D0%BC%D0%B5%D1%81%D1%8C",
-    "https://5ka.ru/search/?text=%D1%81%D1%8B%D1%80",
-    "https://5ka.ru/search/?text=%D0%99%D0%BE%D0%B3%D1%83%D1%80%D1%82",
-    "https://5ka.ru/search/?text=%D0%B2%D0%B0%D1%80%D0%B5%D0%BD%D0%B8%D0%BA%D0%B8",
-    "https://5ka.ru/search/?text=%D1%82%D0%B2%D0%BE%D1%80%D0%BE%D0%B3",
-    "https://5ka.ru/search/?text=%D0%BF%D0%B5%D1%87%D0%B5%D0%BD%D1%8C%D0%B5",
-    "https://5ka.ru/search/?text=%D1%85%D0%BB%D0%BE%D0%BF%D1%8C%D1%8F",
-    "https://5ka.ru/search/?text=%D1%8F%D0%B9%D1%86%D0%B0",
-    "https://5ka.ru/search/?text=%D0%B7%D1%83%D0%B1%D0%BD%D0%B0%D1%8F%20%D0%BF%D0%B0%D1%81%D1%82%D0%B0",
-    "http://5ka.ru/search/?text=%D0%BE%D0%B3%D1%83%D1%80%D1%86%D1%8B",
-    "https://5ka.ru/search/?text=%D1%82%D1%83%D1%88%D1%91%D0%BD%D0%BA%D0%B0",
-    "https://5ka.ru/search/?text=%D1%82%D0%B2%D0%BE%D1%80%D0%BE%D0%B3",
-    "https://5ka.ru/search/?text=%D0%BC%D0%B0%D0%BD%D0%B4%D0%B0%D1%80%D0%B8%D0%BD%D1%8B",
-    "https://5ka.ru/catalog/sgushchyonka--251C13168/",
-    "https://5ka.ru/search/?text=%D0%9C%D0%B0%D1%81%D0%BB%D0%BE%20%D1%81%D0%BB%D0%B8%D0%B2%D0%BE%D1%87%D0%BD%D0%BE%D0%B5"
+    "https://5ka.ru/search/?text=choco", #choco
+    "https://5ka.ru/search/?text=%D1%81%D0%BF%D0%B0%D0%B3%D0%B5%D1%82%D1%82%D0%B8", #спагетти
+    "https://5ka.ru/search/?text=%D1%80%D0%B8%D1%81", #рис
+    "https://5ka.ru/search/?text=%D1%8F%D0%B1%D0%BB%D0%BE%D0%BA%D0%BE", #яблоко
+    "https://5ka.ru/search/?text=%D0%B1%D0%B0%D0%BD%D0%B0%D0%BD%D1%8B", #бананы
+    "https://5ka.ru/search/?text=%D1%87%D0%B0%D0%B9", #чай
+    "https://5ka.ru/search/?text=%D0%A1%D1%82%D0%B8%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9%20%D0%BF%D0%BE%D1%80%D0%BE%D1%88%D0%BE%D0%BA", #стиральный порошок
+    "https://5ka.ru/search/?text=%D0%BF%D1%8E%D1%80%D0%B5", #пюре
+    "https://5ka.ru/search/?text=%D0%BA%D1%83%D0%BA%D1%83%D1%80%D1%83%D0%B7%D0%B0", #кукуруза
+    "https://5ka.ru/search/?text=%D0%BA%D1%80%D0%B5%D0%BA%D0%B5%D1%80", #крекер
+    "https://5ka.ru/search/?text=%D0%BC%D0%BE%D0%BB%D0%BE%D0%BA%D0%BE", #молоко
+    "https://5ka.ru/search/?text=%D0%B3%D0%BE%D1%80%D0%BE%D1%88%D0%B5%D0%BA", #горошек
+    "https://5ka.ru/search/?text=%D0%BC%D1%8E%D1%81%D0%BB%D0%B8", #мюсли
+    "https://5ka.ru/search/?text=%D1%81%D1%80%D0%B5%D0%B4%D1%81%D1%82%D0%B2%D0%BE%20%D0%B4%D0%BB%D1%8F%20%D0%BC%D1%8B%D1%82%D1%8C%D1%8F%20%D0%BF%D0%BE%D1%81%D1%83%D0%B4%D1%8B", #средство для мытья посуды
+    "https://5ka.ru/search/?text=%D1%81%D0%BC%D0%B5%D1%81%D1%8C", #смесь
+    "https://5ka.ru/search/?text=%D1%81%D1%8B%D1%80", #сыр
+    "https://5ka.ru/search/?text=%D0%99%D0%BE%D0%B3%D1%83%D1%80%D1%82", #йогурт
+    "https://5ka.ru/search/?text=%D0%B2%D0%B0%D1%80%D0%B5%D0%BD%D0%B8%D0%BA%D0%B8", #вареники
+    "https://5ka.ru/search/?text=%D1%82%D0%B2%D0%BE%D1%80%D0%BE%D0%B3", #творог
+    "https://5ka.ru/search/?text=%D0%BF%D0%B5%D1%87%D0%B5%D0%BD%D1%8C%D0%B5", #печенье
+    "https://5ka.ru/search/?text=%D1%85%D0%BB%D0%BE%D0%BF%D1%8C%D1%8F", #хлопья
+    "https://5ka.ru/search/?text=%D1%8F%D0%B9%D1%86%D0%B0", #яйца
+    "https://5ka.ru/search/?text=%D0%B7%D1%83%D0%B1%D0%BD%D0%B0%D1%8F%20%D0%BF%D0%B0%D1%81%D1%82%D0%B0", #зубная паста
+    "http://5ka.ru/search/?text=%D0%BE%D0%B3%D1%83%D1%80%D1%86%D1%8B", #огурцы
+    "https://5ka.ru/search/?text=%D1%82%D1%83%D1%88%D1%91%D0%BD%D0%BA%D0%B0", #тушёнка
+    "https://5ka.ru/search/?text=%D0%BC%D0%B0%D0%BD%D0%B4%D0%B0%D1%80%D0%B8%D0%BD%D1%8B", #мандарины
+    "https://5ka.ru/catalog/sgushchyonka--251C13168/", #Сгущёнка
+    "https://5ka.ru/search/?text=%D0%9C%D0%B0%D1%81%D0%BB%D0%BE%20%D1%81%D0%BB%D0%B8%D0%B2%D0%BE%D1%87%D0%BD%D0%BE%D0%B5", #масло сливочное
+    "https://5ka.ru/search/?text=%D0%BB%D0%B8%D0%BC%D0%BE%D0%BD%D1%8B", #лимоны
+    "https://5ka.ru/search/?text=%D0%BF%D0%BE%D0%BC%D0%B8%D0%B4%D0%BE%D1%80%D1%8B", #помидоры
 ]
 
 options = webdriver.ChromeOptions()
 
-# Убираем признаки автоматизации
+# Основные настройки для обхода детекта
 options.add_argument("--disable-blink-features=AutomationControlled")
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
 options.add_experimental_option('useAutomationExtension', False)
 
-# Другие полезные опции
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-options.add_argument("--disable-extensions")
-options.add_argument("--disable-plugins")
-options.add_argument("--disable-images")
-options.add_argument("--disable-javascript")  # Осторожно: может сломать функциональность
+# Добавляем реальные заголовки
+options.add_argument("--accept-lang=ru-RU,ru;q=0.9,en;q=0.8")
+options.add_argument("--accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
 
 # Случайный User-Agent
 user_agents = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 ]
 options.add_argument(f'--user-agent={random.choice(user_agents)}')
 
-# Если нужно, раскомментируйте headless
-# options.add_argument("--headless")
+# Важно: НЕ отключайте JavaScript!
+# options.add_argument("--disable-javascript")  # Удалите эту строку!
 
 driver = webdriver.Chrome(options=options)
+
+# Исполняем JavaScript для скрытия признаков автоматизации
+driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+driver.execute_cdp_cmd('Network.setUserAgentOverride', {
+    "userAgent": random.choice(user_agents),
+    "platform": "Windows"
+})
+
+# Устанавливаем реальные заголовки через CDP
+driver.execute_cdp_cmd('Network.setExtraHTTPHeaders', {
+    "headers": {
+        "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Referer": "https://www.google.com/",
+        "DNT": "1",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site"
+    }
+})
 
 def scroll_to_bottom(driver, pause_time=1, max_wait=20):
     """

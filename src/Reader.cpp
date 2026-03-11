@@ -7,13 +7,13 @@
 #include <fstream>
 #include <iostream>
 
-void Reader::make_note(const std::string& pq) {
+void Reader::make_note(const std::string& pq, const std::string& name_table, const std::string& file_name) {
     PostgresDB db;
     db.connect(pq);
-    PyLoader::load("bash -c 'python3 ../py_scripts/2.py'");
+    // PyLoader::load("bash -c 'python3 ../py_scripts/2.py'");
     
     nlohmann::json data;
-    std::ifstream file("../sensetive_res/products.json");
+    std::ifstream file("../sensetive_res/" + file_name + ".json");
     data = nlohmann::json::parse(file);
     std::string date = data["date"];
     for(const auto& obj : data["products"]){
@@ -25,10 +25,10 @@ void Reader::make_note(const std::string& pq) {
         if(obj.contains("discount")){
             std::string discount = obj["discount"];
             discount = clean_price(discount);
-            db.execute(std::string("INSERT INTO cards (title, price, discount, date) VALUES ($1, $2, $3, $4);"), std::vector<std::string>{title, price, discount, date});
+            db.execute(std::string("INSERT INTO ") + name_table + std::string(" (title, price, discount, date) VALUES ($1, $2, $3, $4);"), std::vector<std::string>{title, price, discount, date});
         }
         else{
-            db.execute(std::string("INSERT INTO cards (title, price, date) VALUES ($1, $2, $3);"), std::vector<std::string>{title, price, date});
+            db.execute(std::string("INSERT INTO ") + name_table + std::string(" (title, price, date) VALUES ($1, $2, $3);"), std::vector<std::string>{title, price, date});
         }
     }
 }

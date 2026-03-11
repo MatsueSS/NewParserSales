@@ -6,6 +6,7 @@
 #include "Reader.h"
 #include "Interface.h"
 #include "PostgresDB.h"
+#include "PyLoader.h"
 
 int main(void)
 {
@@ -38,6 +39,11 @@ int main(void)
     while(true){
         inter.start_process();
     }
+
+    // Reader reader;
+    // PyLoader::load("bash -c 'python3 ../py_scripts/pars_perekrestok_sait.py'");
+    // PyLoader::load("bash -c 'python3 ../py_scripts/pars_perekrestok_htmp.py'");
+    // reader.make_note(get_conn(), "cards_perekrestok", "perekrestok");
 
     return 0;
 }

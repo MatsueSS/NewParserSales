@@ -269,13 +269,14 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         } catch (ErrorQueryResultDBexception& e){
             result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{data});
         }
-        if(result_query_found.empty() == 0){
+        if(result_query_found.empty()){
             //critical error
             result_query_found.push_back(std::vector<std::string>{std::string{"0"}});
         }
         if(result_query_found[0][0] == "f"){
             found = false;
-        } else {
+        } else if (result_query_found[0][0] == "t") {
+            found = true;
             user->second.add_product(std::string(data));
             try{
                 db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
@@ -285,13 +286,16 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
             } catch(ErrorQueryResultDBexception& e) {
                 db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
             }
+        } else {
+            //critical error
+            found = false;
         }
     }
     auto ptr = TelegramSender::get_instance();
     if(found)
         ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
     else
-        ptr->call(id, type_msg::send, std::string("Не удалось найти такую карточку в базу данных. Проверьте корректность названия карточки или же обратитесь к администратору\n"));
+        ptr->call(id, type_msg::send, std::string("Не удалось найти такую карточку в базе данных. Проверьте корректность названия карточки или же обратитесь к администратору\n"));
 }
 
 void BotTelegram::command_del_card(std::string&& id, std::string&& data)
@@ -378,7 +382,7 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
     }
     if(query_result.empty()){
         auto ptr = TelegramSender::get_instance();
-        ptr->call(id, type_msg::send, std::string("Данной карточки нет в базе данных\n"));
+        ptr->call(id, type_msg::send, std::string("Данной карточки нет в базе данных или же ещё не было скидок на этот товар\n"));
         offset_reload();
         return;
     }
