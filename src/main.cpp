@@ -41,7 +41,7 @@ int main(void)
     //     inter.start_process();
     // }
 
-    FileMatcher m("../sensetive_res/dict.txt");
+    FileMatcher m("../sensetive_res/new_dict.txt");
     
     return 0;
 
