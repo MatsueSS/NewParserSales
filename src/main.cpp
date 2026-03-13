@@ -36,13 +36,25 @@ int main(void)
     //     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     // }
 
+//start
+
     // Interface inter(get_last_offset());
     // while(true){
     //     inter.start_process();
     // }
 
-    FileMatcher m("../sensetive_res/new_dict.txt");
+//test
+
+    // FileMatcher m("../sensetive_res/new_dict.txt");
     
+    // PrefixTree tree;
+    // PostgresDB db;
+    // db.connect(get_conn());
+    // std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT DISTINCT title FROM cards"), std::vector<std::string>{});
+    // for(auto& vec : result){
+    //     tree.add_word(vec[0]);
+    // }
+
     return 0;
 
     // Reader reader;
