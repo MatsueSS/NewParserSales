@@ -1,0 +1,20 @@
+#ifndef _FILE_MATCHER_H_
+#define _FILE_MATCHER_H_
+
+#include "Matcher.h"
+
+class FileMatcher : public Matcher {
+public:
+    FileMatcher(const std::string& filename);
+
+private:
+    std::string filename;
+
+    std::vector<std::string> parse(std::string&& str);
+
+protected:
+    virtual void load_data() override;
+
+};
+
+#endif

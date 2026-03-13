@@ -7,17 +7,16 @@
 
 class Matcher{
 public:
-    Matcher();
+    Matcher() = default;
 
     template<typename Data>
     const std::vector<std::string>* find_matches(Data&& query) const noexcept;
 
     virtual ~Matcher() = default;
 
-private:
+protected:
     std::unordered_map<std::string, std::vector<std::string>> dict;
 
-protected:
     virtual void load_data() = 0;
 
 };

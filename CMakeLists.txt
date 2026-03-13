@@ -4,6 +4,7 @@ project(NewParserSales)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_BUILD_TYPE Debug)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
@@ -20,6 +21,7 @@ add_executable(${PROJECT_NAME}
     src/Interface.cpp
     src/Forecast.cpp
     src/Matrix.cpp
+    src/FileMatcher.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

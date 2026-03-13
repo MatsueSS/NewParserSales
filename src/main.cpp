@@ -7,6 +7,7 @@
 #include "Interface.h"
 #include "PostgresDB.h"
 #include "PyLoader.h"
+#include "FileMatcher.h"
 
 int main(void)
 {
@@ -35,10 +36,14 @@ int main(void)
     //     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     // }
 
-    Interface inter(get_last_offset());
-    while(true){
-        inter.start_process();
-    }
+    // Interface inter(get_last_offset());
+    // while(true){
+    //     inter.start_process();
+    // }
+
+    FileMatcher m("../sensetive_res/dict.txt");
+    
+    return 0;
 
     // Reader reader;
     // PyLoader::load("bash -c 'python3 ../py_scripts/pars_perekrestok_sait.py'");
