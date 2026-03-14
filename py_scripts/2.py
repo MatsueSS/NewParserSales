@@ -7,9 +7,12 @@ from datetime import datetime
 products_set = set()
 today = datetime.today().strftime("%Y-%m-%d")
 
-for i in range(2, 150):
-    with open(f"../urls/page_{i}.html", "r", encoding="utf-8") as file:
-        html_doc = file.read()
+for i in range(2, 200):
+    try:
+        with open(f"../urls/page_{i}.html", "r", encoding="utf-8") as file:
+            html_doc = file.read()
+    except FileNotFoundError:
+        pass
 
     soup = BeautifulSoup(html_doc, "lxml")
     group = soup.find_all("div", class_="css-6n4fw9")

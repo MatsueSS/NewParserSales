@@ -38,10 +38,13 @@ int main(void)
 
 //start
 
-    // Interface inter(get_last_offset());
-    // while(true){
-    //     inter.start_process();
-    // }
+    Interface inter(get_last_offset());
+
+    return 0;
+
+    while(true){
+        inter.start_process();
+    }
 
 //test
 
@@ -54,8 +57,6 @@ int main(void)
     // for(auto& vec : result){
     //     tree.add_word(vec[0]);
     // }
-
-    return 0;
 
     // Reader reader;
     // PyLoader::load("bash -c 'python3 ../py_scripts/pars_perekrestok_sait.py'");

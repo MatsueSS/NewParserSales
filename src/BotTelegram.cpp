@@ -23,12 +23,12 @@ BotTelegram::BotTelegram(std::string offset)
     std::vector<std::vector<std::string>> res;
     try{
         db.connect(conn);
-        res = db.fetch(std::string("SELECT id, cards FROM users;"), std::vector<std::string>{});
+        res = db.fetch(std::string("SELECT id, cards FROM old_users;"), std::vector<std::string>{});
     } catch(BadConnectionDBexception& e){
         db.connect(conn);
-        res = db.fetch(std::string("SELECT id, cards FROM users;"), std::vector<std::string>{});
+        res = db.fetch(std::string("SELECT id, cards FROM old_users;"), std::vector<std::string>{});
     } catch(ErrorQueryResultDBexception& e){
-        res = db.fetch(std::string("SELECT id, cards FROM users;"), std::vector<std::string>{});
+        res = db.fetch(std::string("SELECT id, cards FROM old_users;"), std::vector<std::string>{});
     }
     for(const auto& row : res){
         std::string link = row[1], id = row[0];
@@ -168,13 +168,13 @@ void BotTelegram::command_start(std::string&& id)
         db.connect(get_conn());
     }
     try{
-        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
+        db.execute(std::string("INSERT INTO old_users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
     } catch (BadConnectionDBexception& e){
         db.connect(get_conn());
-        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
+        db.execute(std::string("INSERT INTO old_users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
     } catch (ErrorQueryResultDBexception& e){
         std::cout << e.what() << '\n';
-        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
+        db.execute(std::string("INSERT INTO old_users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
     }
     
 }
@@ -250,12 +250,12 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         for(const auto& obj : it->second){
             user->second.add_product(obj);
             try{
-                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+                db.execute(std::string("UPDATE old_users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
             } catch(BadConnectionDBexception& e){
                 db.connect(conn);
-                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+                db.execute(std::string("UPDATE old_users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
             } catch(ErrorQueryResultDBexception& e){
-                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+                db.execute(std::string("UPDATE old_users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
             }
         }
     }
