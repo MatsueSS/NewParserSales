@@ -8,6 +8,7 @@
 #include "PostgresDB.h"
 #include "PyLoader.h"
 #include "FileMatcher.h"
+#include "HiSquare.h"
 
 int main(void)
 {
@@ -38,15 +39,34 @@ int main(void)
 
 //start
 
-    Interface inter(get_last_offset());
+    // Interface inter(get_last_offset());
 
-    return 0;
+    // return 0;
 
-    while(true){
-        inter.start_process();
-    }
+    // while(true){
+    //     inter.start_process();
+    // }
 
 //test
+
+    HiSquare h;
+    h.independence("Молоко сгущенное Алексеевское цельное с сахаром 8.5% БЗМЖ 360г", "2025-09-01", "2026-03-14", 0.95);
+
+    // PostgresDB db;
+    // db.connect(get_conn());
+    // std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT DISTINCT title FROM cards;"), std::vector<std::string>{});
+
+    // int count = 0;
+    // for(const auto& vec : result){
+    //     try{
+    //         bool r = h.independence(vec[0], "2025-09-01", "2026-03-14", 0.95);
+    //         if(!r) std::cout << r << ' ' << ++count << ' ' << vec[0] << '\n';
+    //     } catch(HiSquareException& e){
+    //         continue;
+    //     }
+    // }
+
+    //bool r = h.independence("Яблоки Гренни Смит", "2025-09-01", "2026-03-14", 0.95);
 
     // FileMatcher m("../sensetive_res/new_dict.txt");
     

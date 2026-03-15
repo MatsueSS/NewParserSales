@@ -24,6 +24,7 @@ add_executable(${PROJECT_NAME}
     src/FileMatcher.cpp
     src/ProductSearcher.cpp
     src/PrefixTree.cpp
+    src/HiSquare.cpp
 )
 
 find_package(PostgreSQL REQUIRED)
@@ -35,3 +36,8 @@ find_package(CURL REQUIRED)
 
 include_directories(${CURL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CURL_LIBRARIES})
+
+find_package(Boost REQUIRED)
+
+include_directories(${Boost_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
