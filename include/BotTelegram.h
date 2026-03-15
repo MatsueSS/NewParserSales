@@ -5,6 +5,7 @@
 
 #include "TelegramUser.h"
 #include "Matrix.h"
+#include "ProductSearcher.h"
 
 #include <unordered_map>
 #include <thread>
@@ -28,6 +29,8 @@ private:
     std::thread worker;
     std::string offset;
 
+    ProductSearcher searcher;
+
     void check_message();
     void offset_reload();
 
@@ -50,7 +53,7 @@ private:
     void notify_user_updated(Type&& user);
 
 public:
-    explicit BotTelegram(std::string);
+    BotTelegram(std::string, std::unique_ptr<Matcher>);
 
     BotTelegram(const BotTelegram&) = delete;
     BotTelegram& operator=(const BotTelegram&) = delete;

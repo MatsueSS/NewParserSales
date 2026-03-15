@@ -38,13 +38,12 @@ int main(void)
 
 //start
 
-    // Interface inter(get_last_offset());
+    std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt");
+    Interface inter(get_last_offset(), std::move(ptr));
 
-    // return 0;
-
-    // while(true){
-    //     inter.start_process();
-    // }
+    while(true){
+        inter.start_process();
+    }
 
 //test
 

@@ -11,7 +11,7 @@
 #include <chrono>
 #include <fstream>
 
-Interface::Interface(std::string str) : ptr(std::make_unique<BotTelegram>(std::move(str))) 
+Interface::Interface(std::string str, std::unique_ptr<Matcher> ptr) : ptr(std::make_unique<BotTelegram>(std::move(str), std::move(ptr))) 
 {}
 
 bool Interface::control_date() const 

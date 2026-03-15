@@ -9,6 +9,12 @@ class ProductSearcher{
 public:
     ProductSearcher(std::unique_ptr<Matcher> strategy);
 
+    ProductSearcher(const ProductSearcher&) = delete;
+    ProductSearcher& operator=(const ProductSearcher&) = delete;
+
+    ProductSearcher(ProductSearcher&&) noexcept;
+    ProductSearcher& operator=(ProductSearcher&&) noexcept;
+
     void set_strategy(std::unique_ptr<Matcher> new_strategy) noexcept;
 
     template<typename Data>

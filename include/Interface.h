@@ -11,7 +11,7 @@ class Interface{
     bool control_date() const;
     
 public:
-    Interface(std::string);
+    Interface(std::string, std::unique_ptr<Matcher>);
 
     Interface(const Interface&) = delete;
     Interface& operator=(const Interface&) = delete;
