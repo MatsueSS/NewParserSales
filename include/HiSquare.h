@@ -19,6 +19,7 @@ class HiSquare{
 public:
     //Tests the hypothesis of independence of the discount to the week number
     bool independence_from_week(const std::string& title, const std::string& start_date, const std::string& end_date, double p_value) const;
+    bool independence_from_season(const std::string& title, double p_value) const;
 
     double find_hi_square(const std::vector<std::vector<int>>& table) const noexcept;
 
@@ -26,6 +27,7 @@ private:
     std::vector<std::string> generate_all_saturdays(const std::string& start, const std::string& end) const noexcept;
 
     int get_week_of_month(int day) const noexcept;
+    int get_season_index(int month) const noexcept;
 };
 
 #endif

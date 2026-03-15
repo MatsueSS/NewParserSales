@@ -7,6 +7,7 @@
 #define COUNT_WEEKS 5
 #define COUNT_RESULT 2
 #define DATE_IN_ROW 4
+#define COUNT_SEASON 2
 
 #include <boost/math/distributions/chi_squared.hpp>
 #include <map>
@@ -87,6 +88,52 @@ bool HiSquare::independence_from_week(const std::string& title, const std::strin
     boost::math::chi_squared dist(freedom);
 
     return hi_square < boost::math::quantile(dist, p_value);
+}
+
+bool HiSquare::independence_from_season(const std::string& title, double p_value) const
+{
+    std::vector<std::vector<int>> table (COUNT_SEASON, std::vector<int>(COUNT_RESULT, 0));
+
+    std::vector<std::string> all_saturdays = generate_all_saturdays("2025-09-01", "2026-02-28");
+    for(const auto& date : all_saturdays) {
+        int month = std::stoi(date.substr(5, 2));
+        int season_index = get_season_index(month);
+        if(season_index >= 0 && season_index < COUNT_SEASON) {
+            table[season_index][1]++;
+        }
+    }
+    
+    PostgresDB db;
+    db.connect(get_conn());
+    
+    std::vector<std::vector<std::string>> discounts;
+    discounts = db.fetch(std::string("SELECT DISTINCT ON(date) * FROM cards WHERE title = $1 AND discount IS NOT NULL ORDER BY date DESC;"), std::vector<std::string>{title});
+    if(discounts.empty())
+        throw HiSquareException("Zero rows for " + title);
+
+    for(const auto& row : discounts) {
+        int month = std::stoi(row[DATE_IN_ROW].substr(5, 2));
+        int season_index = get_season_index(month);
+        if(season_index >= 0 && season_index < COUNT_SEASON) {
+            table[season_index][0]++;
+            table[season_index][1]--;
+        }
+    }
+
+    double hi_square = find_hi_square(table);
+
+    int freedom = (COUNT_RESULT-1)*(COUNT_SEASON-1);
+    boost::math::chi_squared diff(freedom);
+
+    return hi_square < boost::math::quantile(diff, p_value);
+}
+
+int HiSquare::get_season_index(int month) const noexcept {
+    if(month >= 3 && month <= 5) return 2;
+    if(month >= 6 && month <= 8) return 3;
+    if(month >= 9 && month <= 11) return 0;
+    if(month == 12 || month <= 2) return 1;
+    return -1;
 }
 
 std::vector<std::string> HiSquare::generate_all_saturdays(const std::string& start_date, const std::string& end_date) const noexcept

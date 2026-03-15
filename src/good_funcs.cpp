@@ -1,5 +1,8 @@
 #include "good_funcs.h"
 
+#include "HiSquare.h"
+#include "PostgresDB.h"
+
 #include <fstream>
 #include <sstream>
 #include <iomanip>
@@ -86,4 +89,44 @@ std::chrono::year_month_day converte_string(const std::string& str) noexcept{
     std::istringstream iss(str);
     iss >> year >> delim1 >> month >> delim2 >> day;
     return std::chrono::year{static_cast<int>(year)} / std::chrono::month{month} / std::chrono::day{day};
+}
+
+void check_independence_week()
+{
+    HiSquare h;
+
+    PostgresDB db;
+    db.connect(get_conn());
+    std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT DISTINCT title FROM cards;"), std::vector<std::string>{});
+    std::ofstream file("../sensetive_res/independence_for_week.txt");
+
+    int count = 0;
+    for(const auto& vec : result){
+        try{
+            bool r = h.independence_from_week(vec[0], "2025-09-01", "2026-03-14", 0.95);
+            if(!r) file << r << ' ' << ++count << ' ' << vec[0] << '\n';
+        } catch(HiSquareException& e){
+            continue;
+        }
+    }
+}
+
+void check_independence_season()
+{
+    HiSquare h;
+
+    PostgresDB db;
+    db.connect(get_conn());
+    std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT DISTINCT title FROM cards;"), std::vector<std::string>{});
+    std::ofstream file("../sensetive_res/independence_for_season.txt");
+
+    int count = 0;
+    for(const auto& vec : result){
+        try{
+            bool r = h.independence_from_season(vec[0], 0.95);
+            if(!r) file << r << ' ' << ++count << ' ' << vec[0] << '\n';
+        } catch(HiSquareException& e){
+            continue;
+        }
+    }
 }
