@@ -4,8 +4,8 @@
 //Here is the code that describes the bot in Telegram.
 
 #include "TelegramUser.h"
-#include "Matrix.h"
 #include "ProductSearcher.h"
+#include "ProductRecommendations.h"
 
 #include <unordered_map>
 #include <thread>
@@ -24,11 +24,11 @@ public:
 class BotTelegram{
 private:
     std::unordered_map<std::string, TelegramUser> users;
-    std::unique_ptr<Recommendations> observer;
     std::atomic<bool> flag;
     std::thread worker;
     std::string offset;
 
+    ProductRecommendations observer;
     ProductSearcher searcher;
 
     void check_message();
@@ -40,7 +40,8 @@ private:
     void command_status(std::string&&);
     void command_my_cards(std::string&&);
     void command_forecast(std::string&&, std::string&&);
-    // void command_recommendations(std::string&&);
+    void command_recommendations(std::string&&);
+    void command_has_discount(std::string&&, std::string&&);
 
     std::pair<std::string, std::string> get_command_and_data(const std::string& message) noexcept;
 
@@ -55,15 +56,13 @@ private:
     void load_users_from_db();
 
 public:
-    BotTelegram(std::string, std::unique_ptr<Recommendations>, std::unique_ptr<Matcher>);
+    BotTelegram(std::string, RecType type, std::unique_ptr<Matcher>);
 
     BotTelegram(const BotTelegram&) = delete;
     BotTelegram& operator=(const BotTelegram&) = delete;
 
     BotTelegram(BotTelegram&&) noexcept;
     BotTelegram& operator=(BotTelegram&&) noexcept;
-
-    void command_recommendations(std::string&&);
 
     template<typename Type>
     void add_user(Type&&);

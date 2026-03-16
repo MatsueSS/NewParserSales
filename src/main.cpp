@@ -8,6 +8,7 @@
 #include "PostgresDB.h"
 #include "PyLoader.h"
 #include "FileMatcher.h"
+#include "Matrix.h"
 
 int main(void)
 {
@@ -39,14 +40,13 @@ int main(void)
 //start
 
     std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt");
-    std::unique_ptr<Recommendations> nptr = std::make_unique<Matrix>();
-    Interface inter(get_last_offset(), std::move(nptr), std::move(ptr));
+    Interface inter(get_last_offset(), RecType::MATRIX, std::move(ptr));
 
     while(true){
         inter.start_process();
     }
 
-    // BotTelegram b(get_last_offset(), std::move(nptr), std::move(ptr));
+    // BotTelegram b(get_last_offset(), RecType::MATRIX, std::move(ptr));
     // b.command_recommendations("828404782");
 
 //test

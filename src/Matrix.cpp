@@ -12,25 +12,8 @@ const char* MatrixException::what() const noexcept
 BadTypeMatrixException::BadTypeMatrixException(std::string str) : MatrixException(std::move(str)) {}
 EmptyResultMatrixException::EmptyResultMatrixException(std::string str) : MatrixException(std::move(str)) {}
 
-void Matrix::add_user(const std::string& id) noexcept
-{
-    matrix[id] = {};
-}
-
-void Matrix::del_user(const std::string& id) noexcept
-{
-    matrix.erase(id);
-}
-
-void Matrix::add_card(const std::string& id, const std::string& card) noexcept
-{
-    matrix[id].insert(card);
-}
-
-void Matrix::del_card(const std::string& id, const std::string& card) noexcept
-{
-    matrix[id].erase(card);
-}
+Matrix::Matrix(const std::unordered_map<std::string, TelegramUser>& m) : matrix(m)
+{}
 
 std::vector<std::string> Matrix::recommendation(const std::string& id) const
 {
@@ -38,14 +21,18 @@ std::vector<std::string> Matrix::recommendation(const std::string& id) const
         throw EmptyResultMatrixException("User must be added\n");
     std::vector<std::string> result;
 
-    const auto& user_cards = matrix.at(id);
+    auto user = matrix.find(id);
+    const std::unordered_set<std::string>& cards = user->second.get_cards();
 
     std::unordered_map<std::string, int> freq;
     for(const auto& obj : matrix){
         if(obj.first == id)
             continue;
-        for(const auto& card : obj.second){
-            if(!user_cards.count(card))
+        
+        std::unordered_set<std::string> another_cards = obj.second.get_cards();
+
+        for(const auto& card : another_cards){
+            if(!user->second.is_has_product(card))
                 freq[card]++;
         }
     }

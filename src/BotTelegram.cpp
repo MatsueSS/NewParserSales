@@ -4,6 +4,7 @@
 #include "json.hpp"
 #include "PostgresDB.h"
 #include "Forecast.h"
+#include "Matrix.h"
 
 #include <chrono>
 #include <fstream>
@@ -11,10 +12,15 @@
 #include <vector>
 #include <iostream>
 
-BotTelegram::BotTelegram(std::string offset, std::unique_ptr<Recommendations> obs, std::unique_ptr<Matcher> srch) 
-    : flag(true), offset(std::move(offset)), observer(std::move(obs)), searcher(std::move(srch)) 
+BotTelegram::BotTelegram(std::string offset, RecType type, std::unique_ptr<Matcher> srch) 
+    : flag(true), offset(std::move(offset)), searcher(std::move(srch)) 
 
 {
+    if(type == RecType::MATRIX){
+        std::unique_ptr<Recommendations> ptr = std::make_unique<Matrix>(users);
+        observer.set_strategy(std::move(ptr));
+    }
+
     load_users_from_db();
 
     worker = std::thread(&BotTelegram::check_message, this);
@@ -37,7 +43,7 @@ void BotTelegram::load_users_from_db()
     }
 
     for(const auto& cont : res){
-        observer->add_user(cont[0]);
+        observer.add_user(cont[0]);
         TelegramUser user(cont[0]);
         add_user(std::move(user));
     }
@@ -59,7 +65,7 @@ void BotTelegram::load_users_from_db()
         if(it == users.end()){
             throw BotTelegramException("critical error with starting programm - the user is missing from the users table, but is present in the preferences table");
         }
-        observer->add_card(cont[0], cont[1]);
+        observer.add_card(cont[0], cont[1]);
         it->second.add_product(cont[1]);
     }
 }
@@ -74,7 +80,7 @@ BotTelegram::~BotTelegram()
 }
 
 BotTelegram::BotTelegram(BotTelegram&& obj) noexcept
-    : flag(obj.flag.load()), worker(std::move(obj.worker)), offset(std::move(obj.offset)), searcher(std::move(obj.searcher))
+    : flag(obj.flag.load()), worker(std::move(obj.worker)), offset(std::move(obj.offset)), searcher(std::move(obj.searcher)), observer(std::move(obj.observer))
 {
     obj.flag = false;
 }
@@ -89,6 +95,7 @@ BotTelegram& BotTelegram::operator=(BotTelegram&& obj) noexcept
     flag = obj.flag.load();
     worker = std::move(obj.worker);
     searcher = std::move(obj.searcher);
+    observer = std::move(obj.observer);
     obj.flag = false;
     return *this;
 }
@@ -143,6 +150,9 @@ void BotTelegram::check_message()
             else if(command == "/recommendations"){
                 command_recommendations(std::move(id));
             }
+            else if(command == "/has_discount"){
+                command_has_discount(std::move(id), std::move(data));
+            }
             else{
                 auto ptr = TelegramSender::get_instance();
                 ptr->call(id, type_msg::send, std::string("Неверная команда"));
@@ -177,7 +187,7 @@ void BotTelegram::offset_reload()
 void BotTelegram::command_start(std::string&& id)
 {
     TelegramUser user(id);
-    observer->add_user(id);
+    observer.add_user(id);
     this->add_user(std::move(user));
     
     auto ptr = TelegramSender::get_instance();
@@ -224,7 +234,7 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         found = true;
         for(const auto& obj : *search_result){
             user->second.add_product(obj);
-            observer->add_card(id, obj);
+            observer.add_card(id, obj);
             try{
                 db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, obj});
             } catch(BadConnectionDBexception& e){
@@ -245,16 +255,13 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         } catch (ErrorQueryResultDBexception& e){
             result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{data});
         }
-        if(result_query_found.empty()){
-            //critical error
-            result_query_found.push_back(std::vector<std::string>{std::string{"0"}});
-        }
+
         if(result_query_found[0][0] == "f"){
             found = false;
         } else{
             found = true;
             user->second.add_product(std::string(data));
-            observer->add_card(id, data);
+            observer.add_card(id, data);
             try{
                 db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, data});
             } catch(BadConnectionDBexception& e){
@@ -295,7 +302,7 @@ void BotTelegram::command_del_card(std::string&& id, std::string&& data)
     } catch(ErrorQueryResultDBexception& e) {
         db.execute(std::string("DELETE FROM preferences WHERE id = $1 AND preference = $2;"), std::vector<std::string>{id, data});
     }
-    observer->del_card(id, data);
+    observer.del_card(id, data);
 }
 
 void BotTelegram::command_status(std::string&& id)
@@ -372,12 +379,6 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         auto diff = (dates[i]-dates[i-1]).count()/7;
         if(diff != 0) frequency.emplace_back(diff-1);
     }
-    // if(frequency.size() < 5){
-    //     auto ptr = TelegramSender::get_instance();
-    //     ptr->call(id, type_msg::send, std::string("Слишком мало данных для прогнозирования\n"));
-    //     offset_reload();
-    //     return;
-    // }
     Forecast f;
     double prob = f.geometric_probability(std::move(frequency), 0);
     auto ptr = TelegramSender::get_instance();
@@ -386,7 +387,7 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
 
 void BotTelegram::command_recommendations(std::string&& id)
 {
-    auto res = observer->recommendation(id);
+    auto res = observer.recommendation(id);
     std::string result = "Рекомендуемые карточки\n";
     int count = 0;
     for(const auto& v : res){

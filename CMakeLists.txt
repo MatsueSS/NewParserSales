@@ -25,6 +25,7 @@ add_executable(${PROJECT_NAME}
     src/ProductSearcher.cpp
     src/PrefixTree.cpp
     src/HiSquare.cpp
+    src/ProductRecommendations.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

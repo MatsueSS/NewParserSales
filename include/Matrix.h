@@ -4,6 +4,7 @@
 //Here is the code that allows you to read recommendations for users
 
 #include "Recommendations.h"
+#include "TelegramUser.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -32,15 +33,15 @@ public:
 
 class Matrix : public Recommendations{
 private:
-    std::unordered_map<std::string, std::unordered_set<std::string>> matrix;
+    const std::unordered_map<std::string, TelegramUser>& matrix;
 
 public:
-    Matrix() = default;
+    Matrix(const std::unordered_map<std::string, TelegramUser>&);
 
-    virtual void add_user(const std::string& id) noexcept override;
-    virtual void del_user(const std::string& id) noexcept override;
-    virtual void add_card(const std::string& id, const std::string& card) noexcept override;
-    virtual void del_card(const std::string& id, const std::string& card) noexcept override;
+    virtual void add_user(const std::string& id) override {};
+    virtual void del_user(const std::string& id) override {};
+    virtual void add_card(const std::string& id, const std::string& card) override {};
+    virtual void del_card(const std::string& id, const std::string& card) override {};
 
     Matrix(const Matrix&) = default;
     Matrix& operator=(const Matrix&) = default;
