@@ -130,3 +130,14 @@ void check_independence_season()
         }
     }
 }
+
+std::chrono::year_month_day get_previous_or_current_saturday() noexcept
+{    
+    auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());
+    std::chrono::weekday wd{today};
+    
+    int days_back = (wd.c_encoding() + 1) % 7;
+    
+    auto saturday = today - std::chrono::days(days_back);
+    return std::chrono::year_month_day{saturday};
+}

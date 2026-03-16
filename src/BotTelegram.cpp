@@ -210,6 +210,45 @@ void BotTelegram::command_start(std::string&& id)
     
 }
 
+void BotTelegram::command_has_discount(std::string&& id, std::string&& card)
+{
+    if(card.empty()){
+        auto ptr = TelegramSender::get_instance();
+        ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        offset_reload();
+        return;
+    }
+    auto user = users.find(id);
+
+    PostgresDB db;
+    std::string conn = get_conn();
+    
+    std::vector<std::vector<std::string>> result_query_found;
+    try{
+        result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{card});
+    } catch (BadConnectionDBexception& e){
+        db.connect(conn);
+        result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{card});
+    } catch (ErrorQueryResultDBexception& e){
+        result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{card});
+    }
+
+    // std::vector<std::vector<std::string>> 
+    bool found = false;
+    if(result_query_found[0][0] == "f"){
+        found = false;
+    } else {
+        found = true;
+
+    }
+
+    auto ptr = TelegramSender::get_instance();
+    if(found)
+        ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
+    else
+        ptr->call(id, type_msg::send, std::string("Не удалось найти такую карточку в базе данных. Проверьте корректность названия карточки или же обратитесь к администратору\n"));
+}
+
 void BotTelegram::command_add_card(std::string&& id, std::string&& data)
 {
     if(data.empty()){

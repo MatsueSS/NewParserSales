@@ -15,6 +15,8 @@ std::string get_last_offset() noexcept;
 std::string converte_ymd(const std::chrono::year_month_day&) noexcept;
 std::chrono::year_month_day converte_string(const std::string& str) noexcept;
 
+std::chrono::year_month_day get_previous_or_current_saturday() noexcept;
+
 void check_independence_week();
 void check_independence_season();
 
