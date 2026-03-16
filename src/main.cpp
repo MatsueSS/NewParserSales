@@ -39,11 +39,15 @@ int main(void)
 //start
 
     std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt");
-    Interface inter(get_last_offset(), std::move(ptr));
+    std::unique_ptr<Recommendations> nptr = std::make_unique<Matrix>();
+    Interface inter(get_last_offset(), std::move(nptr), std::move(ptr));
 
     while(true){
         inter.start_process();
     }
+
+    // BotTelegram b(get_last_offset(), std::move(nptr), std::move(ptr));
+    // b.command_recommendations("828404782");
 
 //test
 

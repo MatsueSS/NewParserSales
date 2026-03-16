@@ -3,24 +3,12 @@
 
 //Here is the code that allows you to read recommendations for users
 
-#include "TelegramUser.h"
+#include "Recommendations.h"
 
 #include <unordered_map>
+#include <unordered_set>
 #include <type_traits>
-#include <string>
-#include <vector>
-
-class IUserObserver{
-public:
-    virtual ~IUserObserver() = default;
-    virtual void on_user_added(const TelegramUser& user) = 0;
-    virtual void on_user_added(TelegramUser&& user) = 0;
-
-    virtual void on_user_updated(const TelegramUser& user) = 0;
-    virtual void on_user_updated(TelegramUser&& user) = 0;
-    
-    virtual std::vector<std::string> recommendation(const std::string& id) = 0;
-};
+#include <exception>
 
 class MatrixException : public std::exception {
 protected:
@@ -42,18 +30,17 @@ public:
     EmptyResultMatrixException(std::string);
 };
 
-class Matrix : public IUserObserver{
+class Matrix : public Recommendations{
 private:
     std::unordered_map<std::string, std::unordered_set<std::string>> matrix;
 
 public:
-    void on_user_added(const TelegramUser& user) override;
-    void on_user_added(TelegramUser&& user) override;
-
-    void on_user_updated(const TelegramUser& user) override;    
-    void on_user_updated(TelegramUser&& user) override;
-
     Matrix() = default;
+
+    virtual void add_user(const std::string& id) noexcept override;
+    virtual void del_user(const std::string& id) noexcept override;
+    virtual void add_card(const std::string& id, const std::string& card) noexcept override;
+    virtual void del_card(const std::string& id, const std::string& card) noexcept override;
 
     Matrix(const Matrix&) = default;
     Matrix& operator=(const Matrix&) = default;
@@ -61,7 +48,7 @@ public:
     Matrix(Matrix&&) noexcept = default;
     Matrix& operator=(Matrix&&) noexcept = default;
 
-    std::vector<std::string> recommendation(const std::string& id);
+    std::vector<std::string> recommendation(const std::string& id) const override;
 };
 
 #endif //_MATRIX_LIKE_H_

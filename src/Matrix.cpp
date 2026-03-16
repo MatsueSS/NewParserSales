@@ -12,30 +12,27 @@ const char* MatrixException::what() const noexcept
 BadTypeMatrixException::BadTypeMatrixException(std::string str) : MatrixException(std::move(str)) {}
 EmptyResultMatrixException::EmptyResultMatrixException(std::string str) : MatrixException(std::move(str)) {}
 
-void Matrix::on_user_added(const TelegramUser& user)
+void Matrix::add_user(const std::string& id) noexcept
 {
-    if(!matrix.count(user.get_id())){
-        matrix[user.get_id()] = std::unordered_set<std::string>(user.get_cards().begin(), user.get_cards().end());
-    }
+    matrix[id] = {};
 }
 
-void Matrix::on_user_added(TelegramUser&& user)
+void Matrix::del_user(const std::string& id) noexcept
 {
-    if(!matrix.count(user.get_id()))
-        matrix[user.get_id()] = std::unordered_set<std::string>(user.get_cards().begin(), user.get_cards().end());
+    matrix.erase(id);
 }
 
-void Matrix::on_user_updated(const TelegramUser& user)
+void Matrix::add_card(const std::string& id, const std::string& card) noexcept
 {
-    matrix[user.get_id()] = std::unordered_set<std::string>(user.get_cards().begin(), user.get_cards().end());
+    matrix[id].insert(card);
 }
 
-void Matrix::on_user_updated(TelegramUser&& user)
+void Matrix::del_card(const std::string& id, const std::string& card) noexcept
 {
-    matrix[user.get_id()] = std::unordered_set<std::string>(user.get_cards().begin(), user.get_cards().end());
+    matrix[id].erase(card);
 }
 
-std::vector<std::string> Matrix::recommendation(const std::string& id)
+std::vector<std::string> Matrix::recommendation(const std::string& id) const
 {
     if(!matrix.count(id))
         throw EmptyResultMatrixException("User must be added\n");
@@ -63,5 +60,4 @@ std::vector<std::string> Matrix::recommendation(const std::string& id)
     }
 
     return result;
-
 }

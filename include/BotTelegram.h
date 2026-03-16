@@ -24,7 +24,7 @@ public:
 class BotTelegram{
 private:
     std::unordered_map<std::string, TelegramUser> users;
-    std::vector<IUserObserver*> observers;
+    std::unique_ptr<Recommendations> observer;
     std::atomic<bool> flag;
     std::thread worker;
     std::string offset;
@@ -40,26 +40,30 @@ private:
     void command_status(std::string&&);
     void command_my_cards(std::string&&);
     void command_forecast(std::string&&, std::string&&);
-    void command_recommendations(std::string&&);
+    // void command_recommendations(std::string&&);
 
     std::pair<std::string, std::string> get_command_and_data(const std::string& message) noexcept;
 
     void stop();
 
-    template<typename Type>
-    void notify_user_added(Type&& user);
+    // template<typename Type>
+    // void notify_user_added(Type&& user);
 
-    template<typename Type>
-    void notify_user_updated(Type&& user);
+    // template<typename Type>
+    // void notify_user_updated(Type&& user);
+
+    void load_users_from_db();
 
 public:
-    BotTelegram(std::string, std::unique_ptr<Matcher>);
+    BotTelegram(std::string, std::unique_ptr<Recommendations>, std::unique_ptr<Matcher>);
 
     BotTelegram(const BotTelegram&) = delete;
     BotTelegram& operator=(const BotTelegram&) = delete;
 
     BotTelegram(BotTelegram&&) noexcept;
     BotTelegram& operator=(BotTelegram&&) noexcept;
+
+    void command_recommendations(std::string&&);
 
     template<typename Type>
     void add_user(Type&&);
@@ -73,9 +77,6 @@ public:
     template<typename Type>
     void notify_all(Type&&) const;
 
-    void add_observer(IUserObserver* obs);
-    void remove_observer(IUserObserver* obs);
-
     ~BotTelegram();
 };
 
@@ -86,8 +87,6 @@ void BotTelegram::add_user(Type&& user){
 
     auto id = user.get_id();
     auto [it, inserted] = users.insert({id, std::forward<Type>(user)});
-    if(inserted)
-        notify_user_added(it->second);
 }
 
 template<typename Type>
@@ -115,26 +114,26 @@ void BotTelegram::notify_all(Type&& notifi) const {
         obj.second.notify(notifi);
 }
 
-template<typename Type>
-void BotTelegram::notify_user_added(Type&& user)
-{
-    if constexpr(!std::is_same<std::decay_t<Type>, TelegramUser>::value)
-        throw BotTelegramException("Value-Type must be a TelegramUser\n");
+// template<typename Type>
+// void BotTelegram::notify_user_added(Type&& user)
+// {
+//     if constexpr(!std::is_same<std::decay_t<Type>, TelegramUser>::value)
+//         throw BotTelegramException("Value-Type must be a TelegramUser\n");
 
-    for(auto obs : observers){
-        obs->on_user_added(std::forward<Type>(user));
-    }
-}
+//     for(auto obs : observers){
+//         obs->on_user_added(std::forward<Type>(user));
+//     }
+// }
 
-template<typename Type>
-void BotTelegram::notify_user_updated(Type&& user)
-{
-    if constexpr(!std::is_same<std::decay_t<Type>, TelegramUser>::value)
-        throw BotTelegramException("Value-Type must be a TelegramUser\n");
+// template<typename Type>
+// void BotTelegram::notify_user_updated(Type&& user)
+// {
+//     if constexpr(!std::is_same<std::decay_t<Type>, TelegramUser>::value)
+//         throw BotTelegramException("Value-Type must be a TelegramUser\n");
 
-    for(auto obs : observers){
-        obs->on_user_updated(std::forward<Type>(user));
-    }
-}
+//     for(auto obs : observers){
+//         obs->on_user_updated(std::forward<Type>(user));
+//     }
+// }
 
 #endif //_BOT_TELEGRAM_H_

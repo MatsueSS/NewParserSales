@@ -11,37 +11,56 @@
 #include <vector>
 #include <iostream>
 
-BotTelegram::BotTelegram(std::string offset, std::unique_ptr<Matcher> ptr) 
-    : flag(true), worker(&BotTelegram::check_message, this), offset(std::move(offset)), searcher(std::move(ptr)) 
+BotTelegram::BotTelegram(std::string offset, std::unique_ptr<Recommendations> obs, std::unique_ptr<Matcher> srch) 
+    : flag(true), offset(std::move(offset)), observer(std::move(obs)), searcher(std::move(srch)) 
 
 {
-    Matrix* m = new Matrix;
-    this->add_observer(m);
+    load_users_from_db();
 
+    worker = std::thread(&BotTelegram::check_message, this);
+}
+
+void BotTelegram::load_users_from_db()
+{
     std::string conn = get_conn();
     PostgresDB db;
     std::vector<std::vector<std::string>> res;
+
     try{
         db.connect(conn);
-        res = db.fetch(std::string("SELECT id, cards FROM old_users;"), std::vector<std::string>{});
-    } catch(BadConnectionDBexception& e){
+        res = db.fetch(std::string("SELECT id FROM users;"), std::vector<std::string>{});
+    } catch (BadConnectionDBexception& e){
         db.connect(conn);
-        res = db.fetch(std::string("SELECT id, cards FROM old_users;"), std::vector<std::string>{});
-    } catch(ErrorQueryResultDBexception& e){
-        res = db.fetch(std::string("SELECT id, cards FROM old_users;"), std::vector<std::string>{});
+        res = db.fetch(std::string("SELECT id FROM users;"), std::vector<std::string>{});
+    } catch (ErrorQueryResultDBexception& e){
+        res = db.fetch(std::string("SELECT id FROM users;"), std::vector<std::string>{});
     }
-    for(const auto& row : res){
-        std::string link = row[1], id = row[0];
-        TelegramUser user(id);
-        std::regex elementRegex(R"(\"([^"]+)\")");
-        std::smatch match;
-        auto begin = link.cbegin();
-        auto end = link.cend();
-        while(std::regex_search(begin, end, match, elementRegex)){
-            user.add_product(std::string(match[1]));
-            begin = match.suffix().first;
-        }
+
+    for(const auto& cont : res){
+        observer->add_user(cont[0]);
+        TelegramUser user(cont[0]);
         add_user(std::move(user));
+    }
+
+    res.clear();
+
+    try{
+        db.connect(conn);
+        res = db.fetch(std::string("SELECT id, preference FROM preferences;"), std::vector<std::string>{});
+    } catch (BadConnectionDBexception& e){
+        db.connect(conn);
+        res = db.fetch(std::string("SELECT id, preference FROM preferences;"), std::vector<std::string>{});
+    } catch(ErrorQueryResultDBexception& e){
+        res = db.fetch(std::string("SELECT id, preference FROM preferences;"), std::vector<std::string>{});
+    }
+
+    for(const auto& cont : res){
+        auto it = users.find(cont[0]);
+        if(it == users.end()){
+            throw BotTelegramException("critical error with starting programm - the user is missing from the users table, but is present in the preferences table");
+        }
+        observer->add_card(cont[0], cont[1]);
+        it->second.add_product(cont[1]);
     }
 }
 
@@ -158,7 +177,8 @@ void BotTelegram::offset_reload()
 void BotTelegram::command_start(std::string&& id)
 {
     TelegramUser user(id);
-    this->add_user(user);
+    observer->add_user(id);
+    this->add_user(std::move(user));
     
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::string("Привет, теперь тебе доступен ряд команд для манипуляции с карточками\n"));
@@ -169,13 +189,13 @@ void BotTelegram::command_start(std::string&& id)
         db.connect(get_conn());
     }
     try{
-        db.execute(std::string("INSERT INTO old_users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
+        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
     } catch (BadConnectionDBexception& e){
         db.connect(get_conn());
-        db.execute(std::string("INSERT INTO old_users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
+        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
     } catch (ErrorQueryResultDBexception& e){
         std::cout << e.what() << '\n';
-        db.execute(std::string("INSERT INTO old_users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
+        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
     }
     
 }
@@ -204,13 +224,14 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         found = true;
         for(const auto& obj : *search_result){
             user->second.add_product(obj);
+            observer->add_card(id, obj);
             try{
-                db.execute(std::string("UPDATE old_users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, obj});
             } catch(BadConnectionDBexception& e){
                 db.connect(conn);
-                db.execute(std::string("UPDATE old_users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, obj});
             } catch(ErrorQueryResultDBexception& e){
-                db.execute(std::string("UPDATE old_users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{obj, id});
+                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, obj});
             }
         }
     }
@@ -230,20 +251,18 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         }
         if(result_query_found[0][0] == "f"){
             found = false;
-        } else if (result_query_found[0][0] == "t") {
+        } else{
             found = true;
             user->second.add_product(std::string(data));
+            observer->add_card(id, data);
             try{
-                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, data});
             } catch(BadConnectionDBexception& e){
                 db.connect(conn);
-                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, data});
             } catch(ErrorQueryResultDBexception& e) {
-                db.execute(std::string("UPDATE users SET cards = array_append(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, data});
             }
-        } else {
-            //critical error
-            found = false;
         }
     }
     auto ptr = TelegramSender::get_instance();
@@ -269,13 +288,14 @@ void BotTelegram::command_del_card(std::string&& id, std::string&& data)
     std::string conn = get_conn();
     try{
         db.connect(conn);
-        db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+        db.execute(std::string("DELETE FROM preferences WHERE id = $1 AND preference = $2;"), std::vector<std::string>{id, data});
     } catch(BadConnectionDBexception& e) {
         db.connect(conn);
-        db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+        db.execute(std::string("DELETE FROM preferences WHERE id = $1 AND preference = $2;"), std::vector<std::string>{id, data});
     } catch(ErrorQueryResultDBexception& e) {
-        db.execute(std::string("UPDATE users SET cards = array_remove(cards, $1) WHERE id = $2;"), std::vector<std::string>{data, id});
+        db.execute(std::string("DELETE FROM preferences WHERE id = $1 AND preference = $2;"), std::vector<std::string>{id, data});
     }
+    observer->del_card(id, data);
 }
 
 void BotTelegram::command_status(std::string&& id)
@@ -366,7 +386,7 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
 
 void BotTelegram::command_recommendations(std::string&& id)
 {
-    auto res = observers[0]->recommendation(id);
+    auto res = observer->recommendation(id);
     std::string result = "Рекомендуемые карточки\n";
     int count = 0;
     for(const auto& v : res){
@@ -377,14 +397,4 @@ void BotTelegram::command_recommendations(std::string&& id)
     }
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, result);
-}
-
-void BotTelegram::add_observer(IUserObserver* obs)
-{
-    observers.push_back(obs);
-}
-
-void BotTelegram::remove_observer(IUserObserver* obs)
-{
-    observers.erase(std::remove(observers.begin(), observers.end(), obs), observers.end());
 }
