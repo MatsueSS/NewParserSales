@@ -16,6 +16,7 @@ std::string converte_ymd(const std::chrono::year_month_day&) noexcept;
 std::chrono::year_month_day converte_string(const std::string& str) noexcept;
 
 std::chrono::year_month_day get_previous_or_current_saturday() noexcept;
+std::string saturday_to_string(const std::chrono::year_month_day& ymd) noexcept;
 
 void check_independence_week();
 void check_independence_season();

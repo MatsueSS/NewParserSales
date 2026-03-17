@@ -141,3 +141,10 @@ std::chrono::year_month_day get_previous_or_current_saturday() noexcept
     auto saturday = today - std::chrono::days(days_back);
     return std::chrono::year_month_day{saturday};
 }
+
+std::string saturday_to_string(const std::chrono::year_month_day& ymd) noexcept
+{
+    std::ostringstream oss;
+    oss << std::setfill('0') << (int)ymd.year() << "-" << std::setw(2) << (unsigned)ymd.month() << "-" << (unsigned)ymd.day();
+    return oss.str();
+}

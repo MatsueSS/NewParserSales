@@ -49,6 +49,9 @@ int main(void)
     // BotTelegram b(get_last_offset(), RecType::MATRIX, std::move(ptr));
     // b.command_recommendations("828404782");
 
+    std::chrono::year_month_day ymd = get_previous_or_current_saturday();
+    std::string sat = saturday_to_string(ymd);
+
 //test
 
     // FileMatcher m("../sensetive_res/new_dict.txt");
