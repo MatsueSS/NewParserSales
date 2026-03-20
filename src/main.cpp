@@ -39,12 +39,14 @@ int main(void)
 
 //start
 
-    std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt");
-    Interface inter(get_last_offset(), RecType::MATRIX, std::move(ptr));
+    // std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt");
+    // Interface inter(get_last_offset(), RecType::MATRIX, std::move(ptr));
 
-    while(true){
-        inter.start_process();
-    }
+    // while(true){
+    //     inter.start_process();
+    // }
+
+//pretest
 
     // BotTelegram b(get_last_offset(), RecType::MATRIX, std::move(ptr));
     // b.command_recommendations("828404782");
@@ -65,6 +67,18 @@ int main(void)
     // PyLoader::load("bash -c 'python3 ../py_scripts/pars_perekrestok_sait.py'");
     // PyLoader::load("bash -c 'python3 ../py_scripts/pars_perekrestok_htmp.py'");
     // reader.make_note(get_conn(), "cards_perekrestok", "perekrestok");
+
+    PostgresDB db;
+    PrefixTree tree;
+    db.connect(get_conn());
+    std::vector<std::vector<std::string>> unique_card = db.fetch(std::string("SELECT DISTINCT title FROM cards;"), std::vector<std::string>{});
+    for(const auto& obj : unique_card){
+        tree.add_word(obj[0]);
+    }
+
+    std::string temp = "Ябл";
+    std::string result = tree.give_word_for_prefix(temp);
+    std::cout << result << '\n';
 
     return 0;
 }

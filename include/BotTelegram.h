@@ -6,6 +6,7 @@
 #include "TelegramUser.h"
 #include "ProductSearcher.h"
 #include "ProductRecommendations.h"
+#include "PrefixTree.h"
 
 #include <unordered_map>
 #include <thread>
@@ -30,6 +31,7 @@ private:
 
     ProductRecommendations observer;
     ProductSearcher searcher;
+    PrefixTree tree;
 
     void check_message();
     void offset_reload();
@@ -44,6 +46,8 @@ private:
     void command_has_discount(std::string&&, std::string&&);
 
     std::pair<std::string, std::string> get_command_and_data(const std::string& message) noexcept;
+
+    void init_tree() noexcept;
 
     void stop();
 
