@@ -41,6 +41,8 @@ public:
     template<typename Data1, typename Type, typename Data2>
     static std::future<void> call(Data1&& id, Type&& type, Data2&& offset);
 
+    void send_with_keyboard(const std::string& chat_id, const std::string& text, const std::string& keyboard_json);
+
 private:
     static TelegramSender* instance;
     std::string token;

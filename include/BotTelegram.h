@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <thread>
 #include <vector>
+#include <set>
 
 class BotTelegramException : public std::exception{
 protected:
@@ -28,6 +29,8 @@ private:
     std::atomic<bool> flag;
     std::thread worker;
     std::string offset;
+    std::map<std::string, std::string> waiting_for_input;
+    std::set<std::string> users_with_keyboard;
 
     ProductRecommendations observer;
     ProductSearcher searcher;
@@ -51,13 +54,9 @@ private:
 
     void stop();
 
-    // template<typename Type>
-    // void notify_user_added(Type&& user);
-
-    // template<typename Type>
-    // void notify_user_updated(Type&& user);
-
     void load_users_from_db();
+
+    void send_main_keyboard(const std::string& id) const noexcept;
 
 public:
     BotTelegram(std::string, RecType type, std::unique_ptr<Matcher>);

@@ -123,44 +123,84 @@ void BotTelegram::check_message()
         auto v = JsonReader::read("jq -r '.result[] | {text: .message.text, id:.message.from.id, update_id: .update_id}' ../res/result_"+ offset +".json", type_json::message);
         if(!v.empty()){
             std::string id = v[2];
-            auto message = get_command_and_data(v[1]);
-            std::string command = message.first;
-            std::string data = message.second;
-            
-            id = id.substr(0, id.length() - 1);
+            std::string full_message = v[1];
 
-            if(command == "/start"){
-                command_start(std::move(id));
+            id = id.substr(0, id.length()-1);
+
+            if(users_with_keyboard.find(id) == users_with_keyboard.end()){
+                send_main_keyboard(id);
+                users_with_keyboard.insert(id);
             }
-            else if(command == "/add_card"){
-                command_add_card(std::move(id), std::move(data));
+
+            auto waiting = waiting_for_input.find(id);
+            if(waiting != waiting_for_input.end()){
+                if(waiting->second == "add")
+                    command_add_card(std::string(id), std::string(full_message));
+                else if(waiting->second == "del")
+                    command_del_card(std::string(id), std::string(full_message));
+                else if(waiting->second == "forecast")
+                    command_forecast(std::string(id), std::string(full_message));
+                else if(waiting->second == "has_discount")
+                    command_has_discount(std::string(id), std::string(full_message));
+                waiting_for_input.erase(id);
+                offset_reload();
+                continue;
             }
-            else if(command == "/del_card"){
-                command_del_card(std::move(id), std::move(data));
-            }
-            else if(command == "/status"){
-                command_status(std::move(id));
-            }
-            else if(command == "/my_cards"){
+
+            if (full_message == "📋 Мои карточки") {
                 command_my_cards(std::move(id));
             }
-            else if(command == "/forecast"){
-                command_forecast(std::move(id), std::move(data));
+            else if (full_message == "💰 Статус скидок") {
+                command_status(std::move(id));
             }
-            else if(command == "/recommendations"){
+            else if (full_message == "🎯 Рекомендации") {
                 command_recommendations(std::move(id));
             }
-            else if(command == "/has_discount"){
-                command_has_discount(std::move(id), std::move(data));
+            else if (full_message == "➕ Добавить товар") {
+                waiting_for_input[id] = "add";
+                ptr->call(id, type_msg::send, std::string("Введите название товара для добавления:"));
             }
-            else{
-                auto ptr = TelegramSender::get_instance();
-                ptr->call(id, type_msg::send, std::string("Неверная команда"));
+            else if (full_message == "➖ Удалить товар") {
+                waiting_for_input[id] = "del";
+                ptr->call(id, type_msg::send, std::string("Введите название товара для удаления:"));
+            }
+            else if (full_message == "📊 Прогноз") {
+                waiting_for_input[id] = "forecast";
+                ptr->call(id, type_msg::send, std::string("Введите название товара для прогноза:"));
+            }
+            else if(full_message == "❓ Узнать скидку"){
+                waiting_for_input[id] = "has_discount";
+                ptr->call(id, type_msg::send, std::string("Введите название товара для проверки скидки:"));
+            }
+            else {
+                ptr->call(id, type_msg::send, std::string("Используйте кнопки меню"));
             }
 
             offset_reload();
         }
     }
+}
+
+void BotTelegram::send_main_keyboard(const std::string& id) const noexcept
+{
+    std::string keyboard_json = R"({
+        "keyboard": [
+            [{"text": "📋 Мои карточки"}, {"text": "💰 Статус скидок"}],
+            [{"text": "🎯 Рекомендации"}],
+            [{"text": "➕ Добавить товар"}, {"text": "➖ Удалить товар"}],
+            [{"text": "📊 Прогноз"}, {"text": "❓ Узнать скидку"}]
+        ],
+        "resize_keyboard": true,
+        "one_time_keyboard": false
+    })";
+    
+    std::string message = 
+        "🌟 Главное меню\n\n"
+        "🔹 Нажимайте кнопки для команд\n"
+        "🔹 Для добавления/удаления/прогноза введите название после нажатия";
+    
+    auto ptr = TelegramSender::get_instance();
+    ptr->send_with_keyboard(id, message, keyboard_json);
 }
 
 std::pair<std::string, std::string> BotTelegram::get_command_and_data(const std::string& message) noexcept
@@ -189,6 +229,8 @@ void BotTelegram::command_start(std::string&& id)
     TelegramUser user(id);
     observer.add_user(id);
     this->add_user(std::move(user));
+
+    send_main_keyboard(id);
     
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::string("Привет, теперь тебе доступен ряд команд для манипуляции с карточками\n"));
@@ -251,7 +293,7 @@ void BotTelegram::command_has_discount(std::string&& id, std::string&& card)
         }
 
         if(res[0][0] == "t"){
-            ptr->call(id, type_msg::send, std::string("Скидка на" + true_card + "присутствует (данные взяты на число - " + last_sat + ")"));
+            ptr->call(id, type_msg::send, std::string("Скидка на " + true_card + " присутствует (данные взяты на число - " + last_sat + ")"));
         } else {
             ptr->call(id, type_msg::send, std::string("Скидка на " + true_card + " отсутствует (данные взяты на число - " + last_sat + ")"));
         }

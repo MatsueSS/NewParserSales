@@ -79,3 +79,29 @@ const char * TSexception::what() const noexcept
 }
 
 BadTypeValueTSexception::BadTypeValueTSexception(std::string str) : TSexception(std::move(str)) {}
+
+void TelegramSender::send_with_keyboard(const std::string& chat_id, const std::string& text, const std::string& keyboard_json)
+{
+    std::string url = "https://api.telegram.org/bot" + token + "/sendMessage";
+    
+    std::string json_data = "{";
+    json_data += "\"chat_id\":\"" + chat_id + "\",";
+    json_data += "\"text\":\"" + text + "\",";
+    json_data += "\"reply_markup\":" + keyboard_json;
+    json_data += "}";
+    
+    CURL* curl = curl_easy_init();
+    if(curl) {
+        struct curl_slist* headers = nullptr;
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        
+        CURLcode res = curl_easy_perform(curl);
+        
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
+    }
+}
