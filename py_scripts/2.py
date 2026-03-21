@@ -20,7 +20,7 @@ for i in range(2, 200):
     for obj in group:
         title = obj.find("p", class_="css-y50q0q")
 
-        discount = obj.find("span", class_="css-1kmcjcs")
+        discount = obj.find("span", class_="css-gv6vdh")
         old_price = obj.find("span", class_="css-8696l")
 
         if discount and old_price:

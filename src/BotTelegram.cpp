@@ -9,6 +9,7 @@
 #include <chrono>
 #include <fstream>
 #include <vector>
+#include <iostream>
 
 BotTelegram::BotTelegram(std::string offset, RecType type, std::unique_ptr<Matcher> srch) 
     : flag(true), offset(std::move(offset)), searcher(std::move(srch)) 
@@ -20,6 +21,7 @@ BotTelegram::BotTelegram(std::string offset, RecType type, std::unique_ptr<Match
     }
 
     load_users_from_db();
+    init_tree();
 
     worker = std::thread(&BotTelegram::check_message, this);
 }
@@ -236,22 +238,26 @@ void BotTelegram::command_has_discount(std::string&& id, std::string&& card)
 
     if(tree.has_prefix(card)){
         std::string true_card;
-        
+        true_card = tree.give_word_for_prefix(card);
+        std::vector<std::vector<std::string>> res;
+        try{
+            db.connect(conn);
+            res = db.fetch(std::string("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)"), std::vector<std::string>{true_card, last_sat});
+        } catch (BadConnectionDBexception& e){
+            db.connect(conn);
+            res = db.fetch(std::string("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)"), std::vector<std::string>{true_card, last_sat});
+        } catch (ErrorQueryResultDBexception& e){
+            res = db.fetch(std::string("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)"), std::vector<std::string>{true_card, last_sat});
+        }
+
+        if(res[0][0] == "t"){
+            ptr->call(id, type_msg::send, std::string("Скидка на" + true_card + "присутствует (данные взяты на число - " + last_sat + ")"));
+        } else {
+            ptr->call(id, type_msg::send, std::string("Скидка на " + true_card + " отсутствует (данные взяты на число - " + last_sat + ")"));
+        }
     } else {
         ptr->call(id, type_msg::send, std::string("Не удалось найти такую карточку в базе данных. Проверьте корректность названия карточки или же обратитесь к администратору\n"));
     }
-    
-    try{
-        row = db.fetch(std::string("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)"), std::vector<std::string>{card, last_sat});
-    } catch (BadConnectionDBexception& e){
-        db.connect(conn);
-        row = db.fetch(std::string("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)"), std::vector<std::string>{card, last_sat});
-    } catch (ErrorQueryResultDBexception& e){
-        row = db.fetch(std::string("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)"), std::vector<std::string>{card, last_sat});
-    }
-
-    ptr->call(id, type_msg::send, std::string("Скидка на данную карточку присутствует (данные взяты на число - " + last_sat + ")"));
-    ptr->call(id, type_msg::send, std::string("Скидка на данную карточку отсутствует (данные взяты на число - " + last_sat + ")"));
 }
 
 void BotTelegram::command_add_card(std::string&& id, std::string&& data)
