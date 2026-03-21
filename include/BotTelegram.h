@@ -7,6 +7,7 @@
 #include "ProductSearcher.h"
 #include "ProductRecommendations.h"
 #include "PrefixTree.h"
+#include "UserStateMaching.h"
 
 #include <unordered_map>
 #include <thread>
@@ -29,12 +30,12 @@ private:
     std::atomic<bool> flag;
     std::thread worker;
     std::string offset;
-    std::map<std::string, std::string> waiting_for_input;
     std::set<std::string> users_with_keyboard;
 
     ProductRecommendations observer;
     ProductSearcher searcher;
     PrefixTree tree;
+    UserStateMaching MachingState;
 
     void check_message();
     void offset_reload();

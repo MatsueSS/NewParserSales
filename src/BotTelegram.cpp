@@ -132,17 +132,17 @@ void BotTelegram::check_message()
                 users_with_keyboard.insert(id);
             }
 
-            auto waiting = waiting_for_input.find(id);
-            if(waiting != waiting_for_input.end()){
-                if(waiting->second == "add")
+            auto waiting = MachingState.get_waiting(id);
+            if(waiting != UserStateMaching::UserAction::NONE){
+                if(waiting == UserStateMaching::UserAction::ADD_CARD)
                     command_add_card(std::string(id), std::string(full_message));
-                else if(waiting->second == "del")
+                else if(waiting == UserStateMaching::UserAction::DEL_CARD)
                     command_del_card(std::string(id), std::string(full_message));
-                else if(waiting->second == "forecast")
+                else if(waiting == UserStateMaching::UserAction::FORECAST)
                     command_forecast(std::string(id), std::string(full_message));
-                else if(waiting->second == "has_discount")
+                else if(waiting == UserStateMaching::UserAction::HAS_DISCOUNT)
                     command_has_discount(std::string(id), std::string(full_message));
-                waiting_for_input.erase(id);
+                MachingState.clear(id);
                 offset_reload();
                 continue;
             }
@@ -157,19 +157,19 @@ void BotTelegram::check_message()
                 command_recommendations(std::move(id));
             }
             else if (full_message == "➕ Добавить товар") {
-                waiting_for_input[id] = "add";
+                MachingState.set_waiting(id, UserStateMaching::UserAction::ADD_CARD);
                 ptr->call(id, type_msg::send, std::string("Введите название товара для добавления:"));
             }
             else if (full_message == "➖ Удалить товар") {
-                waiting_for_input[id] = "del";
+                MachingState.set_waiting(id, UserStateMaching::UserAction::DEL_CARD);
                 ptr->call(id, type_msg::send, std::string("Введите название товара для удаления:"));
             }
             else if (full_message == "📊 Прогноз") {
-                waiting_for_input[id] = "forecast";
+                MachingState.set_waiting(id, UserStateMaching::UserAction::FORECAST);
                 ptr->call(id, type_msg::send, std::string("Введите название товара для прогноза:"));
             }
             else if(full_message == "❓ Узнать скидку"){
-                waiting_for_input[id] = "has_discount";
+                MachingState.set_waiting(id, UserStateMaching::UserAction::HAS_DISCOUNT);
                 ptr->call(id, type_msg::send, std::string("Введите название товара для проверки скидки:"));
             }
             else {
