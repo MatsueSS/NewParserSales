@@ -1,0 +1,26 @@
+#include "PoolCards.h"
+
+#include "PostgresDB.h"
+#include "good_funcs.h"
+
+PoolCards::PoolCards()
+{
+    PostgresDB db;
+    db.connect(get_conn());
+
+    std::vector<std::vector<std::string>> res = db.fetch(std::string("SELECT * FROM products"), std::vector<std::string>{});
+    int size = res.size();
+    title_to_id.reserve(size + size/10);
+    id_to_title.resize(size);
+    for(const auto& obj : res){
+        uint32_t card_id = std::stoi(obj[0]);
+        Product product(obj[1], card_id);
+        id_to_title[card_id] = product;
+        title_to_id.emplace(std::make_pair(obj[1], card_id));
+    }
+}
+
+const Product& PoolCards::get_title(uint32_t id) const noexcept
+{
+    return id_to_title.at(id);
+}
