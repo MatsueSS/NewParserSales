@@ -8,10 +8,10 @@ PoolCards::PoolCards()
     PostgresDB db;
     db.connect(get_conn());
 
-    std::vector<std::vector<std::string>> res = db.fetch(std::string("SELECT * FROM products"), std::vector<std::string>{});
+    std::vector<std::vector<std::string>> res = db.fetch(std::string("SELECT * FROM products;"), std::vector<std::string>{});
     int size = res.size();
     title_to_id.reserve(size + size/10);
-    id_to_title.resize(size);
+    id_to_title.resize(size+1);
     for(const auto& obj : res){
         uint32_t card_id = std::stoi(obj[0]);
         Product product(obj[1], card_id);

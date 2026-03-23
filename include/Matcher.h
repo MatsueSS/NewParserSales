@@ -10,12 +10,12 @@ public:
     Matcher() = default;
 
     template<typename Data>
-    const std::vector<std::string>* find_matches(Data&& query) const noexcept;
+    const std::vector<uint32_t>* find_matches(Data&& query) const noexcept;
 
     virtual ~Matcher() = default;
 
 protected:
-    std::unordered_map<std::string, std::vector<std::string>> dict;
+    std::unordered_map<std::string, std::vector<uint32_t>> dict;
 
     virtual void load_data() = 0;
 
@@ -26,7 +26,7 @@ protected:
  * @note User must be checked result
  */
 template<typename Data>
-const std::vector<std::string>* Matcher::find_matches(Data&& query) const noexcept
+const std::vector<uint32_t>* Matcher::find_matches(Data&& query) const noexcept
 {
     auto it = dict.find(std::forward<Data>(query));
     return it == dict.end() ? nullptr : &it->second;

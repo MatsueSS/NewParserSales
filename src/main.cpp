@@ -40,12 +40,11 @@ int main(void)
 
 //start
 
-    // std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt");
-    // Interface inter(get_last_offset(), RecType::MATRIX, std::move(ptr));
+    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER);
 
-    // while(true){
-    //     inter.start_process();
-    // }
+    while(true){
+        inter.start_process();
+    }
 
 //pretest
 
@@ -80,8 +79,6 @@ int main(void)
     // std::string temp = "Ябл";
     // std::string result = tree.give_word_for_prefix(temp);
     // std::cout << result << '\n';
-
-    PoolCards c;
 
     return 0;
 }

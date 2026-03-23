@@ -5,19 +5,27 @@
 #include "PostgresDB.h"
 #include "Forecast.h"
 #include "Matrix.h"
+#include "FileMatcher.h"
 
 #include <chrono>
 #include <fstream>
 #include <vector>
-#include <iostream>
 
-BotTelegram::BotTelegram(std::string offset, RecType type, std::unique_ptr<Matcher> srch) 
-    : flag(true), offset(std::move(offset)), searcher(std::move(srch)) 
-
+BotTelegram::BotTelegram(std::string offset, RecType rectype, ProdType prodtype) 
+    : flag(true), offset(std::move(offset))
 {
-    if(type == RecType::MATRIX){
-        std::unique_ptr<Recommendations> ptr = std::make_unique<Matrix>(users);
+    if(rectype == RecType::MATRIX){
+        std::unique_ptr<Recommendations> ptr = std::make_unique<Matrix>(users, pc);
         observer.set_strategy(std::move(ptr));
+    } else{
+        throw BadInitBotTelegramException("Haven't execute this strategy\n");
+    }
+
+    if(prodtype == ProdType::FILE_SEARCHER){
+        std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt", pc);
+        searcher.set_strategy(std::move(ptr));
+    } else{
+        throw BadInitBotTelegramException("Haven't execute this strategy\n");
     }
 
     load_users_from_db();
@@ -44,7 +52,7 @@ void BotTelegram::load_users_from_db()
 
     for(const auto& cont : res){
         observer.add_user(cont[0]);
-        TelegramUser user(cont[0]);
+        TelegramUser user(cont[0], pc);
         add_user(std::move(user));
     }
 
@@ -71,6 +79,8 @@ void BotTelegram::load_users_from_db()
 }
 
 BotTelegramException::BotTelegramException(std::string str) : msg(std::move(str)) {}
+
+BadInitBotTelegramException::BadInitBotTelegramException(std::string msg) : BotTelegramException(std::move(msg)) {}
 
 BotTelegram::~BotTelegram()
 {
@@ -226,7 +236,7 @@ void BotTelegram::offset_reload()
 
 void BotTelegram::command_start(std::string&& id)
 {
-    TelegramUser user(id);
+    TelegramUser user(id, pc);
     observer.add_user(id);
     this->add_user(std::move(user));
 
@@ -325,15 +335,16 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
     if(search_result){
         found = true;
         for(const auto& obj : *search_result){
-            user->second.add_product(obj);
-            observer.add_card(id, obj);
+            std::string temp = pc.get_title(obj).get_title();
+            user->second.add_product(temp);
+            observer.add_card(id, temp);
             try{
-                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, obj});
+                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, temp});
             } catch(BadConnectionDBexception& e){
                 db.connect(conn);
-                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, obj});
+                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, temp});
             } catch(ErrorQueryResultDBexception& e){
-                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, obj});
+                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, temp});
             }
         }
     }
@@ -428,7 +439,7 @@ void BotTelegram::command_my_cards(std::string&& id)
     std::string result = "Ваши карточки:\n";
     auto cards = user->second.get_cards();
     for(const auto& obj : cards){
-        result += obj + "\n";
+        result += pc.get_title(obj).get_title() + "\n";
     }
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, result);

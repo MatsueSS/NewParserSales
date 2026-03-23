@@ -5,8 +5,14 @@
 
 #include <memory>
 
+enum ProdType{
+    FILE_SEARCHER
+};
+
 class ProductSearcher{
 public:
+    ProductSearcher() = default;
+
     ProductSearcher(std::unique_ptr<Matcher> strategy);
 
     ProductSearcher(const ProductSearcher&) = delete;
@@ -18,7 +24,7 @@ public:
     void set_strategy(std::unique_ptr<Matcher> new_strategy) noexcept;
 
     template<typename Data>
-    const std::vector<std::string>* search(Data&& query) const noexcept;
+    const std::vector<uint32_t>* search(Data&& query) const noexcept;
 
 private:
     std::unique_ptr<Matcher> searcher;
@@ -26,7 +32,7 @@ private:
 };
 
 template<typename Data>
-const std::vector<std::string>* ProductSearcher::search(Data&& query) const noexcept
+const std::vector<uint32_t>* ProductSearcher::search(Data&& query) const noexcept
 {
     return searcher->find_matches(std::forward<Data>(query));
 }

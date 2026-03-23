@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iostream>
 
-FileMatcher::FileMatcher(const std::string& filename) : filename(filename)
+FileMatcher::FileMatcher(const std::string& filename, const PoolCards& pc) : filename(filename), pc(pc)
 {
     load_data();
 }
@@ -27,8 +27,13 @@ void FileMatcher::load_data()
         std::vector<std::string> synonyms = parse(std::move(first_part));
         std::vector<std::string> cards = parse(std::move(second_part));
 
+        std::vector<uint32_t> id_cards;
+        for(const auto& obj : cards){
+            id_cards.push_back(pc.get_index(obj));
+        }
+
         for(const std::string& syn : synonyms){
-            dict.emplace(syn, cards);
+            dict.emplace(syn, id_cards);
         }
     }
     return;

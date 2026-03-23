@@ -8,6 +8,7 @@
 #include "ProductRecommendations.h"
 #include "PrefixTree.h"
 #include "UserStateMaching.h"
+#include "PoolCards.h"
 
 #include <unordered_map>
 #include <thread>
@@ -24,6 +25,12 @@ public:
     const char* what() const noexcept override;
 };
 
+class BadInitBotTelegramException : public BotTelegramException{
+public:
+    BadInitBotTelegramException(std::string);
+    
+};
+
 class BotTelegram{
 private:
     std::unordered_map<std::string, TelegramUser> users;
@@ -36,6 +43,7 @@ private:
     ProductSearcher searcher;
     PrefixTree tree;
     UserStateMaching MachingState;
+    PoolCards pc;
 
     void check_message();
     void offset_reload();
@@ -60,7 +68,7 @@ private:
     void send_main_keyboard(const std::string& id) const noexcept;
 
 public:
-    BotTelegram(std::string, RecType type, std::unique_ptr<Matcher>);
+    BotTelegram(std::string, RecType rectype, ProdType prodtype);
 
     BotTelegram(const BotTelegram&) = delete;
     BotTelegram& operator=(const BotTelegram&) = delete;

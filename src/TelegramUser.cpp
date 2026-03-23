@@ -4,12 +4,14 @@ TelegramUserException::TelegramUserException(std::string str) : msg(std::move(st
 
 const char* TelegramUserException::what() const noexcept { return msg.c_str(); }
 
-TelegramUser::TelegramUser(std::string str) : id(std::move(str)) {}
+TelegramUser::TelegramUser(std::string str, const PoolCards& converter) : id(std::move(str)), converter(converter) {}
 
-std::string TelegramUser::get_id() const{
+std::string TelegramUser::get_id() const noexcept
+{
     return id;
 }
 
-std::unordered_set<std::string> TelegramUser::get_cards() const {
+const std::unordered_set<uint32_t>& TelegramUser::get_cards() const noexcept
+{
     return lovely_product;
 }

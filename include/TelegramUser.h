@@ -4,6 +4,7 @@
 //Here is the code that describes the bot user.
 
 #include "TelegramSender.h"
+#include "PoolCards.h"
 
 #include <unordered_set>
 #include <string>
@@ -21,10 +22,11 @@ public:
 class TelegramUser{
 private:
     std::string id;
-    std::unordered_set<std::string> lovely_product;
+    std::unordered_set<uint32_t> lovely_product;
+    const PoolCards& converter;
 
 public:
-    TelegramUser(std::string);
+    TelegramUser(std::string, const PoolCards&);
 
     TelegramUser(const TelegramUser&) = default;
     TelegramUser& operator=(const TelegramUser&) = default;
@@ -41,48 +43,73 @@ public:
     template<typename Type>
     bool is_has_product(Type&&) const;
 
-    std::unordered_set<std::string> get_cards() const;
+    const std::unordered_set<uint32_t>& get_cards() const noexcept;
 
     template<typename Type>
     void notify(Type&&) const;
 
-    std::string get_id() const;
+    std::string get_id() const noexcept;
 };
 
 template<typename Type>
 void TelegramUser::add_product(Type&& str){
-    if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
-        throw TelegramUserException("Value-Type must be a string\n");
-
-    lovely_product.emplace(std::forward<Type>(str));
+    if constexpr(std::is_same<std::decay_t<Type>, std::string>::value){
+        uint32_t temp = converter.get_index(std::forward<Type>(str));
+        lovely_product.emplace(temp);
+    }
+    else if constexpr(std::is_same<std::decay_t<Type>, uint32_t>::value){
+        lovely_product.emplace(std::forward<Type>(str));
+    }
+    else
+        throw TelegramUserException("Value-Type must be string or uint32_t\n");
 }
 
 template<typename Type>
 void TelegramUser::del_product(Type&& str){
-    if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
-        throw TelegramUserException("Value-Type must be a string\n");
-
-    lovely_product.erase(std::forward<Type>(str));
+    if constexpr(std::is_same<std::decay_t<Type>, std::string>::value){
+        uint32_t temp = converter.get_index(std::forward<Type>(str));
+        lovely_product.erase(temp);
+    }
+    else if constexpr(std::is_same<std::decay_t<Type>, uint32_t>::value){
+        lovely_product.erase(std::forward<Type>(str));
+    }
+    else
+        throw TelegramUserException("Value-Type must be string or uint32_t\n");
 }
 
 template<typename Type>
 bool TelegramUser::is_has_product(Type&& str) const {
-    if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
-        throw TelegramUserException("Value-Type must be a string\n");
+    if constexpr(std::is_same<std::decay_t<Type>, std::string>::value){
+        uint32_t temp = converter.get_index(std::forward<Type>(str));
+        return lovely_product.count(temp);
+    }
+    else if constexpr(std::is_same<std::decay_t<Type>, uint32_t>::value){
+        return lovely_product.count(std::forward<Type>(str));
+    }
+    else
+        throw TelegramUserException("Value-Type must be a string or uint32_t\n");
 
-    return lovely_product.count(std::forward<Type>(str));
+    return false;
 }
 
 template<typename Type>
 void TelegramUser::notify(Type&& str) const {
-    if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
-        throw TelegramUserException("Value-Type must be a string\n");
+    if constexpr(std::is_same<std::decay_t<Type>, std::string>::value){
+        uint32_t temp = converter.get_index(str);
+        if(!lovely_product.count(temp))
+            return;
 
-    if(!lovely_product.count(str))
-        return;
-
-    auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, std::forward<Type>(str));
+        TelegramSender::get_instance()->call(id, type_msg::send, std::forward<Type>(str));
+    }
+    else if constexpr(std::is_same<std::decay_t<Type>, uint32_t>::value){
+        if(!lovely_product.count(str))
+            return;
+        
+        std::string temp = converter.get_title(std::forward<Type>(str));
+        TelegramSender::get_instance()->call(id, type_msg::send, std::move(temp));
+    }
+    else
+        throw TelegramUserException("Value-Type must be string or uint32_t\n");
 }
 
 #endif //_TELEGRAM_USER_

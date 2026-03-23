@@ -30,6 +30,11 @@ void Reader::make_note(const std::string& pq, const std::string& name_table, con
         else{
             db.execute(std::string("INSERT INTO ") + name_table + std::string(" (title, price, date) VALUES ($1, $2, $3);"), std::vector<std::string>{title, price, date});
         }
+
+        auto res = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM products WHERE title = $1);"), std::vector<std::string>{title});
+        if(res[0][0] == "f"){
+            db.execute(std::string("INSERT INTO products (title) VALUES ($1)"), std::vector<std::string>{title});
+        }
     }
 }
 

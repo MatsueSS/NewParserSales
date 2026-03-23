@@ -12,7 +12,7 @@ const char* MatrixException::what() const noexcept
 BadTypeMatrixException::BadTypeMatrixException(std::string str) : MatrixException(std::move(str)) {}
 EmptyResultMatrixException::EmptyResultMatrixException(std::string str) : MatrixException(std::move(str)) {}
 
-Matrix::Matrix(const std::unordered_map<std::string, TelegramUser>& m) : matrix(m)
+Matrix::Matrix(const std::unordered_map<std::string, TelegramUser>& m, const PoolCards& c) : matrix(m), pc(c)
 {}
 
 std::vector<std::string> Matrix::recommendation(const std::string& id) const
@@ -22,14 +22,14 @@ std::vector<std::string> Matrix::recommendation(const std::string& id) const
     std::vector<std::string> result;
 
     auto user = matrix.find(id);
-    const std::unordered_set<std::string>& cards = user->second.get_cards();
+    const std::unordered_set<uint32_t>& cards = user->second.get_cards();
 
-    std::unordered_map<std::string, int> freq;
+    std::unordered_map<uint32_t, int> freq;
     for(const auto& obj : matrix){
         if(obj.first == id)
             continue;
         
-        std::unordered_set<std::string> another_cards = obj.second.get_cards();
+        const std::unordered_set<uint32_t>& another_cards = obj.second.get_cards();
 
         for(const auto& card : another_cards){
             if(!user->second.is_has_product(card))
@@ -37,12 +37,12 @@ std::vector<std::string> Matrix::recommendation(const std::string& id) const
         }
     }
 
-    std::priority_queue<std::pair<int, std::string>> que;
+    std::priority_queue<std::pair<int, uint32_t>> que;
     for(const auto& obj : freq)
         que.push({obj.second, obj.first});
 
     while(result.size() != 3 && !que.empty()){
-        result.push_back(que.top().second);
+        result.push_back(pc.get_title(que.top().second).get_title());
         que.pop();
     }
 
