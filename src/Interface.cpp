@@ -55,7 +55,7 @@ void Interface::start_process() const {
         PostgresDB db;
         db.connect(get_conn());
 
-        auto discounts = db.fetch(std::string("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;"), std::vector<std::string>{date});
+        auto discounts = db.fetch(std::string("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;"), std::vector<std::string>{get_date_str_now()});
 
         for(const auto& obj : discounts){
             ptr->notify_all(obj[0]);

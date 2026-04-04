@@ -91,7 +91,7 @@ auto Forecast::dispersion(Container&& container) const
     if(container.size() == 0)
         throw ZeroDivisionForecastException("Zero division\n");
 
-    double mean = median(container); //need mean
+    double mean = mean(container);
     double disper = 0;
     for(const auto& obj: container){
         disper += *obj;

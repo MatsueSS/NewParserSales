@@ -22,7 +22,7 @@ class NotExistParserException : public ParserException {
 public:
     NotExistParserException(std::string msg);
     
-}
+};
 
 struct ProductData{
     std::string title;

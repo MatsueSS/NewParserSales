@@ -60,18 +60,11 @@ public:
 
     bool is_connect() const;
 
-    //need pre-conect on postgres-user for make a new db
-    template<typename Type>
-    bool make_db(Type&& conn) const;
-
     template<typename Container, typename Type>
     bool execute(Type&& query, Container&& container) const;
 
     template<typename Container, typename Type>
     std::vector<std::vector<std::string>> fetch(Type&& query, Container&& container) const;
-
-    // template<typename Type>
-    // std::vector<std::vector<std::string>> simple_query(Type&& query) const;
 
     void close();
 
@@ -102,28 +95,6 @@ bool PostgresDB::connect(Type&& data)
         temp_conn, 
         [](PGconn* ptr){ PQfinish(ptr); }
     );
-
-    return 1;
-}
-
-template<typename Type>
-bool PostgresDB::make_db(Type&& data) const
-{
-    if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value){
-        throw BadTypeValueDBexception("Value must be string\n");
-    }
-
-    if(!conn)
-        throw BadConnectionDBexception("No connect\n");
-
-    PGresultPTR result (
-        PQexec(conn.get(), ("CREATE DATABASE " + data).c_str()),
-        [](PGresult* res){ PQclear(res); }
-    );
-
-    if(PQresultStatus(result.get()) != PGRES_COMMAND_OK){
-        throw ErrorQueryResultDBexception("Cannot be create db\n");
-    }
 
     return 1;
 }

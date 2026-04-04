@@ -57,8 +57,6 @@ private:
     void command_recommendations(std::string&&);
     void command_has_discount(std::string&&, std::string&&);
 
-    std::pair<std::string, std::string> get_command_and_data(const std::string& message) noexcept;
-
     void init_tree() noexcept;
 
     void stop();
@@ -85,6 +83,7 @@ public:
     template<typename Type>
     bool is_has_user(Type&&) const;
 
+    // send users notify
     template<typename Type>
     void notify_all(Type&&) const;
 
@@ -124,27 +123,5 @@ void BotTelegram::notify_all(Type&& notifi) const {
     for(const auto& obj : users)
         obj.second.notify(notifi);
 }
-
-// template<typename Type>
-// void BotTelegram::notify_user_added(Type&& user)
-// {
-//     if constexpr(!std::is_same<std::decay_t<Type>, TelegramUser>::value)
-//         throw BotTelegramException("Value-Type must be a TelegramUser\n");
-
-//     for(auto obs : observers){
-//         obs->on_user_added(std::forward<Type>(user));
-//     }
-// }
-
-// template<typename Type>
-// void BotTelegram::notify_user_updated(Type&& user)
-// {
-//     if constexpr(!std::is_same<std::decay_t<Type>, TelegramUser>::value)
-//         throw BotTelegramException("Value-Type must be a TelegramUser\n");
-
-//     for(auto obs : observers){
-//         obs->on_user_updated(std::forward<Type>(user));
-//     }
-// }
 
 #endif //_BOT_TELEGRAM_H_

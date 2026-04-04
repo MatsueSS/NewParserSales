@@ -215,19 +215,6 @@ void BotTelegram::send_main_keyboard(const std::string& id) const noexcept
     ptr->send_with_keyboard(id, message, keyboard_json);
 }
 
-std::pair<std::string, std::string> BotTelegram::get_command_and_data(const std::string& message) noexcept
-{
-    std::string command, data;
-    std::size_t spacePos = message.find(' ');
-    if(spacePos != std::string::npos){
-        command = message.substr(0, spacePos);
-        data = message.substr(spacePos+1);
-    } else {
-        command = message;
-    }
-    return {command, data};
-}
-
 void BotTelegram::offset_reload()
 {
     long long oset = std::stoll(offset);
