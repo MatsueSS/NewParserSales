@@ -4,13 +4,15 @@
 #include "Matcher.h"
 #include "PoolCards.h"
 
+#include <memory>
+
 class FileMatcher : public Matcher {
 public:
-    FileMatcher(const std::string& filename, const PoolCards& pc);
+    FileMatcher(const std::string& filename, std::shared_ptr<PoolCards> ptr_pc);
 
 private:
     std::string filename;
-    const PoolCards& pc;
+    std::shared_ptr<PoolCards> ptr_pc;
 
     std::vector<std::string> parse(std::string&& str);
 

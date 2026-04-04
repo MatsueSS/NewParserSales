@@ -34,10 +34,10 @@ public:
 class Matrix : public Recommendations{
 private:
     const std::unordered_map<std::string, TelegramUser>& matrix;
-    const PoolCards& pc;
+    std::shared_ptr<PoolCards> ptr_pc;
 
 public:
-    Matrix(const std::unordered_map<std::string, TelegramUser>&, const PoolCards&);
+    Matrix(const std::unordered_map<std::string, TelegramUser>&, std::shared_ptr<PoolCards> ptr_pc);
 
     virtual void add_user(const std::string& id) override {};
     virtual void del_user(const std::string& id) override {};

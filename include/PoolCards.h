@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <shared_mutex>
 
 class PoolCardsException : public std::exception{
 protected:
@@ -40,6 +41,7 @@ public:
 private:
     std::vector<Product> id_to_title;
     std::unordered_map<std::string, uint32_t> title_to_id;
+    mutable std::shared_mutex mutex;
 
 };
 
@@ -48,6 +50,8 @@ uint32_t PoolCards::get_index(Data&& title) const noexcept
 {
     if constexpr(!std::is_same<std::decay_t<Data>, std::string>::value)
         throw BadTypePoolCardsException("Value type must be string");
+
+    std::shared_lock<std::shared_mutex> lock(mutex);
 
     auto it = title_to_id.find(std::forward<Data>(title));
     return it == title_to_id.end() ? 0 : it->second;

@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iostream>
 
-FileMatcher::FileMatcher(const std::string& filename, const PoolCards& pc) : filename(filename), pc(pc)
+FileMatcher::FileMatcher(const std::string& filename, std::shared_ptr<PoolCards> ptr_pc) : filename(filename), ptr_pc(ptr_pc)
 {
     load_data();
 }
@@ -29,7 +29,7 @@ void FileMatcher::load_data()
 
         std::vector<uint32_t> id_cards;
         for(const auto& obj : cards){
-            id_cards.push_back(pc.get_index(obj));
+            id_cards.push_back(ptr_pc->get_index(obj));
         }
 
         for(const std::string& syn : synonyms){

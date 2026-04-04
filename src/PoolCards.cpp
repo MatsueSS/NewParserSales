@@ -22,5 +22,6 @@ PoolCards::PoolCards()
 
 const Product& PoolCards::get_title(uint32_t id) const noexcept
 {
+    std::shared_lock<std::shared_mutex> lock(mutex);
     return id_to_title.at(id);
 }

@@ -23,10 +23,10 @@ class TelegramUser{
 private:
     std::string id;
     std::unordered_set<uint32_t> lovely_product;
-    const PoolCards& converter;
+    std::shared_ptr<PoolCards> ptr_pc;
 
 public:
-    TelegramUser(std::string, const PoolCards&);
+    TelegramUser(std::string, std::shared_ptr<PoolCards> ptr_pc);
 
     TelegramUser(const TelegramUser&) = default;
     TelegramUser& operator=(const TelegramUser&) = default;
@@ -54,7 +54,7 @@ public:
 template<typename Type>
 void TelegramUser::add_product(Type&& str){
     if constexpr(std::is_same<std::decay_t<Type>, std::string>::value){
-        uint32_t temp = converter.get_index(std::forward<Type>(str));
+        uint32_t temp = ptr_pc->get_index(std::forward<Type>(str));
         lovely_product.emplace(temp);
     }
     else if constexpr(std::is_same<std::decay_t<Type>, uint32_t>::value){
@@ -67,7 +67,7 @@ void TelegramUser::add_product(Type&& str){
 template<typename Type>
 void TelegramUser::del_product(Type&& str){
     if constexpr(std::is_same<std::decay_t<Type>, std::string>::value){
-        uint32_t temp = converter.get_index(std::forward<Type>(str));
+        uint32_t temp = ptr_pc->get_index(std::forward<Type>(str));
         lovely_product.erase(temp);
     }
     else if constexpr(std::is_same<std::decay_t<Type>, uint32_t>::value){
@@ -80,7 +80,7 @@ void TelegramUser::del_product(Type&& str){
 template<typename Type>
 bool TelegramUser::is_has_product(Type&& str) const {
     if constexpr(std::is_same<std::decay_t<Type>, std::string>::value){
-        uint32_t temp = converter.get_index(std::forward<Type>(str));
+        uint32_t temp = ptr_pc->get_index(std::forward<Type>(str));
         return lovely_product.count(temp);
     }
     else if constexpr(std::is_same<std::decay_t<Type>, uint32_t>::value){
@@ -95,7 +95,7 @@ bool TelegramUser::is_has_product(Type&& str) const {
 template<typename Type>
 void TelegramUser::notify(Type&& str) const {
     if constexpr(std::is_same<std::decay_t<Type>, std::string>::value){
-        uint32_t temp = converter.get_index(str);
+        uint32_t temp = ptr_pc->get_index(str);
         if(!lovely_product.count(temp))
             return;
 
@@ -105,7 +105,7 @@ void TelegramUser::notify(Type&& str) const {
         if(!lovely_product.count(str))
             return;
         
-        std::string temp = converter.get_title(std::forward<Type>(str));
+        std::string temp = ptr_pc->get_title(std::forward<Type>(str));
         TelegramSender::get_instance()->call(id, type_msg::send, std::move(temp));
     }
     else

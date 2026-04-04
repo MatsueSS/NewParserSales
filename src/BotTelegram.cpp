@@ -14,15 +14,17 @@
 BotTelegram::BotTelegram(std::string offset, RecType rectype, ProdType prodtype) 
     : flag(true), offset(std::move(offset))
 {
+    ptr_pc = std::make_shared<PoolCards>();
+
     if(rectype == RecType::MATRIX){
-        std::unique_ptr<Recommendations> ptr = std::make_unique<Matrix>(users, pc);
+        std::unique_ptr<Recommendations> ptr = std::make_unique<Matrix>(users, ptr_pc);
         observer.set_strategy(std::move(ptr));
     } else{
         throw BadInitBotTelegramException("Haven't execute this strategy\n");
     }
 
     if(prodtype == ProdType::FILE_SEARCHER){
-        std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt", pc);
+        std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt", ptr_pc);
         searcher.set_strategy(std::move(ptr));
     } else{
         throw BadInitBotTelegramException("Haven't execute this strategy\n");
@@ -52,7 +54,7 @@ void BotTelegram::load_users_from_db()
 
     for(const auto& cont : res){
         observer.add_user(cont[0]);
-        TelegramUser user(cont[0], pc);
+        TelegramUser user(cont[0], ptr_pc);
         add_user(std::move(user));
     }
 
@@ -236,7 +238,7 @@ void BotTelegram::offset_reload()
 
 void BotTelegram::command_start(std::string&& id)
 {
-    TelegramUser user(id, pc);
+    TelegramUser user(id, ptr_pc);
     observer.add_user(id);
     this->add_user(std::move(user));
 
@@ -335,7 +337,7 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
     if(search_result){
         found = true;
         for(const auto& obj : *search_result){
-            std::string temp = pc.get_title(obj).get_title();
+            std::string temp = ptr_pc->get_title(obj).get_title();
             user->second.add_product(temp);
             observer.add_card(id, temp);
             try{
@@ -439,7 +441,7 @@ void BotTelegram::command_my_cards(std::string&& id)
     std::string result = "Ваши карточки:\n";
     auto cards = user->second.get_cards();
     for(const auto& obj : cards){
-        result += pc.get_title(obj).get_title() + "\n";
+        result += ptr_pc->get_title(obj).get_title() + "\n";
     }
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, result);

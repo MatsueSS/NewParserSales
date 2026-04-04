@@ -12,7 +12,7 @@ const char* MatrixException::what() const noexcept
 BadTypeMatrixException::BadTypeMatrixException(std::string str) : MatrixException(std::move(str)) {}
 EmptyResultMatrixException::EmptyResultMatrixException(std::string str) : MatrixException(std::move(str)) {}
 
-Matrix::Matrix(const std::unordered_map<std::string, TelegramUser>& m, const PoolCards& c) : matrix(m), pc(c)
+Matrix::Matrix(const std::unordered_map<std::string, TelegramUser>& m, std::shared_ptr<PoolCards> ptr_pc) : matrix(m), ptr_pc(ptr_pc)
 {}
 
 std::vector<std::string> Matrix::recommendation(const std::string& id) const
@@ -42,7 +42,7 @@ std::vector<std::string> Matrix::recommendation(const std::string& id) const
         que.push({obj.second, obj.first});
 
     while(result.size() != 3 && !que.empty()){
-        result.push_back(pc.get_title(que.top().second).get_title());
+        result.push_back(ptr_pc->get_title(que.top().second).get_title());
         que.pop();
     }
 

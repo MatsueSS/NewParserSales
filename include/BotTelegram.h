@@ -43,7 +43,7 @@ private:
     ProductSearcher searcher;
     PrefixTree tree;
     UserStateMaching MachingState;
-    PoolCards pc;
+    std::shared_ptr<PoolCards> ptr_pc;
 
     void check_message();
     void offset_reload();
