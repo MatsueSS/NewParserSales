@@ -5,18 +5,12 @@
 // Takes all information from the file
 
 #include "Matcher.h"
-#include "PoolCards.h"
-
-#include <memory>
 
 class FileMatcher : public Matcher {
 public:
     FileMatcher(const std::string& filename, std::shared_ptr<PoolCards> ptr_pc);
 
 private:
-    std::string filename;
-    std::shared_ptr<PoolCards> ptr_pc;
-
     // Divides by character of a string
     std::vector<std::string> parse(std::string&& str);
 

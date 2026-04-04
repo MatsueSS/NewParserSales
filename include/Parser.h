@@ -24,6 +24,12 @@ public:
     
 };
 
+class BadTypeFactoryParserException : public ParserException {
+public:
+    BadTypeFactoryParserException(std::string msg);
+    
+};
+
 struct ProductData{
     std::string title;
     std::string price;

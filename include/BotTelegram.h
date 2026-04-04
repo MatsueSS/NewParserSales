@@ -10,9 +10,7 @@
 #include "UserStateMaching.h"
 #include "PoolCards.h"
 
-#include <unordered_map>
 #include <thread>
-#include <vector>
 #include <set>
 
 class BotTelegramException : public std::exception{
@@ -33,17 +31,17 @@ public:
 
 class BotTelegram{
 private:
-    std::unordered_map<std::string, TelegramUser> users;
+    std::shared_ptr<std::unordered_map<std::string, TelegramUser>> users;
     std::atomic<bool> flag;
     std::thread worker;
     std::string offset;
     std::set<std::string> users_with_keyboard;
 
+    std::shared_ptr<PoolCards> ptr_pc;
     ProductRecommendations observer;
     ProductSearcher searcher;
     PrefixTree tree;
     UserStateMaching MachingState;
-    std::shared_ptr<PoolCards> ptr_pc;
 
     void check_message();
     void offset_reload();
@@ -96,7 +94,7 @@ void BotTelegram::add_user(Type&& user){
         throw BotTelegramException("Value-Type must be a TelegramUser\n");
 
     auto id = user.get_id();
-    auto [it, inserted] = users.insert({id, std::forward<Type>(user)});
+    auto [it, inserted] = users->insert({id, std::forward<Type>(user)});
 }
 
 template<typename Type>
@@ -104,7 +102,7 @@ void BotTelegram::del_user(Type&& user){
     if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
         throw BotTelegramException("Value-Type must be a string\n");
 
-    users.erase(user);
+    users->erase(user);
 }
 
 template<typename Type>
@@ -112,7 +110,7 @@ bool BotTelegram::is_has_user(Type&& user) const {
     if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
         throw BotTelegramException("Value-type must be a string\n");
 
-    return users.count(user);
+    return users->count(user);
 }
 
 template<typename Type>
@@ -120,7 +118,7 @@ void BotTelegram::notify_all(Type&& notifi) const {
     if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
         throw BotTelegramException("Value-Type must be a string\n");
 
-    for(const auto& obj : users)
+    for(const auto& obj : *users)
         obj.second.notify(notifi);
 }
 

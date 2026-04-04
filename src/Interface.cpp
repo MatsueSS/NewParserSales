@@ -3,24 +3,17 @@
 #include "good_funcs.h"
 #include "PyLoader.h"
 #include "json.hpp"
-#include "Matrix.h"
-#include "PyAutoClickParser.h"
-#include "PyHTMLParser.h"
+#include "Recommendations.h"
 #include "PostgresDB.h"
+#include "FactoryParser.h"
 
-#include <iostream>
 #include <sstream>
 #include <chrono>
 #include <fstream>
 
 Interface::Interface(std::string str, RecType rectype, ProdType prodtype, TypeParses typeparser) : ptr(std::make_unique<BotTelegram>(std::move(str), rectype, prodtype)) 
 {
-    if(typeparser == TypeParses::PY_AUTOCLICK_PARSER){
-        pr.set_strategy(std::move(std::make_unique<PyAutoClickParser>()));
-    }
-    else if(typeparser == TypeParses::PY_HTML_PARSER){
-        pr.set_strategy(std::move(std::make_unique<PyHTMLParser>()));
-    }
+    pr = std::move(FactoryParser::create(TypeParses::PY_AUTOCLICK_PARSER));
 }
 
 bool Interface::control_date() const 

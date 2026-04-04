@@ -24,6 +24,7 @@ public:
 class Product{
 public:
     Product() = default;
+    
     Product(const std::string& title, uint32_t id);
     Product(std::string&&, uint32_t id);
 

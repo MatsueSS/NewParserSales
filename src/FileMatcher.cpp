@@ -1,10 +1,9 @@
 #include "FileMatcher.h"
 
-#include <fstream>
 #include <sstream>
-#include <iostream>
+#include <fstream>
 
-FileMatcher::FileMatcher(const std::string& filename, std::shared_ptr<PoolCards> ptr_pc) : filename(filename), ptr_pc(ptr_pc)
+FileMatcher::FileMatcher(const std::string& filename, std::shared_ptr<PoolCards> ptr_pc) : Matcher(filename, ptr_pc)
 {
     load_data();
 }

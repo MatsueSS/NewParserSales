@@ -5,10 +5,6 @@
 
 #include <memory>
 
-enum class RecType {
-    MATRIX
-};
-
 class ProductRecommendations{
 public:
     ProductRecommendations() = default;

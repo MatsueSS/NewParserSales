@@ -5,10 +5,6 @@
 
 #include <memory>
 
-enum ProdType{
-    FILE_SEARCHER
-};
-
 class ProductSearcher{
 public:
     ProductSearcher() = default;

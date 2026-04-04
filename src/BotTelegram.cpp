@@ -1,35 +1,24 @@
 #include "BotTelegram.h"
+
 #include "JsonReader.h"
 #include "good_funcs.h"
 #include "json.hpp"
 #include "PostgresDB.h"
 #include "Forecast.h"
-#include "Matrix.h"
-#include "FileMatcher.h"
+#include "FactoryRecommendations.h"
+#include "FactorySearcher.h"
 
 #include <chrono>
 #include <fstream>
-#include <vector>
 
 BotTelegram::BotTelegram(std::string offset, RecType rectype, ProdType prodtype) 
-    : flag(true), offset(std::move(offset))
+    : flag(true)
+    , offset(std::move(offset))
+    , ptr_pc(std::make_shared<PoolCards>())
+    , users(std::make_shared<std::unordered_map<std::string, TelegramUser>>())
+    , observer(FactoryRecommendations::create(rectype, ptr_pc, users))
+    , searcher(FactoryMatcher::create(prodtype, "../sensetive_res/new_dict.txt", ptr_pc))
 {
-    ptr_pc = std::make_shared<PoolCards>();
-
-    if(rectype == RecType::MATRIX){
-        std::unique_ptr<Recommendations> ptr = std::make_unique<Matrix>(users, ptr_pc);
-        observer.set_strategy(std::move(ptr));
-    } else{
-        throw BadInitBotTelegramException("Haven't execute this strategy\n");
-    }
-
-    if(prodtype == ProdType::FILE_SEARCHER){
-        std::unique_ptr<Matcher> ptr = std::make_unique<FileMatcher>("../sensetive_res/new_dict.txt", ptr_pc);
-        searcher.set_strategy(std::move(ptr));
-    } else{
-        throw BadInitBotTelegramException("Haven't execute this strategy\n");
-    }
-
     load_users_from_db();
     init_tree();
 
@@ -53,7 +42,6 @@ void BotTelegram::load_users_from_db()
     }
 
     for(const auto& cont : res){
-        observer.add_user(cont[0]);
         TelegramUser user(cont[0], ptr_pc);
         add_user(std::move(user));
     }
@@ -71,11 +59,10 @@ void BotTelegram::load_users_from_db()
     }
 
     for(const auto& cont : res){
-        auto it = users.find(cont[0]);
-        if(it == users.end()){
+        auto it = users->find(cont[0]);
+        if(it == users->end()){
             throw BotTelegramException("critical error with starting programm - the user is missing from the users table, but is present in the preferences table");
         }
-        observer.add_card(cont[0], cont[1]);
         it->second.add_product(cont[1]);
     }
 }
@@ -268,7 +255,7 @@ void BotTelegram::command_has_discount(std::string&& id, std::string&& card)
         offset_reload();
         return;
     }
-    auto user = users.find(id);
+    auto user = users->find(id);
 
     PostgresDB db;
     std::string conn = get_conn();
@@ -309,7 +296,7 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         offset_reload();
         return;
     }
-    auto user = users.find(id);
+    auto user = users->find(id);
     
     PostgresDB db;
     std::string conn = get_conn();
@@ -326,7 +313,6 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         for(const auto& obj : *search_result){
             std::string temp = ptr_pc->get_title(obj).get_title();
             user->second.add_product(temp);
-            observer.add_card(id, temp);
             try{
                 db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, temp});
             } catch(BadConnectionDBexception& e){
@@ -353,7 +339,6 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
         } else{
             found = true;
             user->second.add_product(std::string(data));
-            observer.add_card(id, data);
             try{
                 db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, data});
             } catch(BadConnectionDBexception& e){
@@ -379,7 +364,7 @@ void BotTelegram::command_del_card(std::string&& id, std::string&& data)
         offset_reload();
         return;
     }
-    auto user = users.find(id);
+    auto user = users->find(id);
     user->second.del_product(data);
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::string("Карточка удалена\n"));
@@ -394,29 +379,20 @@ void BotTelegram::command_del_card(std::string&& id, std::string&& data)
     } catch(ErrorQueryResultDBexception& e) {
         db.execute(std::string("DELETE FROM preferences WHERE id = $1 AND preference = $2;"), std::vector<std::string>{id, data});
     }
-    observer.del_card(id, data);
 }
 
 void BotTelegram::command_status(std::string&& id)
 {
-    auto user = users.find(id);
+    auto user = users->find(id);
     std::string result = "Ваши скидки:\n";
-    nlohmann::json data;
-    std::ifstream file("../sensetive_res/products_discount.json");
-    data = nlohmann::json::parse(file);
-    for(const auto& obj : data["products"]){
-        std::string card = obj["title"];
-        if(!user->second.is_has_product(card))
-            continue;;
-        std::string price = obj["price"];
-        if(obj.contains("discount")){
-            std::string discount = obj["discount"];
-            if(user->second.is_has_product(card))
-                result += (card + "\nцена: " + price + "\nскидка: " + discount + '\n');
-        }
-        else{
-            result += (card + " цена: " + price + '\n');
-        }
+
+    PostgresDB db;
+    db.connect(get_conn());
+
+    auto res = db.fetch(std::string("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;"), std::vector<std::string>{get_date_str_now()});
+
+    for(const auto& obj : res){
+        if(user->second.is_has_product(obj[0])) result += obj[0] + '\n';
     }
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, result);
@@ -424,7 +400,7 @@ void BotTelegram::command_status(std::string&& id)
 
 void BotTelegram::command_my_cards(std::string&& id)
 {
-    auto user = users.find(id);
+    auto user = users->find(id);
     std::string result = "Ваши карточки:\n";
     auto cards = user->second.get_cards();
     for(const auto& obj : cards){

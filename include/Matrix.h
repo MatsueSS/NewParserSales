@@ -4,12 +4,9 @@
 //Here is the code that allows you to read recommendations for users
 
 #include "Recommendations.h"
-#include "TelegramUser.h"
 
 #include <unordered_map>
-#include <unordered_set>
 #include <type_traits>
-#include <exception>
 
 class MatrixException : public std::exception {
 protected:
@@ -32,12 +29,8 @@ public:
 };
 
 class Matrix : public Recommendations{
-private:
-    const std::unordered_map<std::string, TelegramUser>& matrix;
-    std::shared_ptr<PoolCards> ptr_pc;
-
 public:
-    Matrix(const std::unordered_map<std::string, TelegramUser>&, std::shared_ptr<PoolCards> ptr_pc);
+    Matrix(std::shared_ptr<PoolCards> ptr_pc, std::shared_ptr<std::unordered_map<std::string, TelegramUser>> matrix);
 
     virtual void add_user(const std::string& id) override {};
     virtual void del_user(const std::string& id) override {};

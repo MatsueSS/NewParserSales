@@ -12,20 +12,20 @@ const char* MatrixException::what() const noexcept
 BadTypeMatrixException::BadTypeMatrixException(std::string str) : MatrixException(std::move(str)) {}
 EmptyResultMatrixException::EmptyResultMatrixException(std::string str) : MatrixException(std::move(str)) {}
 
-Matrix::Matrix(const std::unordered_map<std::string, TelegramUser>& m, std::shared_ptr<PoolCards> ptr_pc) : matrix(m), ptr_pc(ptr_pc)
+Matrix::Matrix(std::shared_ptr<PoolCards> ptr_pc, std::shared_ptr<std::unordered_map<std::string, TelegramUser>> m) : Recommendations(ptr_pc, m)
 {}
 
 std::vector<std::string> Matrix::recommendation(const std::string& id) const
 {
-    if(!matrix.count(id))
+    if(!matrix->count(id))
         throw EmptyResultMatrixException("User must be added\n");
     std::vector<std::string> result;
 
-    auto user = matrix.find(id);
+    auto user = matrix->find(id);
     const std::unordered_set<uint32_t>& cards = user->second.get_cards();
 
     std::unordered_map<uint32_t, int> freq;
-    for(const auto& obj : matrix){
+    for(const auto& obj : *matrix){
         if(obj.first == id)
             continue;
         

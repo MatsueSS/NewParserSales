@@ -12,6 +12,8 @@ const char* ParserException::what() const noexcept { return msg.c_str(); }
 
 NotExistParserException::NotExistParserException(std::string msg) : ParserException(std::move(msg)) {}
 
+BadTypeFactoryParserException::BadTypeFactoryParserException(std::string msg) : ParserException(std::move(msg)) {}
+
 std::vector<ProductData> Parser::parse_json(std::string filename) const
 {
     std::ifstream file(filename);
