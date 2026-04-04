@@ -4,6 +4,25 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <exception>
+
+class ParserException : public std::exception {
+protected:
+    std::string msg;
+
+public:
+    ParserException(std::string msg);
+    ParserException(const ParserException&);
+
+    const char* what() const noexcept override;
+
+};
+
+class NotExistParserException : public ParserException {
+public:
+    NotExistParserException(std::string msg);
+    
+}
 
 struct ProductData{
     std::string title;

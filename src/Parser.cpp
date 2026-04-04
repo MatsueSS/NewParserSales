@@ -4,10 +4,18 @@
 
 #include <fstream>
 
+ParserException::ParserException(std::string msg) : msg(std::move(msg)) {}
+
+ParserException::ParserException(const ParserException& obj) : msg(obj.msg) {}
+
+const char* ParserException::what() const noexcept { return msg.c_str(); }
+
+NotExistParserException::NotExistParserException(std::string msg) : ParserException(std::move(msg)) {}
+
 std::vector<ProductData> Parser::parse_json(std::string filename) const
 {
     std::ifstream file(filename);
-    if(!file.is_open()) throw "";
+    if(!file.is_open()) throw NotExistParserException("File not exist - " + filename + '\n');
 
     nlohmann::json data = nlohmann::json::parse(file);
     std::string date = data["date"];
