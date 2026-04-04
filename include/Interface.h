@@ -5,13 +5,17 @@
 
 #include "BotTelegram.h"
 
+#include "ProductParser.h"
+
 class Interface{
     std::unique_ptr<BotTelegram> ptr;
+    ProductParser pr;
 
     bool control_date() const;
+    std::string save_in_bd(std::vector<ProductData>&& obj) const;
     
 public:
-    Interface(std::string, RecType rectype, ProdType prodtype);
+    Interface(std::string, RecType rectype, ProdType prodtype, TypeParses typeparser);
 
     Interface(const Interface&) = delete;
     Interface& operator=(const Interface&) = delete;

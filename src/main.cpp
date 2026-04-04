@@ -3,13 +3,14 @@
 
 #include "good_funcs.h"
 #include "BotTelegram.h"
-#include "Reader.h"
 #include "Interface.h"
 #include "PostgresDB.h"
 #include "PyLoader.h"
 #include "FileMatcher.h"
 #include "Matrix.h"
 #include "PoolCards.h"
+#include "ProductParser.h"
+#include "PyAutoClickParser.h"
 
 int main(void)
 {
@@ -40,7 +41,7 @@ int main(void)
 
 //start
 
-    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER);
+    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
     while(true){
         inter.start_process();

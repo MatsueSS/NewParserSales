@@ -2,21 +2,30 @@
 #include "JsonReader.h"
 #include "good_funcs.h"
 #include "PyLoader.h"
-#include "Reader.h"
 #include "json.hpp"
 #include "Matrix.h"
+#include "PyAutoClickParser.h"
+#include "PyHTMLParser.h"
+#include "PostgresDB.h"
 
 #include <iostream>
 #include <sstream>
 #include <chrono>
 #include <fstream>
 
-Interface::Interface(std::string str, RecType rectype, ProdType prodtype) : ptr(std::make_unique<BotTelegram>(std::move(str), rectype, prodtype)) 
-{}
+Interface::Interface(std::string str, RecType rectype, ProdType prodtype, TypeParses typeparser) : ptr(std::make_unique<BotTelegram>(std::move(str), rectype, prodtype)) 
+{
+    if(typeparser == TypeParses::PY_AUTOCLICK_PARSER){
+        pr.set_strategy(std::move(std::make_unique<PyAutoClickParser>()));
+    }
+    else if(typeparser == TypeParses::PY_HTML_PARSER){
+        pr.set_strategy(std::move(std::make_unique<PyHTMLParser>()));
+    }
+}
 
 bool Interface::control_date() const 
 {
-    auto res = JsonReader::read(std::string("jq -r '.date' ../sensetive_res/products_discount.json"), type_json::products);
+    auto res = JsonReader::read(std::string("jq -r '.date' ../sensetive_res/products.json"), type_json::products);
     std::string date_str = res[0];
     std::istringstream ss(date_str);
     char delimiter;
@@ -40,71 +49,42 @@ bool Interface::control_date() const
 void Interface::start_process() const {
     bool flag = control_date();
     if(flag){
-        //PyLoader::load("bash -c 'python3 ../py_scripts/ex.py'");
-        //PyLoader::load("bash -c 'python3 ../py_scripts/proxy_test.py'");
-        //PyLoader::load("bash -c 'python3 ../py_scripts/2.py'");
-        Reader reader;
-        reader.make_note(get_conn(), "cards", "products");
-        reader.make_a_json(get_conn());
+        auto cards = pr.fetch_product();
 
-        std::ifstream file("../sensetive_res/products_discount.json");
-        nlohmann::json j = nlohmann::json::parse(file);
+        auto date = save_in_bd(std::move(cards));
+        PostgresDB db;
+        db.connect(get_conn());
 
-        for(const auto& obj : j["products"]){
-            std::string title = obj["title"], discount = obj["discount"];
-            ptr->notify_all(title);
+        auto discounts = db.fetch(std::string("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;"), std::vector<std::string>{date});
+
+        for(const auto& obj : discounts){
+            ptr->notify_all(obj[0]);
         }
     }
     std::this_thread::sleep_for(std::chrono::seconds(10));
 }
 
-// void Interface::temp_parse()
-// {
-//     std::vector<std::vector<std::string>> cards;
-//     for(int i = 1; i <= 40; ++i){
-//         std::ifstream file("../temps/temp_" + std::to_string(i) + ".json");
+std::string Interface::save_in_bd(std::vector<ProductData>&& obj) const
+{
+    PostgresDB db;
+    db.connect(get_conn());
+    
+    nlohmann::json data;
+    std::ifstream file("../sensetive_res/products.json");
+    data = nlohmann::json::parse(file);
+    std::string date = data["date"];
+    for(const auto& obj : data["products"]){
+        if(obj.contains("discount")){
+            db.execute(std::string("INSERT INTO cards (title, price, discount, date) VALUES ($1, $2, $3, $4);"), std::vector<std::string>{obj["title"], obj["price"], obj["discount"], date});
+        }
+        else{
+            db.execute(std::string("INSERT INTO cards (title, price, date) VALUES ($1, $2, $3);"), std::vector<std::string>{obj["title"], obj["price"], date});
+        }
 
-//         if(!file.is_open()) continue;
-
-//         nlohmann::json data = nlohmann::json::parse(file);
-//         auto products = data["products"];
-
-//         for(const auto& product : products){
-//             std::vector<std::string> t;
-//             t.emplace_back(product["name"]);
-//             const auto& prices = product["prices"];
-//             t.emplace_back(prices["regular"]);
-        
-//             if (prices.contains("discount") && !prices["discount"].is_null()) {
-//                 t.emplace_back(prices["discount"]);
-//             }
-//             cards.emplace_back(std::move(t));
-//         }
-//     }
-
-//     nlohmann::json new_data;
-//     new_data["date"] = get_date_str_now();
-
-//     new_data["products"] = nlohmann::json::array();
-
-//     std::unordered_map<std::string, card> hmap;
-
-//     for(const auto& obj : cards){
-//         card c;
-//         c.title = obj[0];
-//         c.price = obj[1];
-//         if(obj.size() == 3) c.discount = obj[2];
-//         hmap.emplace(std::string(obj[0]), c);
-//     }
-
-//     for(const auto& vec : hmap){
-//         nlohmann::json product;
-//         product["title"] = vec.second.title;
-//         product["price"] = vec.second.price;
-//         product["discount"] = vec.second.discount;
-//         new_data["products"].push_back(product);
-//     }
-
-//     std::ofstream file("../sensetive_res/products.json");
-//     file << new_data.dump(4);
-// }
+        auto res = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM products WHERE title = $1);"), std::vector<std::string>{obj["title"]});
+        if(res[0][0] == "f"){
+            db.execute(std::string("INSERT INTO products (title) VALUES ($1)"), std::vector<std::string>{obj["title"]});
+        }
+    }
+    return date;
+}

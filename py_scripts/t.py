@@ -113,7 +113,7 @@ def main():
         input(f"\n⏎ Нажмите Enter после копирования JSON...")
         
         # Сохраняем в файл temp_i.json
-        filename = f"temp_{i}.json"
+        filename = f"../temps/temp_{i}.json"
         print(f"\n💾 Сохраняю данные...")
         
         if save_clipboard_to_file(filename):
@@ -142,16 +142,6 @@ def main():
     print("="*70)
     print(f"✅ Успешно сохранено: {success_count}/{len(URLS)} файлов")
     print(f"📁 Файлы сохранены как: temp_1.json, temp_2.json, ...")
-    
-    # Проверяем созданные файлы
-    print("\n📋 Список созданных файлов:")
-    for i in range(1, len(URLS) + 1):
-        filename = f"../temps/temp_{i}.json"
-        if os.path.exists(filename):
-            size = os.path.getsize(filename)
-            print(f"   ✅ temp_{i}.json - {size} байт")
-        else:
-            print(f"   ❌ temp_{i}.json - не создан")
     
     print("\n✨ Готово!")
 

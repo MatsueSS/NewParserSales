@@ -17,7 +17,6 @@ add_executable(${PROJECT_NAME}
     src/TelegramUser.cpp
     src/good_funcs.cpp
     src/BotTelegram.cpp
-    src/Reader.cpp
     src/Interface.cpp
     src/Forecast.cpp
     src/Matrix.cpp
@@ -28,6 +27,10 @@ add_executable(${PROJECT_NAME}
     src/ProductRecommendations.cpp
     src/PoolCards.cpp
     src/Product.cpp
+    src/Parser.cpp
+    src/ProductParser.cpp
+    src/PyAutoClickParser.cpp
+    src/PyHTMLParser.cpp
 )
 
 find_package(PostgreSQL REQUIRED)
