@@ -81,7 +81,7 @@ auto Forecast::median(Container&& container) const
     std::sort(temp.begin(), temp.end());
     if(temp.size() % 2 == 0)
         return (temp[temp.size()/2-1]+temp[temp.size()/2])/2;
-    return temp[temp.size()];
+    return temp[temp.size()-1];
 }
 
 template<typename Container>
@@ -94,7 +94,7 @@ auto Forecast::dispersion(Container&& container) const
     double mean = mean(container);
     double disper = 0;
     for(const auto& obj: container){
-        disper += *obj;
+        disper += obj;
     }
     return disper/container.size();
 }

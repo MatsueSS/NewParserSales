@@ -8,9 +8,6 @@
 #include "FactoryRecommendations.h"
 #include "FactorySearcher.h"
 
-#include <chrono>
-#include <fstream>
-
 BotTelegram::BotTelegram(std::string offset, RecType rectype, ProdType prodtype) 
     : flag(true)
     , offset(std::move(offset))

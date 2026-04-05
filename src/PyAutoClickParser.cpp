@@ -36,7 +36,7 @@ std::vector<ProductData> PyAutoClickParser::parse_temps() const
 
 std::vector<ProductData> PyAutoClickParser::fetch_product() const
 {
-    PyLoader::load("bash -c 'python3 ../py_scripts/t.py'");
+    PyLoader::load("bash -c 'python3 ../py_scripts/full_autonomic.py'");
     auto cards = parse_temps();
 
     nlohmann::json new_data;

@@ -8,7 +8,7 @@ void PostgresDB::close()
 
 bool PostgresDB::is_connect() const
 {
-    return PQstatus(conn.get()) == CONNECTION_OK;
+    return conn && PQstatus(conn.get()) == CONNECTION_OK;
 }
 
 PostgresDB::~PostgresDB()
