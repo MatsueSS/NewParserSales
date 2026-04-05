@@ -12,6 +12,8 @@
 #include "ProductParser.h"
 #include "PyAutoClickParser.h"
 
+#include "GeometricModel.h"
+
 int main(void)
 {
     // TelegramUser user(std::move(get_id()));
@@ -80,6 +82,11 @@ int main(void)
     // std::string temp = "Ябл";
     // std::string result = tree.give_word_for_prefix(temp);
     // std::cout << result << '\n';
+
+    // GeometricModel m; // 0,1,4,0,2,0,0,2,0,0,0,0,2,1
+    // std::vector<int> discounts = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1};
+    // auto r = m.predict_probability(discounts);
+    // std::cout << r << '\n';
 
     return 0;
 }

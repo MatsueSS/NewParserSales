@@ -4,9 +4,9 @@
 #include "good_funcs.h"
 #include "json.hpp"
 #include "PostgresDB.h"
-#include "Forecast.h"
 #include "FactoryRecommendations.h"
 #include "FactorySearcher.h"
+#include "GeometricModel.h"
 
 BotTelegram::BotTelegram(std::string offset, RecType rectype, ProdType prodtype) 
     : flag(true)
@@ -432,19 +432,25 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         offset_reload();
         return;
     }
-    std::vector<int> frequency;
-    std::vector<std::chrono::sys_days> dates;
-    for(const auto& obj : query_result){
-        auto date = converte_string(obj[0]);
-        auto days = std::chrono::sys_days{date};
-        dates.emplace_back(days);
+
+    std::vector<int> sample;
+    std::chrono::year_month_day ymd {std::chrono::year{2025}, std::chrono::month{9}, std::chrono::day{6}};
+    for(int i = 0; i < query_result.size();){
+        std::chrono::sys_days date = std::chrono::sys_days{ymd};
+        date += std::chrono::days{7};
+        std::chrono::year_month_day n_ymd {date};
+        if(converte_string(query_result[i][0]) == n_ymd){
+            sample.push_back(1);
+            i++;
+        } else {
+            sample.push_back(0);
+        }
+        ymd = n_ymd;
     }
-    for(int i = 1; i < dates.size(); ++i){
-        auto diff = (dates[i]-dates[i-1]).count()/7;
-        if(diff != 0) frequency.emplace_back(diff-1);
-    }
-    Forecast f;
-    double prob = f.geometric_probability(std::move(frequency), 0);
+
+    GeometricModel gm;
+    double prob = gm.predict_probability(std::move(sample));
+
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(prob * 100)) + "%"));
 }

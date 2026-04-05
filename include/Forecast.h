@@ -103,7 +103,8 @@ template<typename Container>
 auto Forecast::geometric_probability(Container&& container, int k) const 
     ->decltype((void)(container.size()), double{})
 {
-    double prob = 1/mean(std::forward<Container>(container));
+    double mo = mean(std::forward<Container>(container));
+    double prob = mo < 1 ? 1/(mo+1) : 1/mo;
     return std::pow(1-prob, k)*prob;
 }
 

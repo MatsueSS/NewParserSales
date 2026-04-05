@@ -31,6 +31,7 @@ add_executable(${PROJECT_NAME}
     src/ProductParser.cpp
     src/PyAutoClickParser.cpp
     src/PyHTMLParser.cpp
+    src/GeometricModel.cpp
 )
 
 find_package(PostgreSQL REQUIRED)
