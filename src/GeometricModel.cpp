@@ -5,6 +5,11 @@
 
 #include <iostream>
 
+GeometricModel::GeometricModel()
+{
+    name = TypeModel::GEOMETRIC_MODEL;
+}
+
 double GeometricModel::predict_probability(const std::vector<int>& sample) noexcept
 {
     return forecast.geometric_probability(std::move(get_data(sample)), 0);

@@ -34,6 +34,7 @@ add_executable(${PROJECT_NAME}
     src/GeometricModel.cpp
     src/MarkovChain1Model.cpp
     src/MarkovChain2Model.cpp
+    src/ModelSelector.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

@@ -2,6 +2,11 @@
 
 #include <cmath>
 
+MarkovChain2Model::MarkovChain2Model()
+{
+    name = TypeModel::MARKOV_CHAIN_2_MODEL;
+}
+
 double MarkovChain2Model::predict_probability(const std::vector<int>& sample) noexcept
 {
     build_transitions(sample);

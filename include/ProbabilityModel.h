@@ -12,6 +12,10 @@ public:
     virtual ~ProbabilityModel() = default;
     virtual double predict_probability(const std::vector<int>&) noexcept = 0;
     virtual double calculate_bic(const std::vector<int>&) noexcept = 0;
+    TypeModel get_name() const noexcept { return name; };
+
+protected:
+    TypeModel name;
     
 };
 

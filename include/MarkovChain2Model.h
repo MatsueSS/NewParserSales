@@ -8,6 +8,8 @@
 
 class MarkovChain2Model : public ProbabilityModel {
 public:
+    MarkovChain2Model();
+
     virtual double predict_probability(const std::vector<int>&) noexcept override;
     virtual double calculate_bic(const std::vector<int>&) noexcept override;
 

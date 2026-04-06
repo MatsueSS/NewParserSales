@@ -6,6 +6,8 @@
 
 class GeometricModel : public ProbabilityModel {
 public:
+    GeometricModel();
+
     virtual double predict_probability(const std::vector<int>&) noexcept override;
     virtual double calculate_bic(const std::vector<int>&) noexcept override;
 
