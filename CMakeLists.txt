@@ -32,6 +32,8 @@ add_executable(${PROJECT_NAME}
     src/PyAutoClickParser.cpp
     src/PyHTMLParser.cpp
     src/GeometricModel.cpp
+    src/MarkovChain1Model.cpp
+    src/MarkovChain2Model.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

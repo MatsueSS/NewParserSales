@@ -7,6 +7,10 @@
 #include "FactoryRecommendations.h"
 #include "FactorySearcher.h"
 #include "GeometricModel.h"
+#include "MarkovChain1Model.h"
+#include "MarkovChain2Model.h"
+
+#include <queue>
 
 BotTelegram::BotTelegram(std::string offset, RecType rectype, ProdType prodtype) 
     : flag(true)
@@ -432,6 +436,12 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         offset_reload();
         return;
     }
+    if(query_result.size() < 3){
+        auto ptr = TelegramSender::get_instance();
+        ptr->call(id, type_msg::send, std::string("Слишком мало данных для такой карточки\n"));
+        offset_reload();
+        return;
+    }
 
     std::vector<int> sample;
     std::chrono::year_month_day ymd {std::chrono::year{2025}, std::chrono::month{9}, std::chrono::day{6}};
@@ -448,11 +458,19 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         ymd = n_ymd;
     }
 
+    std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<>> pq;
+
     GeometricModel gm;
-    double prob = gm.predict_probability(std::move(sample));
+    pq.push({gm.calculate_bic(sample), gm.predict_probability(sample)});
+
+    MarkovChain1Model m1m;
+    pq.push({m1m.calculate_bic(sample), m1m.predict_probability(sample)});
+
+    MarkovChain2Model m2m;
+    pq.push({m2m.calculate_bic(sample), m2m.predict_probability(sample)});
 
     auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(prob * 100)) + "%"));
+    ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(pq.top().second * 100)) + "%"));
 }
 
 void BotTelegram::command_recommendations(std::string&& id)

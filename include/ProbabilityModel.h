@@ -3,11 +3,15 @@
 
 #include <vector>
 
+enum class TypeModel{
+    GEOMETRIC_MODEL, MARKOV_CHAIN_1_MODEL, MARKOV_CHAIN_2_MODEL
+};
+
 class ProbabilityModel {
 public:
     virtual ~ProbabilityModel() = default;
-    virtual double predict_probability(const std::vector<int>&) const noexcept = 0;
-    virtual double calculate_bic(const std::vector<int>&) const noexcept = 0;
+    virtual double predict_probability(const std::vector<int>&) noexcept = 0;
+    virtual double calculate_bic(const std::vector<int>&) noexcept = 0;
     
 };
 

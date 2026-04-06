@@ -5,12 +5,12 @@
 
 #include <iostream>
 
-double GeometricModel::predict_probability(const std::vector<int>& sample) const noexcept
+double GeometricModel::predict_probability(const std::vector<int>& sample) noexcept
 {
     return forecast.geometric_probability(std::move(get_data(sample)), 0);
 }
 
-double GeometricModel::calculate_bic(const std::vector<int>& sample) const noexcept
+double GeometricModel::calculate_bic(const std::vector<int>& sample) noexcept
 {
     auto v = get_data(sample);
     int S = std::accumulate(v.begin(), v.end(), 0);

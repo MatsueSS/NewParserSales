@@ -13,6 +13,8 @@
 #include "PyAutoClickParser.h"
 
 #include "GeometricModel.h"
+#include "MarkovChain1Model.h"
+#include "MarkovChain2Model.h"
 
 int main(void)
 {
@@ -43,11 +45,11 @@ int main(void)
 
 //start
 
-    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    while(true){
-        inter.start_process();
-    }
+    // while(true){
+    //     inter.start_process();
+    // }
 
 //pretest
 
@@ -83,10 +85,14 @@ int main(void)
     // std::string result = tree.give_word_for_prefix(temp);
     // std::cout << result << '\n';
 
-    // GeometricModel m; // 0,1,4,0,2,0,0,2,0,0,0,0,2,1
-    // std::vector<int> discounts = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1};
-    // auto r = m.predict_probability(discounts);
-    // std::cout << r << '\n';
+    GeometricModel gm; // 0,1,4,0,2,0,0,2,0,0,0,0,2,1
+    MarkovChain1Model mm;
+    MarkovChain2Model m2m;
+    std::vector<int> discounts = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1};
+    
+    std::cout << gm.calculate_bic(discounts) << ' ' << gm.predict_probability(discounts) << '\n';
+    std::cout << mm.calculate_bic(discounts) << ' ' << mm.predict_probability(discounts) << '\n';
+    std::cout << m2m.calculate_bic(discounts) << ' ' << m2m.predict_probability(discounts) << '\n';
 
     return 0;
 }
