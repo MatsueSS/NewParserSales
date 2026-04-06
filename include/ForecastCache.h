@@ -1,0 +1,32 @@
+#ifndef _FACTORY_CACHE_H_
+#define _FACTORY_CACHE_H_
+
+#include <unordered_map>
+#include <string>
+#include <shared_mutex>
+#include <optional>
+#include <list>
+
+class ForecastCache{
+public:
+    std::optional<double> get(const std::string& title) noexcept;
+
+    void set(const std::string& title, double probability) noexcept;
+
+    void reset() noexcept;
+
+private:
+    struct Cache {
+        std::list<std::string>::iterator lru_iterator;
+        double probability;
+    };
+
+    std::unordered_map<std::string, Cache> cache;
+    std::list<std::string> lru_list;
+
+    std::shared_mutex cache_mutex;
+    const int max_cache_size = 1000;
+
+};
+
+#endif
