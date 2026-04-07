@@ -53,6 +53,8 @@ void Interface::start_process() const {
         for(const auto& obj : discounts){
             ptr->notify_all(obj[0]);
         }
+
+        ptr->reset_cache();
     }
     std::this_thread::sleep_for(std::chrono::seconds(10));
 }

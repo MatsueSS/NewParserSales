@@ -1,6 +1,7 @@
 #include "MarkovChain1Model.h"
 
 #include <cmath>
+#include <numeric>
 
 MarkovChain1Model::MarkovChain1Model()
 {
@@ -11,10 +12,8 @@ double MarkovChain1Model::predict_probability(const std::vector<int>& sample) no
 {
     build_transitions(sample);
     int last_result = sample.back();
-    double r1 = 0.5, r2 = 0.5;
-    if(transition_type[{0,1}] != 0) r1 = (transition_type[{0,1}])/(double)(transition_type[{0,0}] + transition_type[{0,1}]);
-    if(transition_type[{1,1}] != 0) r2 = (transition_type[{1,1}])/(double)(transition_type[{1,0}]+transition_type[{1,1}]);
-    return last_result == 0 ? r1 : r2;
+    double total = transition_type[{last_result, 1}] + transition_type[{last_result, 0}];
+    return total == 0 ? 0.5 : transition_type[{last_result, 1}]/total;
 }
 
 double MarkovChain1Model::calculate_bic(const std::vector<int>& sample) noexcept
@@ -24,21 +23,25 @@ double MarkovChain1Model::calculate_bic(const std::vector<int>& sample) noexcept
     double lg = 0;
     auto it = transition_type.begin();
     while(it != transition_type.end()){
-        auto p1 = it->second;
-        auto p2 = (++it)->second;
-
-        if(p1 != 0) lg += p1*log(p1/(double)(p1+p2));
-        if(p2 != 0) lg += p2*log(p2/(double)(p1+p2));
-
-        ++it;
+        std::vector<double> l;
+        int count = 0;
+        while(count < 2){
+            l.push_back(it->second);
+            count++;
+            it++;
+        }
+        int sum = std::accumulate(l.begin(), l.end(), 0);
+        for(int i : l){
+            if(i != 0) lg += i*log(i/(double)sum);
+        }
     }
     return -2*lg + 2*log(N);
 }
 
 void MarkovChain1Model::build_transitions(const std::vector<int>& sample) noexcept
 {
-    for(int x = 0; x <= 1; ++x){
-        for(int y = 0; y <= 1; ++y){
+    for(int x = 0; x < 2; ++x){
+        for(int y = 0; y < 2; ++y){
             transition_type[{x,y}] = 0;
         }
     }

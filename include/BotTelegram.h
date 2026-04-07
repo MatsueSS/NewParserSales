@@ -9,6 +9,7 @@
 #include "PrefixTree.h"
 #include "UserStateMaching.h"
 #include "PoolCards.h"
+#include "ForecastCache.h"
 
 #include <thread>
 #include <set>
@@ -42,6 +43,7 @@ private:
     ProductSearcher searcher;
     PrefixTree tree;
     UserStateMaching MachingState;
+    ForecastCache f_cache;
 
     void check_message();
     void offset_reload();
@@ -84,6 +86,8 @@ public:
     // send users notify
     template<typename Type>
     void notify_all(Type&&) const;
+
+    void reset_cache() noexcept;
 
     ~BotTelegram();
 };

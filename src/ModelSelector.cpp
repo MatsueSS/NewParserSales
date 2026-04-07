@@ -11,7 +11,7 @@ struct ModelGreater{
 ModelSelector::ModelSelector(std::initializer_list<TypeModel> list)
 {
     for(const auto& obj : list){
-        models.emplace_back(FacrotyModel::create(obj));
+        models.emplace_back(FactoryModel::create(obj));
     }
 }
 

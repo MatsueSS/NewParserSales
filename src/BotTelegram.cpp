@@ -417,6 +417,14 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         offset_reload();
         return;
     }
+
+    auto load_cache = f_cache.get(data);
+    if(load_cache != std::nullopt){
+        auto ptr = TelegramSender::get_instance();
+        ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(load_cache.value() * 100)) + "%"));
+        return;
+    }
+
     PostgresDB db;
     db.connect(get_conn());
     std::vector<std::vector<std::string>> query_result;
@@ -459,6 +467,8 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
     ModelSelector ms({TypeModel::GEOMETRIC_MODEL, TypeModel::MARKOV_CHAIN_1_MODEL, TypeModel::MARKOV_CHAIN_2_MODEL});
     ModelSelector::Result r = ms.select_best(sample);
 
+    f_cache.set(data, r.best_probability);
+
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(r.best_probability * 100)) + "%"));
 }
@@ -476,4 +486,9 @@ void BotTelegram::command_recommendations(std::string&& id)
     }
     auto ptr = TelegramSender::get_instance();
     ptr->call(id, type_msg::send, result);
+}
+
+void BotTelegram::reset_cache() noexcept
+{
+    f_cache.reset();
 }

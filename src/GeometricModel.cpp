@@ -31,7 +31,7 @@ std::vector<int> GeometricModel::get_data(const std::vector<int>& sample) const 
     for(; i < sample.size(); ++i) if(sample[i++] == 1) break;
     for(; i < sample.size(); ++i) {
         if(sample[i] == 1){
-            data.push_back(count);
+            data.push_back(count+1);
             count = 0;
         } else {
             count++;

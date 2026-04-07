@@ -2,6 +2,8 @@
 
 #include "good_funcs.h"
 
+#include <mutex>
+
 std::optional<double> ForecastCache::get(const std::string& title) noexcept
 {
     std::unique_lock lock(cache_mutex);

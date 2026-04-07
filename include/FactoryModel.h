@@ -9,7 +9,7 @@
 
 #include <memory>
 
-class FacrotyModel{
+class FactoryModel{
 public:
     static std::unique_ptr<ProbabilityModel> create(TypeModel type){
         switch(type){

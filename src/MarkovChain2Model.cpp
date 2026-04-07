@@ -1,6 +1,7 @@
 #include "MarkovChain2Model.h"
 
 #include <cmath>
+#include <numeric>
 
 MarkovChain2Model::MarkovChain2Model()
 {
@@ -21,22 +22,26 @@ double MarkovChain2Model::calculate_bic(const std::vector<int>& sample) noexcept
     double lg = 0;
     auto it = transition_type.begin();
     while(it != transition_type.end()){
-        double p1 = it->second;
-        double p2 = (++it)->second;
-
-        if(p1 != 0) lg += p1*log(p1/(double)(p1+p2));
-        if(p2 != 0) lg += p2*log(p2/(double)(p1+p2));
-
-        ++it;
+        std::vector<double> l;
+        int count = 0;
+        while(count < 2){
+            l.push_back(it->second);
+            count++;
+            it++;
+        }
+        int sum = std::accumulate(l.begin(), l.end(), 0);
+        for(int i : l){
+            if(i != 0) lg += i*log(i/(double)sum);
+        }
     }
     return -2*lg + 4*log(sample.size()-2);
 }
 
 void MarkovChain2Model::build_transitions(const std::vector<int>& sample) noexcept
 {
-    for(int x = 0; x <= 1; ++x) {
-        for(int y = 0; y <= 1; ++y) {
-            for(int z = 0; z <= 1; ++z) {
+    for(int x = 0; x < 2; ++x) {
+        for(int y = 0; y < 2; ++y) {
+            for(int z = 0; z < 2; ++z) {
                 transition_type[{x, y, z}] = 0;
             }
         }
