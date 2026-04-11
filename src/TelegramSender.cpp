@@ -41,6 +41,7 @@ void TelegramSender::query(std::string id, type_msg type, std::string offset) no
         CURL* curl = curl_easy_init();
         if(curl){
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_PROXY, "socks5h://127.0.0.1:1080");
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
             CURLcode res = curl_easy_perform(curl);
@@ -58,6 +59,7 @@ void TelegramSender::query(std::string id, type_msg type, std::string offset) no
             std::string post_fields = "chat_id="+id+"&text="+encoding;
             curl_free(encoding);
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+            curl_easy_setopt(curl, CURLOPT_PROXY, "socks5h://127.0.0.1:1080");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_fields.c_str());
             CURLcode res = curl_easy_perform(curl);
             curl_easy_cleanup(curl);
@@ -96,6 +98,7 @@ void TelegramSender::send_with_keyboard(const std::string& chat_id, const std::s
         headers = curl_slist_append(headers, "Content-Type: application/json");
         
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_PROXY, "socks5h://127.0.0.1:1080");
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_data.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         

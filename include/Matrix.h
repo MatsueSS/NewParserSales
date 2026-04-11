@@ -14,6 +14,7 @@ protected:
 
 public:
     MatrixException(std::string);
+    MatrixException(const MatrixException&);
 
     const char *what() const noexcept override;
 };

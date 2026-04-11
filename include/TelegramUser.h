@@ -15,6 +15,7 @@ protected:
 
 public:
     TelegramUserException(std::string);
+    TelegramUserException(const TelegramUserException&);
 
     const char* what() const noexcept override;
 };

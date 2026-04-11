@@ -31,6 +31,7 @@ void ForecastCache::set(const std::string& title, double probability) noexcept
 
 void ForecastCache::reset() noexcept
 {
+    std::unique_lock lock(cache_mutex);
     cache.clear();
     lru_list.clear();
 }

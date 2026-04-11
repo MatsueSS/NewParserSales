@@ -3,6 +3,13 @@
 #include "PostgresDB.h"
 #include "good_funcs.h"
 
+PoolCardsException::PoolCardsException(std::string msg) : msg(std::move(msg)) {}
+PoolCardsException::PoolCardsException(const PoolCardsException& obj) : msg(obj.msg) {}
+
+const char* PoolCardsException::what() const noexcept { return msg.c_str(); }
+
+BadTypePoolCardsException::BadTypePoolCardsException(std::string msg) : PoolCardsException(std::move(msg)) {}
+
 PoolCards::PoolCards()
 {
     PostgresDB db;

@@ -17,6 +17,7 @@ protected:
 
 public:
     ForecastException(std::string) noexcept;
+    ForecastException(const ForecastException&);
 
     const char* what() const noexcept override;
 

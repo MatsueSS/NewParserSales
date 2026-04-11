@@ -1,43 +1,16 @@
------Design Solution-----
+-----Preface and history-----
 
-Now I want to describe the project's idea and explain why it's worth my time. I found it strange to go to stores and keep track of discounts. It's also strange to try to calculate these discounts. You might say that mobile apps already exist, but the search chore remains I told myself that I should create a program that would free me from this chore.
-I'd like to give a brief introduction to what will be described below. I'll say upfront that I had to try every possible way to bypass resource blocking and CAPTCHA. I tried to find a solution using the request library from Python, but it didn't help. Then I settled on selenium.
-All my calls are made using the libcurl library. Why did I decide to use this instead of Python's convenient tools? | view Python as a scripting language, and the connection with Telegram needs to be maintained constantly, so l decided to set the boundaries this way.
-To access the database, I used a custom library. You can find it in the project. I used PostgreSQL as the database.
-Now I want to elaborate on why I used jq in some places instead of lohmann:json. For small queries, I used jq because it's written purely in C, and a short linear search through documents is quite adequate.
+In this section I want to describe the general idea and history of the development of this project.
 
------Main Problem-----
+I've always been frustrated by any trip to the store. It was unpleasant and disgusting. One could say, "But there's delivery—why not use it?" You have to choose, scroll through product feeds. You also have to analyze products for discounts—it's inconvenient and unpleasant. I decided to implement a bot program in my favorite language, C++.
 
-The main problem, which l'm willing to admit, is viewing captcha when using the selenium library. Frankly, I couldn't find a suitable workaround for this. I monitored which files the site was receiving and sending. found the json I needed, but the workaround still failed. At this point, my project isn't independent and requires a solution.
+A few months ago, I had this idea in my head: what if there really was an app that would solve the problem of going to the store and choosing products? It's a brilliant idea. I'm also economically savvy and like to stock up on items that will last me until the next sale—forecasting is essential.
 
------Instructions-----
+My first step was writing simple curl requests through the terminal, but I always got a 403 error. I thought, why not use the Python library, requests. The same error occurred—403. Then I thought, why not search for the website's API? Yes, I found it. That same day, I decided to write a few curl and requests requests with my own headers and cookies. I kept getting a captcha and couldn't get past it.
+Then I looked at selenium in combination with several other Python libraries, which would help me get around the problem. The captcha didn't go away, but I realized that if I passed it, I would have access to the website's parsing. I lived like that for literally eight months, running this script every week. It was tantamount to suffering. After eight months, the site released some update that kept me stuck on the captcha and blocked me from accessing the site. I was upset. I noticed that I visited the site many times and never saw a captcha or a 403 error. I thought, why not create a script that would simply click the correct coordinates on the screen—this is the main way to bypass the captcha? My script still works this way to this day.
+This incident became a good example for me that the solution is always obvious and that even the most high-profile problems can be solved with a low-level solution.
 
-In the good_funcs module, you need to define all the functions as you'll build the project. You also need to create and populate the env file for proper operation. I have prepared cpp files for creating tables in the database, so you don't have to work too hard with this.
+Now it's worth describing the evolution of the project itself. I tried to describe all the idioms, patterns, and tricks I've learned and am still learning in C++. This language is rich in precisely that. As I grew, I tried to find a use for these tricks. If you look at my commits, you'll notice an improvement branch where I performed code reviews. I wrote it in pure C++20.
 
------fill env-----
+-----Theoretical basis for forecasting-----
 
-1 row : bot token
-2 row : temp data in my env is my id
-3 row : connection with db : dbname=remstocks user=matsuess password=731177889232 host=localhost port=5432 client_encoding=UTF8
-4 row : temp data
-5 row : last offset for telegram message
-
------load-----
-
-need use dir load
-mkdir sensitive_res
-mdkir res
-mkdir urls
-
------commands-----
-
-recommendations - recommends popular product cards
-add_card - added a card(need a card)
-del_card - deleted a card(need a card)
-status - show u sales
-my_cards - show ur cards
-forecast - forecast(need a card)
-
------author words-----
-
-One design decision is worth mentioning. I want to touch on the recommendations because it's one of the less obvious aspects of my program. The recommendations are built on the Observer pattern. It turns out that the bot is the one that modifies the observers, and the Matrix class is the observer. The recommendations are based on popular cards.

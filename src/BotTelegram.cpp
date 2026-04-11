@@ -67,6 +67,7 @@ void BotTelegram::load_users_from_db()
 }
 
 BotTelegramException::BotTelegramException(std::string str) : msg(std::move(str)) {}
+BotTelegramException::BotTelegramException(const BotTelegramException& obj) : msg(obj.msg) {}
 
 BadInitBotTelegramException::BadInitBotTelegramException(std::string msg) : BotTelegramException(std::move(msg)) {}
 
@@ -452,15 +453,15 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
     std::vector<int> sample;
     std::chrono::year_month_day ymd {std::chrono::year{2025}, std::chrono::month{9}, std::chrono::day{6}};
     for(int i = 0; i < query_result.size();){
-        std::chrono::sys_days date = std::chrono::sys_days{ymd};
-        date += std::chrono::days{7};
-        std::chrono::year_month_day n_ymd {date};
-        if(converte_string(query_result[i][0]) == n_ymd){
+        if(converte_string(query_result[i][0]) == ymd){
             sample.push_back(1);
             i++;
         } else {
             sample.push_back(0);
         }
+        std::chrono::sys_days date = std::chrono::sys_days{ymd};
+        date += std::chrono::days{7};
+        std::chrono::year_month_day n_ymd {date};
         ymd = n_ymd;
     }
 

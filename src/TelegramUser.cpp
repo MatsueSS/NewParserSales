@@ -2,6 +2,8 @@
 
 TelegramUserException::TelegramUserException(std::string str) : msg(std::move(str)) {}
 
+TelegramUserException::TelegramUserException(const TelegramUserException& obj) : msg(obj.msg) {}
+
 const char* TelegramUserException::what() const noexcept { return msg.c_str(); }
 
 TelegramUser::TelegramUser(std::string str, std::shared_ptr<PoolCards> ptr_pc) : id(std::move(str)), ptr_pc(ptr_pc) {}

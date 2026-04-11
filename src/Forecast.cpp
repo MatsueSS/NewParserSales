@@ -1,6 +1,7 @@
 #include "Forecast.h"
 
 ForecastException::ForecastException(std::string msg) noexcept : msg(std::move(msg)) {}
+ForecastException::ForecastException(const ForecastException& obj) : msg(obj.msg) {}
 
 const char* ForecastException::what() const noexcept {
     return msg.c_str();

@@ -19,8 +19,15 @@ double GeometricModel::calculate_bic(const std::vector<int>& sample) noexcept
 {
     auto v = get_data(sample);
     int S = std::accumulate(v.begin(), v.end(), 0);
+    int n = v.size();
+    
     auto p = predict_probability(sample);
-    return -2*(v.size() * log(p) + S * log(1-p)) + 1*log(v.size());
+    double log_likelihood = n * log(p) + (S - n) * log(1 - p);
+    
+    double N = sample.size();
+    int k = 1;
+    
+    return -2 * log_likelihood + k * log(N);
 }
 
 std::vector<int> GeometricModel::get_data(const std::vector<int>& sample) const noexcept

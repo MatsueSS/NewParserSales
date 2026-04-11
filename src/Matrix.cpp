@@ -3,11 +3,9 @@
 #include <queue>
 
 MatrixException::MatrixException(std::string str) : msg(std::move(str)) {}
+MatrixException::MatrixException(const MatrixException& obj) : msg(obj.msg) {}
 
-const char* MatrixException::what() const noexcept 
-{
-    return msg.c_str();
-}
+const char* MatrixException::what() const noexcept  { return msg.c_str(); }
 
 BadTypeMatrixException::BadTypeMatrixException(std::string str) : MatrixException(std::move(str)) {}
 EmptyResultMatrixException::EmptyResultMatrixException(std::string str) : MatrixException(std::move(str)) {}

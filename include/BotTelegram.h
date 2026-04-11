@@ -20,6 +20,7 @@ protected:
 
 public: 
     BotTelegramException(std::string);
+    BotTelegramException(const BotTelegramException&);
 
     const char* what() const noexcept override;
 };

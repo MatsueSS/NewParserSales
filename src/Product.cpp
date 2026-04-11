@@ -2,7 +2,7 @@
 
 ProductException::ProductException(std::string msg) : msg(std::move(msg)) {}
 
-ProductException::ProductException(const ProductException& obj) : msg(std::move(obj.msg)) {}
+ProductException::ProductException(const ProductException& obj) : msg(obj.msg) {}
 
 const char * ProductException::what() const noexcept { return msg.c_str(); }
 
