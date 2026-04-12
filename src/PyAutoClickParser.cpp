@@ -16,7 +16,6 @@ std::vector<ProductData> PyAutoClickParser::parse_temps() const
 
         nlohmann::json data = nlohmann::json::parse(file);
         auto products = data["products"];
-        std::string date = get_date_str_now();
 
         for(const auto& product : products){
             if(!product.contains("name")) continue;

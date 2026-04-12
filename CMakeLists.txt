@@ -37,6 +37,7 @@ add_executable(${PROJECT_NAME}
     src/ModelSelector.cpp
     src/ForecastCache.cpp
     src/ROC_AUC.cpp
+    src/CppAutoClickParser.cpp
 )
 
 find_package(PostgreSQL REQUIRED)
