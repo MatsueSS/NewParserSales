@@ -19,6 +19,7 @@ void ForecastCache::set(const std::string& title, double probability) noexcept
     auto it = cache.find(title);
     if(it != cache.end()){
         lru_list.splice(lru_list.begin(), lru_list, it->second.lru_iterator);
+        it->second.probability = probability;
     } else {
         lru_list.emplace_front(title);
         cache.emplace(title, Cache{lru_list.begin(), probability});

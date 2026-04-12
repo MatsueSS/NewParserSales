@@ -10,7 +10,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_executable(${PROJECT_NAME}
     test_main.cpp
     test_forecast.cpp
+    test_forecast_cache.cpp
+    test_model_probability.cpp
+    
     ../src/Forecast.cpp
+    ../src/ForecastCache.cpp
+    ../src/ModelSelector.cpp
+    ../src/MarkovChain1Model.cpp
+    ../src/MarkovChain2Model.cpp
+    ../src/GeometricModel.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -21,3 +29,6 @@ find_package(PostgreSQL REQUIRED)
 
 include_directories(${PostgreSQL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARIES})
+
+target_compile_options(tests PRIVATE -fsanitize=address -fsanitize=undefined -fsanitize=leak -g)
+target_link_options(tests PRIVATE -fsanitize=address -fsanitize=undefined -fsanitize=leak)
