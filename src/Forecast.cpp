@@ -8,6 +8,7 @@ const char* ForecastException::what() const noexcept {
 }
 
 ZeroDivisionForecastException::ZeroDivisionForecastException(std::string msg) noexcept : ForecastException(std::move(msg)) {}
+NonNegativeValueForecastException::NonNegativeValueForecastException(std::string msg) noexcept : ForecastException(std::move(msg)) {}
 
 double Forecast::combinations(unsigned n, unsigned k) const
 {

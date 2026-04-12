@@ -23,9 +23,15 @@ public:
 
 };
 
-class ZeroDivisionForecastException : ForecastException{
+class ZeroDivisionForecastException : public ForecastException{
 public:
     ZeroDivisionForecastException(std::string) noexcept;
+
+};
+
+class NonNegativeValueForecastException : public ForecastException{
+public:
+    NonNegativeValueForecastException(std::string) noexcept;    
 
 };
 
@@ -78,11 +84,14 @@ template<typename Container>
 auto Forecast::median(Container&& container) const
     -> decltype((void)(container.size()), double{})
 {
+    if(container.size() == 0)
+        throw ZeroDivisionForecastException("Empty sample\n");
+
     auto temp = container;
     std::sort(temp.begin(), temp.end());
     if(temp.size() % 2 == 0)
-        return (temp[temp.size()/2-1]+temp[temp.size()/2])/2;
-    return temp[temp.size()-1];
+        return (temp[temp.size()/2-1]+temp[temp.size()/2])/2.0;
+    return temp[temp.size()/2];
 }
 
 template<typename Container>
@@ -92,10 +101,10 @@ auto Forecast::dispersion(Container&& container) const
     if(container.size() == 0)
         throw ZeroDivisionForecastException("Zero division\n");
 
-    double mean = mean(container);
+    double m = mean(container);
     double disper = 0;
     for(const auto& obj: container){
-        disper += obj;
+        disper += (m-obj)*(m-obj);
     }
     return disper/container.size();
 }
@@ -105,6 +114,8 @@ auto Forecast::geometric_probability(Container&& container, int k) const
     ->decltype((void)(container.size()), double{})
 {
     double mo = mean(std::forward<Container>(container));
+    if(mo == 0) throw ZeroDivisionForecastException("mean equals 0\n");
+    if(mo < 0) throw NonNegativeValueForecastException("mean must be positive\n");
     double prob = 1/mo;
     return std::pow(1-prob, k)*prob;
 }
