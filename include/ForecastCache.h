@@ -6,12 +6,31 @@
 #include <shared_mutex>
 #include <optional>
 #include <list>
+#include <exception>
+
+class ForecastCacheException : public std::exception{
+protected:
+    std::string msg;
+
+public:
+    ForecastCacheException(std::string msg) noexcept;
+    ForecastCacheException(const ForecastCacheException& obj) noexcept;
+
+    const char * what() const noexcept override;
+    
+};
+
+class BoundQuitForecastCacheException : public ForecastCacheException{
+public:
+    BoundQuitForecastCacheException(std::string msg) noexcept;
+
+};
 
 class ForecastCache{
 public:
     std::optional<double> get(const std::string& title) noexcept;
 
-    void set(const std::string& title, double probability) noexcept;
+    void set(const std::string& title, double probability);
 
     void reset() noexcept;
 

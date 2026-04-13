@@ -48,6 +48,14 @@ TEST_CASE("ForecastCache::get/set/reset"){
         fc.set("key", 0.9);
         CHECK(fc.get("key") == 0.9);
     }
+
+    SUBCASE("upper bound"){
+        CHECK_THROWS(fc.set("1", 1.1));
+    }
+
+    SUBCASE("lower bound"){
+        CHECK_THROWS(fc.set("1", -0.1));
+    }
 }
 
 TEST_CASE("ForecastCache::check_limit"){
