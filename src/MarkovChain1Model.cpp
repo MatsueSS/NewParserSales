@@ -8,15 +8,17 @@ MarkovChain1Model::MarkovChain1Model()
     name = TypeModel::MARKOV_CHAIN_1_MODEL;
 }
 
-double MarkovChain1Model::predict_probability(const std::vector<int>& sample) noexcept
+double MarkovChain1Model::predict_probability(const std::vector<int>& sample)
 {
+    if(sample.empty()) throw EmptySampleProbabilityModelException("sample must be have at least 1 element");
     build_transitions(sample);
     int last_result = sample.back();
-    double total = transition_type[{last_result, 1}] + transition_type[{last_result, 0}];
-    return total == 0 ? 0.5 : transition_type[{last_result, 1}]/total;
+    int total = transition_type[{last_result, 1}] + transition_type[{last_result, 0}];
+    if(total == 0) throw InapplicabilityProbabilityModelException("The model is not applicable for such a sample");
+    return transition_type[{last_result, 1}]/static_cast<double>(total);
 }
 
-double MarkovChain1Model::calculate_bic(const std::vector<int>& sample) noexcept
+double MarkovChain1Model::calculate_bic(const std::vector<int>& sample)
 {
     build_transitions(sample);
     int N = sample.size() - 1;
@@ -31,10 +33,12 @@ double MarkovChain1Model::calculate_bic(const std::vector<int>& sample) noexcept
             it++;
         }
         int sum = std::accumulate(l.begin(), l.end(), 0);
+        if(sum == 0) continue;
         for(int i : l){
-            if(i != 0) lg += i*log(i/(double)sum);
+            if(i != 0) lg += i*log(i/static_cast<double>(sum));
         }
     }
+    if(N <= 0) N = 1;
     return -2*lg + 2*log(N);
 }
 

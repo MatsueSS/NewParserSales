@@ -466,7 +466,13 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
     }
 
     ModelSelector ms({TypeModel::GEOMETRIC_MODEL, TypeModel::MARKOV_CHAIN_1_MODEL, TypeModel::MARKOV_CHAIN_2_MODEL});
-    ModelSelector::Result r = ms.select_best(sample);
+    ModelSelector::Result r;
+
+    try{
+        r = ms.select_best(sample);
+    } catch (NoSuitableProbabilityException& e){
+        r.best_probability = 0.0;
+    }
 
     f_cache.set(data, r.best_probability);
 

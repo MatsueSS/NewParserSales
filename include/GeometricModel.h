@@ -8,8 +8,9 @@ class GeometricModel : public ProbabilityModel {
 public:
     GeometricModel();
 
-    virtual double predict_probability(const std::vector<int>&) noexcept override;
-    virtual double calculate_bic(const std::vector<int>&) noexcept override;
+    //The sample must include strictly positive elements  - else throw or UB
+    virtual double predict_probability(const std::vector<int>&) override;
+    virtual double calculate_bic(const std::vector<int>&) override;
 
 private:
     Forecast forecast;

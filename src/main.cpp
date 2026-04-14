@@ -49,11 +49,11 @@ int main(void)
 
 //start
 
-    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    while(true){
-        inter.start_process();
-    }
+    // while(true){
+    //     inter.start_process();
+    // }
 
 //pretest
 
@@ -142,5 +142,15 @@ int main(void)
     // }
     // std::cout << ra.roc_auc(p,q) << '\n';
 
+    // ModelSelector ms({
+    //     TypeModel::GEOMETRIC_MODEL,
+    //     TypeModel::MARKOV_CHAIN_1_MODEL,
+    //     TypeModel::MARKOV_CHAIN_2_MODEL
+    // });
+    
+    // std::vector<int> markov_data = {0,1,0,1,0,1,0,1};
+    
+    // auto r = ms.select_best(markov_data);
+    
     return 0;
 }

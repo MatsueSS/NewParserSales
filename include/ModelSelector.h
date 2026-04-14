@@ -5,25 +5,6 @@
 
 #include <vector>
 #include <memory>
-#include <exception>
-
-class ModelSelectorException : public std::exception{
-protected:
-    std::string msg;
-
-public:
-    ModelSelectorException(std::string msg) noexcept;
-    ModelSelectorException(const ModelSelectorException& obj) noexcept;
-
-    const char * what() const noexcept override;
-
-};
-
-class EmptyContainerModelSelectorException : public ModelSelectorException{
-public:
-    EmptyContainerModelSelectorException(std::string msg) noexcept;
-
-};
 
 class ModelSelector{
 public:
