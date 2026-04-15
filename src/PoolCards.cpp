@@ -3,6 +3,8 @@
 #include "PostgresDB.h"
 #include "good_funcs.h"
 
+#include <mutex>
+
 PoolCardsException::PoolCardsException(std::string msg) : msg(std::move(msg)) {}
 PoolCardsException::PoolCardsException(const PoolCardsException& obj) : msg(obj.msg) {}
 
@@ -19,6 +21,7 @@ PoolCards::PoolCards()
     int size = res.size();
     title_to_id.reserve(size + size/10);
     id_to_title.resize(size+1);
+    id_to_title[0] = Product();
     for(const auto& obj : res){
         uint32_t card_id = std::stoi(obj[0]);
         Product product(obj[1], card_id);
@@ -29,6 +32,24 @@ PoolCards::PoolCards()
 
 const Product& PoolCards::get_title(uint32_t id) const noexcept
 {
+    if(id <= 0 || id >= id_to_title.size()) return id_to_title[0];
     std::shared_lock<std::shared_mutex> lock(mutex);
-    return id_to_title.at(id);
+    return id_to_title[id];
+}
+
+void PoolCards::add_product(const std::string& title) noexcept
+{
+    if(title_to_id.count(title)) return;
+
+    int future_last_idx = id_to_title.size();
+    title_to_id.insert({title, future_last_idx});
+    id_to_title.emplace_back(title, future_last_idx);
+}
+
+uint32_t PoolCards::get_index(const std::string& title) const noexcept
+{
+    std::shared_lock<std::shared_mutex> lock(mutex);
+
+    auto it = title_to_id.find(title);
+    return it == title_to_id.end() ? 0 : it->second;
 }

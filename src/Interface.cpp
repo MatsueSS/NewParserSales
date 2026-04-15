@@ -11,7 +11,9 @@
 #include <chrono>
 #include <fstream>
 
-Interface::Interface(std::string str, RecType rectype, ProdType prodtype, TypeParses typeparser) : ptr(std::make_unique<BotTelegram>(std::move(str), rectype, prodtype)) 
+Interface::Interface(std::string str, RecType rectype, ProdType prodtype, TypeParses typeparser) 
+    : ptr_pc(std::make_shared<PoolCards>())
+    , ptr(std::make_unique<BotTelegram>(std::move(str), ptr_pc, rectype, prodtype)) 
 {
     pr = std::move(FactoryParser::create(TypeParses::PY_AUTOCLICK_PARSER));
 }
@@ -78,6 +80,7 @@ std::string Interface::save_in_bd(std::vector<ProductData>&& obj) const
 
         auto res = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM products WHERE title = $1);"), std::vector<std::string>{obj["title"]});
         if(res[0][0] == "f"){
+            ptr_pc->add_product(obj["title"]);
             db.execute(std::string("INSERT INTO products (title) VALUES ($1)"), std::vector<std::string>{obj["title"]});
         }
     }

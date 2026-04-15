@@ -13,6 +13,11 @@ add_executable(${PROJECT_NAME}
     test_forecast_cache.cpp
     test_model_probability.cpp
     test_prefix_tree.cpp
+    test_pool_cards.cpp
+
+    ../src/good_funcs.cpp
+    ../src/PostgresDB.cpp
+    ../src/HiSquare.cpp
     
     ../src/Forecast.cpp
     ../src/ForecastCache.cpp
@@ -22,6 +27,8 @@ add_executable(${PROJECT_NAME}
     ../src/GeometricModel.cpp
 
     ../src/PrefixTree.cpp
+    ../src/PoolCards.cpp
+    ../src/Product.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

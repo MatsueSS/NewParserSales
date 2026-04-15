@@ -10,10 +10,10 @@
 
 #include <queue>
 
-BotTelegram::BotTelegram(std::string offset, RecType rectype, ProdType prodtype) 
+BotTelegram::BotTelegram(std::string offset, std::shared_ptr<PoolCards> ptr_pc, RecType rectype, ProdType prodtype) 
     : flag(true)
     , offset(std::move(offset))
-    , ptr_pc(std::make_shared<PoolCards>())
+    , ptr_pc(ptr_pc)
     , users(std::make_shared<std::unordered_map<std::string, TelegramUser>>())
     , observer(FactoryRecommendations::create(rectype, ptr_pc, users))
     , searcher(FactoryMatcher::create(prodtype, "../sensetive_res/new_dict.txt", ptr_pc))

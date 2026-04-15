@@ -7,6 +7,7 @@
 #include "ProductParser.h"
 
 class Interface{
+    std::shared_ptr<PoolCards> ptr_pc;
     std::unique_ptr<BotTelegram> ptr;
     ProductParser pr;
 

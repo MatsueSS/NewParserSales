@@ -33,10 +33,11 @@ public:
     PoolCards(PoolCards&&) noexcept = default;
     PoolCards& operator=(PoolCards&&) noexcept = default;
 
-    template<typename Data>
-    uint32_t get_index(Data&& title) const noexcept;
+    uint32_t get_index(const std::string& title) const noexcept;
 
     const Product& get_title(uint32_t id) const noexcept;
+
+    void add_product(const std::string& title) noexcept;
 
 private:
     std::vector<Product> id_to_title;
@@ -44,17 +45,5 @@ private:
     mutable std::shared_mutex mutex;
 
 };
-
-template<typename Data>
-uint32_t PoolCards::get_index(Data&& title) const noexcept
-{
-    if constexpr(!std::is_same<std::decay_t<Data>, std::string>::value)
-        throw BadTypePoolCardsException("Value type must be string");
-
-    std::shared_lock<std::shared_mutex> lock(mutex);
-
-    auto it = title_to_id.find(std::forward<Data>(title));
-    return it == title_to_id.end() ? 0 : it->second;
-}
 
 #endif

@@ -67,7 +67,7 @@ private:
     void send_main_keyboard(const std::string& id) const noexcept;
 
 public:
-    BotTelegram(std::string, RecType rectype, ProdType prodtype);
+    BotTelegram(std::string, std::shared_ptr<PoolCards> ptr_pc, RecType rectype, ProdType prodtype);
 
     BotTelegram(const BotTelegram&) = delete;
     BotTelegram& operator=(const BotTelegram&) = delete;
