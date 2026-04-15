@@ -12,6 +12,7 @@ add_executable(${PROJECT_NAME}
     test_forecast.cpp
     test_forecast_cache.cpp
     test_model_probability.cpp
+    test_prefix_tree.cpp
     
     ../src/Forecast.cpp
     ../src/ForecastCache.cpp
@@ -19,6 +20,8 @@ add_executable(${PROJECT_NAME}
     ../src/MarkovChain1Model.cpp
     ../src/MarkovChain2Model.cpp
     ../src/GeometricModel.cpp
+
+    ../src/PrefixTree.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
