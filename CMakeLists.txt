@@ -40,6 +40,7 @@ add_executable(${PROJECT_NAME}
     src/CppAutoClickParser.cpp
     src/Hypothesis.cpp
     src/IndependenceWeekHypothesis.cpp
+    src/IndependenceSeasonHypothesis.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

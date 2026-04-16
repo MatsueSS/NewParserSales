@@ -53,3 +53,11 @@ std::vector<std::string> Hypothesis::generate_all_saturdays(const std::string& s
 
     return saturdays;
 }
+
+int Hypothesis::get_season_index(int month) const noexcept {
+    if(month >= 3 && month <= 5) return 2;
+    if(month >= 6 && month <= 8) return 3;
+    if(month >= 9 && month <= 11) return 0;
+    if(month == 12 || month <= 2) return 1;
+    return -1;
+}

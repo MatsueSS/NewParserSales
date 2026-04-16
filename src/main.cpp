@@ -154,6 +154,8 @@ int main(void)
     // std::vector<int> markov_data = {0,1,0,1,0,1,0,1};
     
     // auto r = ms.select_best(markov_data);
+
+    check_independence_season();
     
     return 0;
 }

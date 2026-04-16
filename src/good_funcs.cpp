@@ -3,6 +3,7 @@
 #include "HiSquare.h"
 #include "PostgresDB.h"
 #include "IndependenceWeekHypothesis.h"
+#include "IndependenceSeasonHypothesis.h"
 
 #include <fstream>
 #include <sstream>
@@ -107,7 +108,7 @@ void check_independence_week()
         try{
             bool r = iwh.check_hypothesis(vec[0], "2025-09-01", "2026-04-16", 0.95);
             if(!r) file << r << ' ' << ++count << ' ' << vec[0] << '\n';
-        } catch(HiSquareException& e){
+        } catch(ZeroSampleHypothesisException& e){
             continue;
         }
     }
@@ -116,18 +117,20 @@ void check_independence_week()
 void check_independence_season()
 {
     HiSquare h;
+    IndependenceSeasonHypothesis ish;
 
     PostgresDB db;
     db.connect(get_conn());
-    std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT DISTINCT title FROM cards;"), std::vector<std::string>{});
+    std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT title FROM products;"), std::vector<std::string>{});
     std::ofstream file("../sensetive_res/independence_for_season.txt");
 
     int count = 0;
     for(const auto& vec : result){
         try{
-            bool r = h.independence_from_season(vec[0], 0.95);
+            bool r = ish.check_hypothesis(vec[0], "2025-09-01", "2026-02-28", 0.95);
             if(!r) file << r << ' ' << ++count << ' ' << vec[0] << '\n';
-        } catch(HiSquareException& e){
+            std::cout << vec[0] << ": " << r << '\n';
+        } catch(ZeroSampleHypothesisException& e){
             continue;
         }
     }

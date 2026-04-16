@@ -6,6 +6,7 @@
 #define COUNT_WEEKS 5
 #define COUNT_RESULT 2
 #define DATE_IN_ROW 4
+#define COUNT_SEASON 2
 
 #include <vector>
 #include <string>
@@ -40,6 +41,7 @@ protected:
 
     std::vector<std::string> generate_all_saturdays(const std::string& start_date, const std::string& end_date) const noexcept;
     int get_week_of_month(int day) const noexcept;
+    int get_season_index(int month) const noexcept;
 
 };
 
