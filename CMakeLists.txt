@@ -38,6 +38,8 @@ add_executable(${PROJECT_NAME}
     src/ForecastCache.cpp
     src/ROC_AUC.cpp
     src/CppAutoClickParser.cpp
+    src/Hypothesis.cpp
+    src/IndependenceWeekHypothesis.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

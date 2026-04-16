@@ -2,10 +2,12 @@
 
 #include "HiSquare.h"
 #include "PostgresDB.h"
+#include "IndependenceWeekHypothesis.h"
 
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 
 std::string get_id() noexcept {
     std::ifstream file("../.env");
@@ -93,17 +95,17 @@ std::chrono::year_month_day converte_string(const std::string& str) noexcept{
 
 void check_independence_week()
 {
-    HiSquare h;
+    IndependenceWeekHypothesis iwh;
 
     PostgresDB db;
     db.connect(get_conn());
-    std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT DISTINCT title FROM cards;"), std::vector<std::string>{});
+    std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT title FROM products;"), std::vector<std::string>{});
     std::ofstream file("../sensetive_res/independence_for_week.txt");
 
     int count = 0;
     for(const auto& vec : result){
         try{
-            bool r = h.independence_from_week(vec[0], "2025-09-01", "2026-03-14", 0.95);
+            bool r = iwh.check_hypothesis(vec[0], "2025-09-01", "2026-04-16", 0.95);
             if(!r) file << r << ' ' << ++count << ' ' << vec[0] << '\n';
         } catch(HiSquareException& e){
             continue;

@@ -18,6 +18,9 @@
 #include "MarkovChain1Model.h"
 #include "MarkovChain2Model.h"
 
+#include "HiSquare.h"
+#include "IndependenceWeekHypothesis.h"
+
 #include "ROC_AUC.h"
 
 int main(void)
@@ -49,11 +52,11 @@ int main(void)
 
 //start
 
-    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    while(true){
-        inter.start_process();
-    }
+    // while(true){
+    //     inter.start_process();
+    // }
 
 //pretest
 
