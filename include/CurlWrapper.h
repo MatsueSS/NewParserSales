@@ -53,7 +53,7 @@ public:
     void close() noexcept;
 
     CURLcode read(const std::string& url);
-    CURLcode write(const std::string& url, const std::string& id, const std::string& data);
+    CURLcode write(const std::string& url, const std::string& info, const std::string& data);
 
     void set_proxy(const std::string& proxy);
 

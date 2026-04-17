@@ -77,12 +77,12 @@ CURLcode CurlWrapper::read(const std::string& url)
     return res;
 }
 
-CURLcode CurlWrapper::write(const std::string& url, const std::string& id, const std::string& data)
+CURLcode CurlWrapper::write(const std::string& url, const std::string& info, const std::string& data)
 {
     if(!is_connect()) throw NoInitCurlWrapperException("curl wasn't initialized\n");
 
     CURLescapePTR encoding (curl_easy_escape(curl_ptr.get(), data.c_str(), data.length()), [](char* ptr){ curl_free(ptr); });
-    std::string post_data = "chat_id="+id+"&text="+std::string(encoding.get());
+    std::string post_data = info+std::string(encoding.get());
 
     curl_easy_setopt(curl_ptr.get(), CURLOPT_POST, 1L);
     curl_easy_setopt(curl_ptr.get(), CURLOPT_HTTPGET, 0L);
