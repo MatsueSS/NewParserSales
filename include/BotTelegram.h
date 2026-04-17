@@ -123,8 +123,11 @@ void BotTelegram::notify_all(Type&& notifi) const {
     if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
         throw BotTelegramException("Value-Type must be a string\n");
 
-    for(const auto& obj : *users)
-        obj.second.notify(notifi);
+    for(const auto& obj : *users){
+        if(obj.second.is_has_product(notifi)){
+            TelegramSender::get_instance()->call(obj.second.get_id(), type_msg::send, notifi);
+        }
+    }
 }
 
 #endif //_BOT_TELEGRAM_H_
