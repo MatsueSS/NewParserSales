@@ -241,7 +241,7 @@ void BotTelegram::init_tree() noexcept
 {
     PostgresDB db;
     db.connect(get_conn());
-    std::vector<std::vector<std::string>> unique_card = db.fetch(std::string("SELECT DISTINCT title FROM cards;"), std::vector<std::string>{});
+    std::vector<std::vector<std::string>> unique_card = db.fetch(std::string("SELECT title FROM products;"), std::vector<std::string>{});
     for(const auto& obj : unique_card){
         tree.add_word(obj[0]);
     }
@@ -389,7 +389,7 @@ void BotTelegram::command_status(std::string&& id)
     PostgresDB db;
     db.connect(get_conn());
 
-    auto res = db.fetch(std::string("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;"), std::vector<std::string>{get_date_str_now()});
+    auto res = db.fetch(std::string("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;"), std::vector<std::string>{converte_ymd(get_previous_or_current_saturday())});
 
     for(const auto& obj : res){
         if(user->second.is_has_product(obj[0])) result += obj[0] + '\n';
