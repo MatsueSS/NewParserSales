@@ -23,12 +23,16 @@
 
 #include "ROC_AUC.h"
 
+#include "CurlWrapper.h"
+
 int main(void)
 {
+    global_init();
+
     // TelegramUser user(std::move(get_id()));
     // user.notify(std::string("Hello\n"));
 
-    // std::string url = "https://api.telegram.org/bot7866507385:AAERevbOeUZoyTIJxkAE7laMt-EQA7vIwq0";
+    // std::string url = "https://api.telegram.org/botxkAE7laMt-EQA7vIwq0";
     // url = url + "/getUpdates?offset=512291602";
     // std::ofstream file("../res/result_512291602.json");
     // CURL* curl = curl_easy_init();
@@ -52,11 +56,14 @@ int main(void)
 
 //start
 
-    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    while(true){
-        inter.start_process();
-    }
+    // while(true){
+    //     inter.start_process();
+    // }
+
+
+    TelegramSender::get_instance()->call(std::string("828404782"), type_msg::send, std::string("Hello from last wrapper\n"));
 
 //pretest
 
@@ -155,5 +162,7 @@ int main(void)
     
     // auto r = ms.select_best(markov_data);
     
+    global_delete();
+
     return 0;
 }

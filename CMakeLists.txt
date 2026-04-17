@@ -41,6 +41,7 @@ add_executable(${PROJECT_NAME}
     src/Hypothesis.cpp
     src/IndependenceWeekHypothesis.cpp
     src/IndependenceSeasonHypothesis.cpp
+    src/CurlWrapper.cpp
 )
 
 find_package(PostgreSQL REQUIRED)
