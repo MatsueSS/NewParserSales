@@ -44,7 +44,6 @@ void CurlWrapper::build()
     curl_easy_setopt(curl_ptr.get(), CURLOPT_CONNECTTIMEOUT, 10L);
     curl_easy_setopt(curl_ptr.get(), CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl_ptr.get(), CURLOPT_WRITEDATA, &response);
-
 }
 
 void CurlWrapper::close() noexcept
@@ -125,4 +124,34 @@ long CurlWrapper::get_http_code() const
     long http_code = 0;
     curl_easy_getinfo(curl_ptr.get(), CURLINFO_RESPONSE_CODE, &http_code);
     return http_code;
+}
+
+void CurlWrapper::write_keyboard(const std::string& url, const std::string& id, 
+                                  const std::string& text, const std::string& keyboard_json)
+{
+    if(!is_connect()) throw NoInitCurlWrapperException("curl wasn't initialized\n");
+
+    std::string json_data = "{";
+    json_data += "\"chat_id\":\"" + id + "\",";
+    json_data += "\"text\":\"" + text + "\",";
+    json_data += "\"reply_markup\":" + keyboard_json;
+    json_data += "}";
+    
+    struct curl_slist* headers = nullptr;
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POST, 1L);
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_HTTPGET, 0L);
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDS, json_data.c_str());
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDSIZE, json_data.size());
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_HTTPHEADER, headers);
+    
+    response.clear();
+    CURLcode res = curl_easy_perform(curl_ptr.get());
+    
+    curl_slist_free_all(headers);
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDS, "");
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POST, 0L);
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_HTTPHEADER, nullptr);
 }

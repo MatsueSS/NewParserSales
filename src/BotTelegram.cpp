@@ -116,71 +116,79 @@ const char* BotTelegramException::what() const noexcept
 void BotTelegram::check_message()
 {
     while(flag.load()){
-        auto ptr = TelegramSender::get_instance();
-        ptr->call(std::string(""), type_msg::read, std::string(offset));
+        //auto ptr = TelegramSender::get_instance();
+        // ptr->call(std::string(""), type_msg::read, std::string(offset));
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        auto v = JsonReader::read("jq -r '.result[] | {text: .message.text, id:.message.from.id, update_id: .update_id}' ../res/result_"+ offset +".json", type_json::message);
-        if(!v.empty()){
-            std::string id = v[2];
-            std::string full_message = v[1];
+        // auto v = JsonReader::read("jq -r '.result[] | {text: .message.text, id:.message.from.id, update_id: .update_id}' ../res/result_"+ offset +".json", type_json::message);
+        ts.read(offset);
+        auto data = ts.get_response();
+        if(data == "{\"ok\":true,\"result\":[]}") continue;
+        nlohmann::json js = nlohmann::json::parse(data);
+        
+        std::string id = js["result"][0]["message"]["from"]["id"].dump();
+        std::string full_message = js["result"][0]["message"]["text"];
 
-            id = id.substr(0, id.length()-1);
+        //id = id.substr(0, id.length()-1);
 
-            if(users_with_keyboard.find(id) == users_with_keyboard.end()){
-                send_main_keyboard(id);
-                users_with_keyboard.insert(id);
-            }
-
-            auto waiting = MachingState.get_waiting(id);
-            if(waiting != UserStateMaching::UserAction::NONE){
-                if(waiting == UserStateMaching::UserAction::ADD_CARD)
-                    command_add_card(std::string(id), std::string(full_message));
-                else if(waiting == UserStateMaching::UserAction::DEL_CARD)
-                    command_del_card(std::string(id), std::string(full_message));
-                else if(waiting == UserStateMaching::UserAction::FORECAST)
-                    command_forecast(std::string(id), std::string(full_message));
-                else if(waiting == UserStateMaching::UserAction::HAS_DISCOUNT)
-                    command_has_discount(std::string(id), std::string(full_message));
-                MachingState.clear(id);
-                offset_reload();
-                continue;
-            }
-
-            if (full_message == "📋 Мои карточки") {
-                command_my_cards(std::move(id));
-            }
-            else if (full_message == "💰 Статус скидок") {
-                command_status(std::move(id));
-            }
-            else if (full_message == "🎯 Рекомендации") {
-                command_recommendations(std::move(id));
-            }
-            else if (full_message == "➕ Добавить товар") {
-                MachingState.set_waiting(id, UserStateMaching::UserAction::ADD_CARD);
-                ptr->call(id, type_msg::send, std::string("Введите название товара для добавления:"));
-            }
-            else if (full_message == "➖ Удалить товар") {
-                MachingState.set_waiting(id, UserStateMaching::UserAction::DEL_CARD);
-                ptr->call(id, type_msg::send, std::string("Введите название товара для удаления:"));
-            }
-            else if (full_message == "📊 Прогноз") {
-                MachingState.set_waiting(id, UserStateMaching::UserAction::FORECAST);
-                ptr->call(id, type_msg::send, std::string("Введите название товара для прогноза:"));
-            }
-            else if(full_message == "❓ Узнать скидку"){
-                MachingState.set_waiting(id, UserStateMaching::UserAction::HAS_DISCOUNT);
-                ptr->call(id, type_msg::send, std::string("Введите название товара для проверки скидки:"));
-            }
-            else {
-                ptr->call(id, type_msg::send, std::string("Используйте кнопки меню"));
-            }
-
-            offset_reload();
+        if(users_with_keyboard.find(id) == users_with_keyboard.end()){
+            send_main_keyboard(id);
+            users_with_keyboard.insert(id);
         }
+
+        auto waiting = MachingState.get_waiting(id);
+        if(waiting != UserStateMaching::UserAction::NONE){
+            if(waiting == UserStateMaching::UserAction::ADD_CARD)
+                command_add_card(std::string(id), std::string(full_message));
+            else if(waiting == UserStateMaching::UserAction::DEL_CARD)
+                command_del_card(std::string(id), std::string(full_message));
+            else if(waiting == UserStateMaching::UserAction::FORECAST)
+                command_forecast(std::string(id), std::string(full_message));
+            else if(waiting == UserStateMaching::UserAction::HAS_DISCOUNT)
+                command_has_discount(std::string(id), std::string(full_message));
+            MachingState.clear(id);
+            offset_reload();
+            continue;
+        }
+
+        if (full_message == "📋 Мои карточки") {
+            command_my_cards(std::move(id));
+        }
+        else if (full_message == "💰 Статус скидок") {
+            command_status(std::move(id));
+        }
+        else if (full_message == "🎯 Рекомендации") {
+            command_recommendations(std::move(id));
+        }
+        else if (full_message == "➕ Добавить товар") {
+            MachingState.set_waiting(id, UserStateMaching::UserAction::ADD_CARD);
+            // ptr->call(id, type_msg::send, std::string("Введите название товара для добавления:"));
+            ts.write(id, "Введите название товара для добавления:");
+        }
+        else if (full_message == "➖ Удалить товар") {
+            MachingState.set_waiting(id, UserStateMaching::UserAction::DEL_CARD);
+            // ptr->call(id, type_msg::send, std::string("Введите название товара для удаления:"));
+            ts.write(id, "Введите название товара для удаления:");
+        }
+        else if (full_message == "📊 Прогноз") {
+            MachingState.set_waiting(id, UserStateMaching::UserAction::FORECAST);
+            // ptr->call(id, type_msg::send, std::string("Введите название товара для прогноза:"));
+            ts.write(id, "Введите название товара для прогноза:");
+        }
+        else if(full_message == "❓ Узнать скидку"){
+            MachingState.set_waiting(id, UserStateMaching::UserAction::HAS_DISCOUNT);
+            // ptr->call(id, type_msg::send, std::string("Введите название товара для проверки скидки:"));
+            ts.write(id, "Введите название товара для проверки скидки:");
+        }
+        else {
+            // ptr->call(id, type_msg::send, std::string("Используйте кнопки меню"));
+            ts.write(id, "Используйте кнопки меню");
+        }
+
+        offset_reload();
     }
 }
 
-void BotTelegram::send_main_keyboard(const std::string& id) const noexcept
+void BotTelegram::send_main_keyboard(const std::string& id) noexcept
 {
     std::string keyboard_json = R"({
         "keyboard": [
@@ -198,8 +206,9 @@ void BotTelegram::send_main_keyboard(const std::string& id) const noexcept
         "🔹 Нажимайте кнопки для команд\n"
         "🔹 Для добавления/удаления/прогноза введите название после нажатия";
     
-    auto ptr = TelegramSender::get_instance();
-    ptr->send_with_keyboard(id, message, keyboard_json);
+    // auto ptr = TelegramSender::get_instance();
+    // ptr->send_with_keyboard(id, message, keyboard_json);
+    ts.send_keyboard(id, message, keyboard_json);
 }
 
 void BotTelegram::offset_reload()
@@ -218,8 +227,9 @@ void BotTelegram::command_start(std::string&& id)
 
     send_main_keyboard(id);
     
-    auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, std::string("Привет, теперь тебе доступен ряд команд для манипуляции с карточками\n"));
+    // auto ptr = TelegramSender::get_instance();
+    // ptr->call(id, type_msg::send, std::string("Привет, теперь тебе доступен ряд команд для манипуляции с карточками\n"));
+    ts.write(id, "Привет, теперь тебе доступен ряд команд для манипуляции с карточками");
     PostgresDB db;
     try{
         db.connect(get_conn());
@@ -250,8 +260,9 @@ void BotTelegram::init_tree() noexcept
 void BotTelegram::command_has_discount(std::string&& id, std::string&& card)
 {
     if(card.empty()){
-        auto ptr = TelegramSender::get_instance();
-        ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        // auto ptr = TelegramSender::get_instance();
+        // ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        ts.write(id, "Вы не ввели данные");
         offset_reload();
         return;
     }
@@ -262,7 +273,7 @@ void BotTelegram::command_has_discount(std::string&& id, std::string&& card)
 
     std::vector<std::vector<std::string>> row;
     std::string last_sat = saturday_to_string(get_previous_or_current_saturday());
-    auto ptr = TelegramSender::get_instance();
+    //auto ptr = TelegramSender::get_instance();
 
     if(tree.has_prefix(card)){
         std::string true_card;
@@ -279,20 +290,24 @@ void BotTelegram::command_has_discount(std::string&& id, std::string&& card)
         }
 
         if(res[0][0] == "t"){
-            ptr->call(id, type_msg::send, std::string("Скидка на " + true_card + " присутствует (данные взяты на число - " + last_sat + ")"));
+            // ptr->call(id, type_msg::send, std::string("Скидка на " + true_card + " присутствует (данные взяты на число - " + last_sat + ")"));
+            ts.write(id, "Скидка на " + true_card + " присутствует (данные взяты на число - " + last_sat + ")");
         } else {
-            ptr->call(id, type_msg::send, std::string("Скидка на " + true_card + " отсутствует (данные взяты на число - " + last_sat + ")"));
+            // ptr->call(id, type_msg::send, std::string("Скидка на " + true_card + " отсутствует (данные взяты на число - " + last_sat + ")"));
+            ts.write(id, "Скидка на " + true_card + " отсутствует (данные взяты на число - " + last_sat + ")");
         }
     } else {
-        ptr->call(id, type_msg::send, std::string("Не удалось найти такую карточку в базе данных. Проверьте корректность названия карточки или же обратитесь к администратору\n"));
+        // ptr->call(id, type_msg::send, std::string("Не удалось найти такую карточку в базе данных. Проверьте корректность названия карточки или же обратитесь к администратору\n"));
+        ts.write(id, "Не удалось найти такую карточку в базе данных. Проверьте корректность названия карточки или же обратитесь к администратору");
     }
 }
 
 void BotTelegram::command_add_card(std::string&& id, std::string&& data)
 {
     if(data.empty()){
-        auto ptr = TelegramSender::get_instance();
-        ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        //auto ptr = TelegramSender::get_instance();
+        //ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        ts.write(id, "Вы не ввели данные");
         offset_reload();
         return;
     }
@@ -349,25 +364,29 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
             }
         }
     }
-    auto ptr = TelegramSender::get_instance();
+    //auto ptr = TelegramSender::get_instance();
     if(found)
-        ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
+        //ptr->call(id, type_msg::send, std::string("Карточка добавлена\n"));
+        ts.write(id, "Карточка добавлена");
     else
-        ptr->call(id, type_msg::send, std::string("Не удалось найти такую карточку в базе данных. Проверьте корректность названия карточки или же обратитесь к администратору\n"));
+        //ptr->call(id, type_msg::send, std::string("Не удалось найти такую карточку в базе данных. Проверьте корректность названия карточки или же обратитесь к администратору\n"));
+        ts.write(id, "Не удалось найти такую карточку в базе данных. Проверьте корректность названия карточки или же обратитесь к администратору");
 }
 
 void BotTelegram::command_del_card(std::string&& id, std::string&& data)
 {
     if(data.empty()){
-        auto ptr = TelegramSender::get_instance();
-        ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        //auto ptr = TelegramSender::get_instance();
+        //ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        ts.write(id, "Вы не ввели данные");
         offset_reload();
         return;
     }
     auto user = users->find(id);
     user->second.del_product(data);
-    auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, std::string("Карточка удалена\n"));
+    //auto ptr = TelegramSender::get_instance();
+    //ptr->call(id, type_msg::send, std::string("Карточка удалена\n"));
+    ts.write(id, "Карточка удалена");
     PostgresDB db;
     std::string conn = get_conn();
     try{
@@ -394,8 +413,9 @@ void BotTelegram::command_status(std::string&& id)
     for(const auto& obj : res){
         if(user->second.is_has_product(obj[0])) result += obj[0] + '\n';
     }
-    auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, result);
+    //auto ptr = TelegramSender::get_instance();
+    //ptr->call(id, type_msg::send, result);
+    ts.write(id, result);
 }
 
 void BotTelegram::command_my_cards(std::string&& id)
@@ -406,23 +426,26 @@ void BotTelegram::command_my_cards(std::string&& id)
     for(const auto& obj : cards){
         result += ptr_pc->get_title(obj).get_title() + "\n";
     }
-    auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, result);
+    //auto ptr = TelegramSender::get_instance();
+    //ptr->call(id, type_msg::send, result);
+    ts.write(id, result);
 }
 
 void BotTelegram::command_forecast(std::string&& id, std::string&& data)
 {
     if(data.empty()){
-        auto ptr = TelegramSender::get_instance();
-        ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        //auto ptr = TelegramSender::get_instance();
+        //ptr->call(id, type_msg::send, std::string("Вы не ввели данные\n"));
+        ts.write(id, "Вы не ввели данные");
         offset_reload();
         return;
     }
 
     auto load_cache = f_cache.get(data);
     if(load_cache != std::nullopt){
-        auto ptr = TelegramSender::get_instance();
-        ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(load_cache.value() * 100)) + "%"));
+        //auto ptr = TelegramSender::get_instance();
+        //ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(load_cache.value() * 100)) + "%"));
+        ts.write(id, "Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(load_cache.value() * 100)) + "%");
         return;
     }
 
@@ -438,14 +461,16 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
     }
     if(query_result.empty()){
-        auto ptr = TelegramSender::get_instance();
-        ptr->call(id, type_msg::send, std::string("Данной карточки нет в базе данных или же ещё не было скидок на этот товар\n"));
+        //auto ptr = TelegramSender::get_instance();
+        //ptr->call(id, type_msg::send, std::string("Данной карточки нет в базе данных или же ещё не было скидок на этот товар\n"));
+        ts.write(id, "Данной карточки нет в базе данных или же ещё не было скидок на этот товар");
         offset_reload();
         return;
     }
     if(query_result.size() < 3){
-        auto ptr = TelegramSender::get_instance();
-        ptr->call(id, type_msg::send, std::string("Слишком мало данных для такой карточки\n"));
+        //auto ptr = TelegramSender::get_instance();
+        //ptr->call(id, type_msg::send, std::string("Слишком мало данных для такой карточки\n"));
+        ts.write(id, "Слишком мало данных для такой карточки");
         offset_reload();
         return;
     }
@@ -476,8 +501,9 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
 
     f_cache.set(data, r.best_probability);
 
-    auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(r.best_probability * 100)) + "%"));
+    //auto ptr = TelegramSender::get_instance();
+    //ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(r.best_probability * 100)) + "%"));
+    ts.write(id, "Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(r.best_probability * 100)) + "%");
 }
 
 void BotTelegram::command_recommendations(std::string&& id)
@@ -491,8 +517,9 @@ void BotTelegram::command_recommendations(std::string&& id)
         result += v + '\n';
         count++;
     }
-    auto ptr = TelegramSender::get_instance();
-    ptr->call(id, type_msg::send, result);
+    //auto ptr = TelegramSender::get_instance();
+    //ptr->call(id, type_msg::send, result);
+    ts.write(id, result);
 }
 
 void BotTelegram::reset_cache() noexcept

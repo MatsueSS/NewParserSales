@@ -3,11 +3,11 @@
 
 //Here is the code that describes the bot user.
 
-#include "TelegramSender.h"
 #include "PoolCards.h"
 
 #include <unordered_set>
 #include <string>
+#include <memory>
 
 class TelegramUserException : public std::exception{
 protected:

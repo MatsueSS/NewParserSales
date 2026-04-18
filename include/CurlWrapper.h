@@ -63,6 +63,8 @@ public:
 
     bool is_connect() const noexcept;
 
+    void write_keyboard(const std::string& url, const std::string& id, const std::string& text, const std::string& keyboard_json);
+
     ~CurlWrapper();
 
 private:

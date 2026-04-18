@@ -25,6 +25,8 @@
 
 #include "CurlWrapper.h"
 
+#include "TelegramStategy.h"
+
 int main(void)
 {
     global_init();
@@ -56,11 +58,11 @@ int main(void)
 
 //start
 
-    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    // while(true){
-    //     inter.start_process();
-    // }
+    while(true){
+        inter.start_process();
+    }
 
 //pretest
 

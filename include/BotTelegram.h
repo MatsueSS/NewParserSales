@@ -10,6 +10,7 @@
 #include "UserStateMaching.h"
 #include "PoolCards.h"
 #include "ForecastCache.h"
+#include "TelegramStategy.h"
 
 #include <thread>
 #include <set>
@@ -45,6 +46,7 @@ private:
     PrefixTree tree;
     UserStateMaching MachingState;
     ForecastCache f_cache;
+    TelegramStrategy ts;
 
     void check_message();
     void offset_reload();
@@ -64,7 +66,7 @@ private:
 
     void load_users_from_db();
 
-    void send_main_keyboard(const std::string& id) const noexcept;
+    void send_main_keyboard(const std::string& id) noexcept;
 
 public:
     BotTelegram(std::string, std::shared_ptr<PoolCards> ptr_pc, RecType rectype, ProdType prodtype);
@@ -86,7 +88,7 @@ public:
 
     // send users notify
     template<typename Type>
-    void notify_all(Type&&) const;
+    void notify_all(Type&&);
 
     void reset_cache() noexcept;
 
@@ -119,13 +121,14 @@ bool BotTelegram::is_has_user(Type&& user) const {
 }
 
 template<typename Type>
-void BotTelegram::notify_all(Type&& notifi) const {
+void BotTelegram::notify_all(Type&& notifi) {
     if constexpr(!std::is_same<std::decay_t<Type>, std::string>::value)
         throw BotTelegramException("Value-Type must be a string\n");
 
     for(const auto& obj : *users){
         if(obj.second.is_has_product(notifi)){
-            TelegramSender::get_instance()->call(obj.second.get_id(), type_msg::send, notifi);
+            ts.write(obj.second.get_id(), notifi);
+            //TelegramSender::get_instance()->call(obj.second.get_id(), type_msg::send, notifi);
         }
     }
 }

@@ -12,7 +12,7 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/PostgresDB.cpp
     src/PyLoader.cpp
-    src/TelegramSender.cpp
+    #src/TelegramSender.cpp
     src/JsonReader.cpp
     src/TelegramUser.cpp
     src/good_funcs.cpp
