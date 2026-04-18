@@ -160,6 +160,42 @@ int main(void)
     // std::vector<int> markov_data = {0,1,0,1,0,1,0,1};
     
     // auto r = ms.select_best(markov_data);
+
+    // PostgresDB db;
+    // db.connect(get_conn());
+
+    // std::string title = "Яблоки Голден";
+    // auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{title});
+    // //auto ymd = converte_string(first_date[0][0]);
+    // std::chrono::year_month_day ymd {std::chrono::year{2025}, std::chrono::month{9}, std::chrono::day{6}};
+
+    // auto query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{title});
+
+    // std::vector<int> sample;
+    // for(int i = 0; i < query_result.size();){
+    //     if(converte_string(query_result[i][0]) == ymd){
+    //         sample.push_back(1);
+    //         i++;
+    //     } else {
+    //         sample.push_back(0);
+    //     }
+    //     std::chrono::sys_days date = std::chrono::sys_days{ymd};
+    //     date += std::chrono::days{7};
+    //     std::chrono::year_month_day n_ymd {date};
+    //     ymd = n_ymd;
+    // }
+
+    // for(int i : sample)
+    //     std::cout << i << ' ';
+    // std::cout << '\n';
+
+    // GeometricModel gm;
+    // MarkovChain1Model m1m;
+    // MarkovChain2Model m2m;
+
+    // std::cout << gm.predict_probability(sample) << ' ' << gm.calculate_bic(sample) << '\n';
+    // std::cout << m1m.predict_probability(sample) << ' ' << m1m.calculate_bic(sample) << '\n';
+    // std::cout << m2m.predict_probability(sample) << ' ' << m2m.calculate_bic(sample) << '\n';
     
     global_delete();
 

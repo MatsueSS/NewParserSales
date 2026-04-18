@@ -402,19 +402,29 @@ void BotTelegram::command_del_card(std::string&& id, std::string&& data)
 
 void BotTelegram::command_status(std::string&& id)
 {
-    auto user = users->find(id);
-    std::string result = "Ваши скидки:\n";
+    // auto user = users->find(id);
+    // std::string result = "Ваши скидки:\n";
+
+    // PostgresDB db;
+    // db.connect(get_conn());
+
+    // auto res = db.fetch(std::string("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;"), std::vector<std::string>{converte_ymd(get_previous_or_current_saturday())});
+
+    // for(const auto& obj : res){
+    //     if(user->second.is_has_product(obj[0])) result += obj[0] + '\n';
+    // }
+    // //auto ptr = TelegramSender::get_instance();
+    // //ptr->call(id, type_msg::send, result);
+    // ts.write(id, result);
 
     PostgresDB db;
     db.connect(get_conn());
 
-    auto res = db.fetch(std::string("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;"), std::vector<std::string>{converte_ymd(get_previous_or_current_saturday())});
-
+    auto res = db.fetch(std::string("SELECT t1.preference FROM (SELECT * FROM preferences WHERE id = $1) t1 INNER JOIN (SELECT title FROM cards WHERE date = $2 AND discount IS NOT NULL) t2 ON t1.preference = t2.title;"), std::vector<std::string>{id, converte_ymd(get_previous_or_current_saturday())});
+    std::string result = "Ваши скидки:\n";
     for(const auto& obj : res){
-        if(user->second.is_has_product(obj[0])) result += obj[0] + '\n';
+        result += obj[0] + '\n';
     }
-    //auto ptr = TelegramSender::get_instance();
-    //ptr->call(id, type_msg::send, result);
     ts.write(id, result);
 }
 
@@ -475,8 +485,10 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         return;
     }
 
+    auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{data});
+    auto ymd = converte_string(first_date[0][0]);
+
     std::vector<int> sample;
-    std::chrono::year_month_day ymd {std::chrono::year{2025}, std::chrono::month{9}, std::chrono::day{6}};
     for(int i = 0; i < query_result.size();){
         if(converte_string(query_result[i][0]) == ymd){
             sample.push_back(1);
