@@ -1,5 +1,5 @@
-#ifndef _FACTORY_CACHE_H_
-#define _FACTORY_CACHE_H_
+#ifndef FACTORY_CACHE_H
+#define FACTORY_CACHE_H
 
 #include <unordered_map>
 #include <string>
@@ -28,6 +28,14 @@ public:
 
 class ForecastCache{
 public:
+    ForecastCache() = default;
+
+    ForecastCache(const ForecastCache&) = delete;
+    ForecastCache& operator=(const ForecastCache&) = delete;
+
+    ForecastCache(ForecastCache&&) noexcept = delete;
+    ForecastCache& operator=(ForecastCache&&) noexcept = delete;
+
     std::optional<double> get(const std::string& title) noexcept;
 
     void set(const std::string& title, double probability);
@@ -48,4 +56,4 @@ private:
 
 };
 
-#endif
+#endif // FORECAST_CACHE_H

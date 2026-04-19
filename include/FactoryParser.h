@@ -1,5 +1,5 @@
-#ifndef _FACTORY_PARSER_H_
-#define _FACTORY_PARSER_H_
+#ifndef FACTORY_PARSER_H
+#define FACTORY_PARSER_H
 
 #include "Parser.h"
 #include "PyAutoClickParser.h"
@@ -22,4 +22,4 @@ public:
     }
 };
 
-#endif
+#endif // FACTORY_PARSER_H

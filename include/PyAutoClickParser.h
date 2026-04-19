@@ -1,5 +1,5 @@
-#ifndef _PY_AUTO_CLICK_PARSER_H_
-#define _PY_AUTO_CLICK_PARSER_H_
+#ifndef PY_AUTO_CLICK_PARSER_H
+#define PY_AUTO_CLICK_PARSER_H
 
 #include "Parser.h"
 
@@ -12,4 +12,4 @@ public:
 
 };
 
-#endif
+#endif // PY_AUTO_CLICK_PARSER_H

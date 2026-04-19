@@ -1,5 +1,5 @@
-#ifndef _RECOMMENDATIONS_H_
-#define _RECOMMENDATIONS_H_
+#ifndef RECOMMENDATIONS_H
+#define RECOMMENDATIONS_H
 
 #include "PoolCards.h"
 #include "TelegramUser.h"
@@ -53,4 +53,4 @@ public:
     virtual std::vector<std::string> recommendation(const std::string& id) const = 0;
 };
 
-#endif
+#endif // RECOMMENDATIONS_H

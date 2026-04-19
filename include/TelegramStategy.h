@@ -1,5 +1,5 @@
-#ifndef _TELEGRAM_STRATEGY_H_
-#define _TELEGRAM_STRATEGY_H_
+#ifndef TELEGRAM_STRATEGY_H
+#define TELEGRAM_STRATEGY_H
 
 #include "CurlWrapper.h"
 #include "good_funcs.h"
@@ -57,4 +57,4 @@ private:
 
 };
 
-#endif
+#endif // TELEGRAM_STRATEGY_H

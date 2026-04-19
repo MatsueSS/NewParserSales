@@ -1,12 +1,12 @@
 #include "BotTelegram.h"
 
-#include "JsonReader.h"
 #include "good_funcs.h"
 #include "json.hpp"
 #include "PostgresDB.h"
 #include "FactoryRecommendations.h"
 #include "FactorySearcher.h"
 #include "ModelSelector.h"
+#include "PostgresDB.h"
 
 #include <queue>
 
@@ -17,6 +17,8 @@ BotTelegram::BotTelegram(std::string offset, std::shared_ptr<PoolCards> ptr_pc, 
     , users(std::make_shared<std::unordered_map<std::string, TelegramUser>>())
     , observer(FactoryRecommendations::create(rectype, ptr_pc, users))
     , searcher(FactoryMatcher::create(prodtype, "../sensetive_res/new_dict.txt", ptr_pc))
+    , f_cache(std::make_shared<ForecastCache>())
+    , ptr_mx(std::make_unique<std::mutex>())
 {
     load_users_from_db();
     init_tree();
@@ -28,10 +30,10 @@ void BotTelegram::load_users_from_db()
 {
     std::string conn = get_conn();
     PostgresDB db;
+    db.connect(conn);
     std::vector<std::vector<std::string>> res;
 
     try{
-        db.connect(conn);
         res = db.fetch(std::string("SELECT id FROM users;"), std::vector<std::string>{});
     } catch (BadConnectionDBexception& e){
         db.connect(conn);
@@ -48,7 +50,6 @@ void BotTelegram::load_users_from_db()
     res.clear();
 
     try{
-        db.connect(conn);
         res = db.fetch(std::string("SELECT id, preference FROM preferences;"), std::vector<std::string>{});
     } catch (BadConnectionDBexception& e){
         db.connect(conn);
@@ -79,7 +80,10 @@ BotTelegram::~BotTelegram()
 }
 
 BotTelegram::BotTelegram(BotTelegram&& obj) noexcept
-    : flag(obj.flag.load()), worker(std::move(obj.worker)), offset(std::move(obj.offset)), searcher(std::move(obj.searcher)), observer(std::move(obj.observer))
+    : users(std::move(obj.users)), flag(obj.flag.load()), worker(std::move(obj.worker)), offset(std::move(obj.offset))
+    , users_with_keyboard(std::move(obj.users_with_keyboard)), ptr_pc(std::move(obj.ptr_pc)), observer(std::move(obj.observer))
+    , searcher(std::move(obj.searcher)), tree(std::move(obj.tree)), MachineState(std::move(obj.MachineState)), f_cache(std::move(obj.f_cache))
+    , ts(std::move(obj.ts)), ptr_mx(std::move(obj.ptr_mx))
 {
     obj.flag = false;
 }
@@ -90,11 +94,19 @@ BotTelegram& BotTelegram::operator=(BotTelegram&& obj) noexcept
         return *this;
 
     stop();
-    offset = std::move(obj.offset);
+    users = std::move(users);
     flag = obj.flag.load();
     worker = std::move(obj.worker);
-    searcher = std::move(obj.searcher);
+    offset = std::move(obj.offset);
+    users_with_keyboard = std::move(obj.users_with_keyboard);
     observer = std::move(obj.observer);
+    searcher = std::move(obj.searcher);
+    tree = std::move(obj.tree);
+    MachineState = std::move(obj.MachineState);
+    f_cache = std::move(obj.f_cache);
+    ts = std::move(obj.ts);
+    ptr_mx = std::move(obj.ptr_mx);
+
     obj.flag = false;
     return *this;
 }
@@ -128,29 +140,30 @@ void BotTelegram::check_message()
         std::string id = js["result"][0]["message"]["from"]["id"].dump();
         std::string full_message = js["result"][0]["message"]["text"];
 
-        //id = id.substr(0, id.length()-1);
-
         if(users_with_keyboard.find(id) == users_with_keyboard.end()){
             send_main_keyboard(id);
             users_with_keyboard.insert(id);
         }
 
-        auto waiting = MachingState.get_waiting(id);
-        if(waiting != UserStateMaching::UserAction::NONE){
-            if(waiting == UserStateMaching::UserAction::ADD_CARD)
+        auto waiting = MachineState.get_waiting(id);
+        if(waiting != UserStateMachine::UserAction::NONE){
+            if(waiting == UserStateMachine::UserAction::ADD_CARD)
                 command_add_card(std::string(id), std::string(full_message));
-            else if(waiting == UserStateMaching::UserAction::DEL_CARD)
+            else if(waiting == UserStateMachine::UserAction::DEL_CARD)
                 command_del_card(std::string(id), std::string(full_message));
-            else if(waiting == UserStateMaching::UserAction::FORECAST)
+            else if(waiting == UserStateMachine::UserAction::FORECAST)
                 command_forecast(std::string(id), std::string(full_message));
-            else if(waiting == UserStateMaching::UserAction::HAS_DISCOUNT)
+            else if(waiting == UserStateMachine::UserAction::HAS_DISCOUNT)
                 command_has_discount(std::string(id), std::string(full_message));
-            MachingState.clear(id);
+            MachineState.clear(id);
             offset_reload();
             continue;
         }
 
-        if (full_message == "📋 Мои карточки") {
+        if(full_message == "/start") {
+            command_start(std::move(id));
+        }
+        else if (full_message == "📋 Мои карточки") {
             command_my_cards(std::move(id));
         }
         else if (full_message == "💰 Статус скидок") {
@@ -160,22 +173,22 @@ void BotTelegram::check_message()
             command_recommendations(std::move(id));
         }
         else if (full_message == "➕ Добавить товар") {
-            MachingState.set_waiting(id, UserStateMaching::UserAction::ADD_CARD);
+            MachineState.set_waiting(id, UserStateMachine::UserAction::ADD_CARD);
             // ptr->call(id, type_msg::send, std::string("Введите название товара для добавления:"));
             ts.write(id, "Введите название товара для добавления:");
         }
         else if (full_message == "➖ Удалить товар") {
-            MachingState.set_waiting(id, UserStateMaching::UserAction::DEL_CARD);
+            MachineState.set_waiting(id, UserStateMachine::UserAction::DEL_CARD);
             // ptr->call(id, type_msg::send, std::string("Введите название товара для удаления:"));
             ts.write(id, "Введите название товара для удаления:");
         }
         else if (full_message == "📊 Прогноз") {
-            MachingState.set_waiting(id, UserStateMaching::UserAction::FORECAST);
+            MachineState.set_waiting(id, UserStateMachine::UserAction::FORECAST);
             // ptr->call(id, type_msg::send, std::string("Введите название товара для прогноза:"));
             ts.write(id, "Введите название товара для прогноза:");
         }
         else if(full_message == "❓ Узнать скидку"){
-            MachingState.set_waiting(id, UserStateMaching::UserAction::HAS_DISCOUNT);
+            MachineState.set_waiting(id, UserStateMachine::UserAction::HAS_DISCOUNT);
             // ptr->call(id, type_msg::send, std::string("Введите название товара для проверки скидки:"));
             ts.write(id, "Введите название товара для проверки скидки:");
         }
@@ -213,6 +226,7 @@ void BotTelegram::send_main_keyboard(const std::string& id) noexcept
 
 void BotTelegram::offset_reload()
 {
+    std::unique_lock<std::mutex> lock(*ptr_mx);
     long long oset = std::stoll(offset);
     oset++;
     offset = std::to_string(oset);
@@ -451,7 +465,7 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         return;
     }
 
-    auto load_cache = f_cache.get(data);
+    auto load_cache = f_cache->get(data);
     if(load_cache != std::nullopt){
         //auto ptr = TelegramSender::get_instance();
         //ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(load_cache.value() * 100)) + "%"));
@@ -511,7 +525,7 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         r.best_probability = 0.0;
     }
 
-    f_cache.set(data, r.best_probability);
+    f_cache->set(data, r.best_probability);
 
     //auto ptr = TelegramSender::get_instance();
     //ptr->call(id, type_msg::send, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(r.best_probability * 100)) + "%"));

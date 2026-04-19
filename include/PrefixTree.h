@@ -1,5 +1,5 @@
-#ifndef _PREFIX_TREE_H_
-#define _PREFIX_TREE_H_
+#ifndef PREFIX_TREE_H
+#define PREFIX_TREE_H
 
 #include <map>
 #include <memory>
@@ -8,6 +8,12 @@
 class PrefixTree{
 public:
     PrefixTree();
+
+    PrefixTree(const PrefixTree&) = delete;
+    PrefixTree& operator=(const PrefixTree&) = delete;
+
+    PrefixTree(PrefixTree&&) noexcept;
+    PrefixTree& operator=(PrefixTree&&) noexcept;
 
     void add_word(const std::string& str) noexcept;
     
@@ -37,4 +43,4 @@ private:
 
 };
 
-#endif
+#endif // PREFIX_TREE_H

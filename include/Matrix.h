@@ -1,5 +1,5 @@
-#ifndef _MATRIX_H_
-#define _MATRIX_H_
+#ifndef MATRIX_H
+#define MATRIX_H
 
 //Here is the code that allows you to read recommendations for users
 
@@ -52,4 +52,4 @@ public:
     std::vector<std::string> recommendation(const std::string& id) const override;
 };
 
-#endif //_MATRIX_LIKE_H_
+#endif // MATRIX_H

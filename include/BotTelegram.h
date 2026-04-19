@@ -1,5 +1,5 @@
-#ifndef _BOT_TELEGRAM_H_
-#define _BOT_TELEGRAM_H_
+#ifndef BOT_TELEGRAM_H
+#define BOT_TELEGRAM_H
 
 //Here is the code that describes the bot in Telegram.
 
@@ -7,13 +7,14 @@
 #include "ProductSearcher.h"
 #include "ProductRecommendations.h"
 #include "PrefixTree.h"
-#include "UserStateMaching.h"
+#include "UserStateMachine.h"
 #include "PoolCards.h"
 #include "ForecastCache.h"
 #include "TelegramStategy.h"
 
 #include <thread>
 #include <set>
+#include <mutex>
 
 class BotTelegramException : public std::exception{
 protected:
@@ -44,9 +45,10 @@ private:
     ProductRecommendations observer;
     ProductSearcher searcher;
     PrefixTree tree;
-    UserStateMaching MachingState;
-    ForecastCache f_cache;
+    UserStateMachine MachineState;
+    std::shared_ptr<ForecastCache> f_cache;
     TelegramStrategy ts;
+    std::unique_ptr<std::mutex> ptr_mx;
 
     void check_message();
     void offset_reload();
@@ -133,4 +135,4 @@ void BotTelegram::notify_all(Type&& notifi) {
     }
 }
 
-#endif //_BOT_TELEGRAM_H_
+#endif // BOT_TELEGRAM_H

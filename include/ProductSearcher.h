@@ -1,5 +1,5 @@
-#ifndef _PRODUCT_SEARCHER_H_
-#define _PRODUCT_SEARCHER_H_
+#ifndef PRODUCT_SEARCHER_H
+#define PRODUCT_SEARCHER_H
 
 #include "Matcher.h"
 
@@ -33,4 +33,4 @@ const std::vector<uint32_t>* ProductSearcher::search(Data&& query) const noexcep
     return searcher->find_matches(std::forward<Data>(query));
 }
 
-#endif
+#endif // PRODUCT_SEARCHER_H

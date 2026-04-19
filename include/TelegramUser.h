@@ -1,5 +1,5 @@
-#ifndef _TELEGRAM_USER_
-#define _TELEGRAM_USER_
+#ifndef TELEGRAM_USER
+#define TELEGRAM_USER
 
 //Here is the code that describes the bot user.
 
@@ -46,9 +46,6 @@ public:
 
     const std::unordered_set<uint32_t>& get_cards() const noexcept;
 
-    // template<typename Type>
-    // void notify(Type&&) const;
-
     std::string get_id() const noexcept;
 };
 
@@ -93,24 +90,4 @@ bool TelegramUser::is_has_product(Type&& str) const {
     return false;
 }
 
-// template<typename Type>
-// void TelegramUser::notify(Type&& str) const {
-//     if constexpr(std::is_same<std::decay_t<Type>, std::string>::value){
-//         uint32_t temp = ptr_pc->get_index(str);
-//         if(!lovely_product.count(temp))
-//             return;
-
-//         TelegramSender::get_instance()->call(id, type_msg::send, std::forward<Type>(str));
-//     }
-//     else if constexpr(std::is_same<std::decay_t<Type>, uint32_t>::value){
-//         if(!lovely_product.count(str))
-//             return;
-        
-//         std::string temp = ptr_pc->get_title(std::forward<Type>(str));
-//         TelegramSender::get_instance()->call(id, type_msg::send, std::move(temp));
-//     }
-//     else
-//         throw TelegramUserException("Value-Type must be string or uint32_t\n");
-// }
-
-#endif //_TELEGRAM_USER_
+#endif // TELEGRAM_USER

@@ -1,5 +1,5 @@
-#ifndef _PRODUCT_RECOMMENDATIONS_H_
-#define _PRODUCT_RECOMMENDATIONS_H_
+#ifndef PRODUCT_RECOMMENDATIONS_H
+#define PRODUCT_RECOMMENDATIONS_H
 
 #include "Recommendations.h"
 
@@ -69,4 +69,4 @@ std::vector<std::string> ProductRecommendations::recommendation(Data&& id) const
     return prRec->recommendation(std::forward<Data>(id));
 }
 
-#endif
+#endif // PRODUCT_RECOMMENDATIONS_H

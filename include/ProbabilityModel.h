@@ -1,5 +1,5 @@
-#ifndef _PROBABILITY_MODEL_H_
-#define _PROBABILITY_MODEL_H_
+#ifndef PROBABILITY_MODEL_H
+#define PROBABILITY_MODEL_H
 
 #include <vector>
 #include <exception>
@@ -56,4 +56,4 @@ protected:
     
 };
 
-#endif
+#endif // PROBABILITY_MODEL_H

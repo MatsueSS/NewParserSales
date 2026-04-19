@@ -1,5 +1,5 @@
-#ifndef _ROC_AUC_H_
-#define _ROC_AUC_H_
+#ifndef ROC_AUC_H
+#define ROC_AUC_H
 
 #include <vector>
 
@@ -9,4 +9,4 @@ public:
     
 };
 
-#endif
+#endif // ROC_AUC_H

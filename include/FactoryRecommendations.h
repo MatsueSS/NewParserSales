@@ -1,5 +1,5 @@
-#ifndef _FACTORY_RECOMMENDATIONS_H_
-#define _FACTORY_RECOMMENDATIONS_H_
+#ifndef FACTORY_RECOMMENDATIONS_H
+#define FACTORY_RECOMMENDATIONS_H
 
 #include "Recommendations.h"
 #include "Matrix.h"
@@ -18,4 +18,4 @@ public:
     }
 };
 
-#endif
+#endif // FACTORY_RECOMMENDATIONS_H

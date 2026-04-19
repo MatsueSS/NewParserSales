@@ -1,5 +1,5 @@
-#ifndef _FORECAST_H_
-#define _FORECAST_H_
+#ifndef FORECAST_H
+#define FORECAST_H
 
 //Typical methods for working with probability and sampling are described here.
 
@@ -136,4 +136,4 @@ double Forecast::poisson_probability(Container&& container, unsigned k) const
     return std::pow(mean_val, k)*exp(-mean_val)/std::tgamma(k+1);
 }
 
-#endif //_FORECAST_H_
+#endif // FORECAST_H

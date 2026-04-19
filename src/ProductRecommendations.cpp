@@ -11,6 +11,8 @@ void ProductRecommendations::set_strategy(std::unique_ptr<Recommendations> new_s
 
 ProductRecommendations& ProductRecommendations::operator=(ProductRecommendations&& obj) noexcept
 {
+    if(this == &obj) return *this;
+
     prRec = std::move(obj.prRec);
     return *this;
 }

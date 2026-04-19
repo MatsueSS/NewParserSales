@@ -1,5 +1,5 @@
-#ifndef _Cpp_AUTOCLICK_PARSER_H_
-#define _Cpp_AUTOCLICK_PARSER_H_
+#ifndef CPP_AUTOCLICK_PARSER_H
+#define CPP_AUTOCLICK_PARSER_H
 
 #include "Parser.h"
 
@@ -12,4 +12,4 @@ public:
     virtual std::vector<ProductData> fetch_product() const override;
 };
 
-#endif
+#endif // CPP_AUTOCLICK_PARSER_H

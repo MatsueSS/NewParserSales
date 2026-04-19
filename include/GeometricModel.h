@@ -1,5 +1,5 @@
-#ifndef _GEOMETRIC_MODEL_H_
-#define _GEOMETRIC_MODEL_H_
+#ifndef GEOMETRIC_MODEL_H
+#define GEOMETRIC_MODEL_H
 
 #include "ProbabilityModel.h"
 #include "Forecast.h"
@@ -19,4 +19,4 @@ private:
 
 };
 
-#endif
+#endif // GEOMETRIC_MODEL_H

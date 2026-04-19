@@ -1,5 +1,5 @@
-#ifndef _MATCHER_H_
-#define _MATCHER_H_
+#ifndef MATCHER_H
+#define MATCHER_H
 
 #include "PoolCards.h"
 
@@ -31,7 +31,7 @@ public:
     Matcher(const std::string& filename, std::shared_ptr<PoolCards> ptr_pc) : filename(filename), ptr_pc(ptr_pc) {}
 
     template<typename Data>
-    const std::vector<uint32_t>* find_matches(Data&& query) const noexcept;
+    const std::vector<uint32_t>* find_matches(Data&& query) const noexcept; // POTENTIAL PROBLEM
 
     virtual ~Matcher() = default;
 
@@ -55,4 +55,4 @@ const std::vector<uint32_t>* Matcher::find_matches(Data&& query) const noexcept
     return it == dict.end() ? nullptr : &it->second;
 }
 
-#endif
+#endif // MATCHER_H

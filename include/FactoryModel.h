@@ -1,5 +1,5 @@
-#ifndef _FACTORY_MODEL_H_
-#define _FACTORY_MODEL_H_
+#ifndef FACTORY_MODEL_H
+#define FACTORY_MODEL_H
 
 #include "ProbabilityModel.h"
 
@@ -25,4 +25,4 @@ public:
     }
 };
 
-#endif
+#endif // FACTORY_MODEL_H

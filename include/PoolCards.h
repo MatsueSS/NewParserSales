@@ -1,5 +1,5 @@
-#ifndef _POOL_CARDS_H_
-#define _POOL_CARDS_H_
+#ifndef POOL_CARDS_H
+#define POOL_CARDS_H
 
 #include "Product.h"
 
@@ -46,4 +46,4 @@ private:
 
 };
 
-#endif
+#endif // POOL_CARDS_H

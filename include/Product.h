@@ -1,5 +1,5 @@
-#ifndef _PRODUCT_H_
-#define _PRODUCT_H_
+#ifndef PRODUCT_H
+#define PRODUCT_H
 
 #include <string>
 
@@ -57,4 +57,4 @@ void Product::set_title(Data&& title)
     this->title = std::forward<Data>(title);
 }
 
-#endif
+#endif // PRODUCT_H

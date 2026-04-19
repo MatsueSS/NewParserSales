@@ -1,5 +1,5 @@
-#ifndef _GOOD_FUNCS_H_
-#define _GOOD_FUNCS_H_
+#ifndef GOOD_FUNCS_H
+#define GOOD_FUNCS_H
 
 //Here are some handy features that I use often.
 
@@ -41,4 +41,4 @@ void check_independence_week();
 // Hypothesis testing - should I use 1 probability or divide by seasons for geometric distribution?
 void check_independence_season();
 
-#endif //_GOOD_FUNCS_H_
+#endif // GOOD_FUNCS_H

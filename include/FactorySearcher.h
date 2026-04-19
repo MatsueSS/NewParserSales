@@ -1,5 +1,5 @@
-#ifndef _FACTORY_SEARCHER_H_
-#define _FACTORY_SEARCHER_H_
+#ifndef FACTORY_SEARCHER_H
+#define FACTORY_SEARCHER_H
 
 #include "Matcher.h"
 #include "FileMatcher.h"
@@ -18,4 +18,4 @@ public:
     }
 };
 
-#endif
+#endif // FACTORY_SEARCHER_H

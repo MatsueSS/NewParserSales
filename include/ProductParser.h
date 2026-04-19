@@ -1,5 +1,5 @@
-#ifndef _PRODUCT_PARSER_H_
-#define _PRODUCT_PARSER_H_
+#ifndef PRODUCT_PARSER_H
+#define PRODUCT_PARSER_H
 
 #include "Parser.h"
 
@@ -25,4 +25,4 @@ private:
 
 };
 
-#endif
+#endif // PRODUCT_PARSER_H

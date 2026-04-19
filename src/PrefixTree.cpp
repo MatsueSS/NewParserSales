@@ -5,6 +5,16 @@
 
 PrefixTree::PrefixTree() : root(std::make_unique<TreeNode>()) {}
 
+PrefixTree::PrefixTree(PrefixTree&& obj) noexcept : root(std::move(obj.root)) {}
+
+PrefixTree& PrefixTree::operator=(PrefixTree&& obj) noexcept
+{
+    if(this == &obj) return *this;
+
+    root = std::move(obj.root);
+    return *this;
+}
+
 void PrefixTree::add_word(const std::string& str) noexcept
 {
     TreeNode* temp_ptr = root.get();

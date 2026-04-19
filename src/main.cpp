@@ -27,6 +27,7 @@
 
 #include "TelegramStategy.h"
 
+#include "json.hpp"
 int main(void)
 {
     global_init();

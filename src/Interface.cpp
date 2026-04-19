@@ -1,5 +1,4 @@
 #include "Interface.h"
-#include "JsonReader.h"
 #include "good_funcs.h"
 #include "PyLoader.h"
 #include "json.hpp"
@@ -20,8 +19,11 @@ Interface::Interface(std::string str, RecType rectype, ProdType prodtype, TypePa
 
 bool Interface::control_date() const 
 {
-    auto res = JsonReader::read(std::string("jq -r '.date' ../sensetive_res/products.json"), type_json::products);
-    std::string date_str = res[0];
+    //auto res = JsonReader::read(std::string("jq -r '.date' ../sensetive_res/products.json"), type_json::products);
+    std::ifstream file("../sensetive_res/products.json");
+    nlohmann::json date = nlohmann::json::parse(file);
+    auto res = date["date"];
+    std::string date_str = res;
     std::istringstream ss(date_str);
     char delimiter;
     unsigned int year, month, day;

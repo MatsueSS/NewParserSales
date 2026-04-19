@@ -1,5 +1,5 @@
-#ifndef _FILE_MATCHER_H_
-#define _FILE_MATCHER_H_
+#ifndef FILE_MATCHER_H
+#define FILE_MATCHER_H
 
 // Allows you to determine the name of a card by a synonym
 // Takes all information from the file
@@ -20,4 +20,4 @@ protected:
 
 };
 
-#endif
+#endif // FILE_MATCHER_H

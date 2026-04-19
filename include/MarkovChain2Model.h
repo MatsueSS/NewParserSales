@@ -1,5 +1,5 @@
-#ifndef _MARKOV_CHAIN_2_MODEL_H_
-#define _MARKOV_CHAIN_2_MODEL_H_
+#ifndef MARKOV_CHAIN_2_MODEL_H
+#define MARKOV_CHAIN_2_MODEL_H
 
 #include "ProbabilityModel.h"
 
@@ -20,4 +20,4 @@ private:
 
 };
 
-#endif
+#endif // MARKOV_CHAIN_2_MODEL_H

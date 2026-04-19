@@ -1,5 +1,5 @@
-#ifndef _CURL_WRAPPER_H_
-#define _CURL_WRAPPER_H_
+#ifndef CURL_WRAPPER_H
+#define CURL_WRAPPER_H
 
 //non thread-safety
 
@@ -78,4 +78,4 @@ private:
 void global_init();
 void global_delete();
 
-#endif
+#endif // CURL_WRAPPER_H

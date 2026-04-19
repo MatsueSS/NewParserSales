@@ -1,5 +1,5 @@
-#ifndef _PY_HTML_PARSER_H_
-#define _PY_HTML_PARSER_H_
+#ifndef PY_HTML_PARSER_H
+#define PY_HTML_PARSER_H
 
 #include "Parser.h"
 
@@ -9,4 +9,4 @@ public:
     
 };
 
-#endif
+#endif // PY_HTML_PARSER_H

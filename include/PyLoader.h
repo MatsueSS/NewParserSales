@@ -1,5 +1,5 @@
-#ifndef _PY_LOADER_H_
-#define _PY_LOADER_H_
+#ifndef PY_LOADER_H
+#define PY_LOADER_H
 
 //The code allows you to call py scripts
 
@@ -11,4 +11,4 @@ public:
 
 };
 
-#endif //_PY_LOADER_H_
+#endif // PY_LOADER_H

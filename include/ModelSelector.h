@@ -1,5 +1,5 @@
-#ifndef _MODEL_SELECTOR_H_
-#define _MODEL_SELECTOR_H_
+#ifndef MODEL_SELECTOR_H
+#define MODEL_SELECTOR_H
 
 #include "FactoryModel.h"
 
@@ -25,4 +25,4 @@ private:
 
 };
 
-#endif
+#endif // MODEL_SELECTOR_H

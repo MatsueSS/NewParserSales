@@ -1,5 +1,5 @@
-#ifndef _POSTGRES_DB_H_
-#define _POSTGRES_DB_H_
+#ifndef POSTGRES_DB_H
+#define POSTGRES_DB_H
 
 //Here is the code that allows you to query the database for psql
 
@@ -179,4 +179,4 @@ std::vector<std::vector<std::string>> PostgresDB::fetch(Type&& query, Container&
     return table;
 }
 
-#endif //_POSTGRES_DB_H_
+#endif // POSTGRES_DB_H

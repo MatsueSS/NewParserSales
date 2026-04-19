@@ -1,12 +1,12 @@
-#ifndef _HYPOTHESIS_H_
-#define _HYPOTHESIS_H_
+#ifndef HYPOTHESIS_H
+#define HYPOTHESIS_H
 
 #define REJECTED 0
 
-#define COUNT_WEEKS 5
-#define COUNT_RESULT 2
-#define DATE_IN_ROW 4
-#define COUNT_SEASON 2
+#define COUNT_WEEKS 5 // maximum count weeks in a month
+#define COUNT_RESULT 2 // I only consider binary situations
+#define DATE_IN_ROW 4 // the position where the date is located in the database table
+#define COUNT_SEASON 2 // the number of seasons I am considering
 
 #include <vector>
 #include <string>
@@ -45,4 +45,4 @@ protected:
 
 };
 
-#endif
+#endif // HYPOTHESIS_H

@@ -1,5 +1,5 @@
-#ifndef _HI_SQUARE_H_
-#define _HI_SQUARE_H_
+#ifndef HI_SQUARE_H
+#define HI_SQUARE_H
 
 #include <vector>
 
@@ -9,4 +9,4 @@ public:
 
 };
 
-#endif
+#endif // HI_SQUARE_H
