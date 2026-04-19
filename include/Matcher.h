@@ -1,6 +1,10 @@
 #ifndef MATCHER_H
 #define MATCHER_H
 
+/*
+    Here is an abstract class for reading files with synonyms for products.
+*/
+
 #include "PoolCards.h"
 
 #include <memory>
@@ -28,6 +32,7 @@ enum class ProdType{
 
 class Matcher{
 public:
+    // filename can be txt file, json file or name of table
     Matcher(const std::string& filename, std::shared_ptr<PoolCards> ptr_pc) : filename(filename), ptr_pc(ptr_pc) {}
 
     template<typename Data>

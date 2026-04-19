@@ -35,6 +35,12 @@ public:
     
 };
 
+class BadTypeProbabilityModelException : public ProbabilityModelException{
+public:
+    BadTypeProbabilityModelException(std::string msg) : ProbabilityModelException(std::move(msg)) {}
+
+};
+
 enum class TypeModel{
     GEOMETRIC_MODEL, MARKOV_CHAIN_1_MODEL, MARKOV_CHAIN_2_MODEL
 };

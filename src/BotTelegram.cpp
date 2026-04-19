@@ -310,11 +310,7 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
     
     PostgresDB db;
     std::string conn = get_conn();
-    try{
-        db.connect(conn);
-    } catch(BadConnectionDBexception& e) {
-        db.connect(conn);
-    }
+    db.connect(get_conn());
 
     auto search_result = searcher.search(std::string(data));
     bool found = false;

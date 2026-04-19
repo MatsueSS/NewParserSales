@@ -65,6 +65,8 @@ int main(void)
         inter.start_process();
     }
 
+    // check_independence_week();
+
 //pretest
 
     // BotTelegram b(get_last_offset(), RecType::MATRIX, std::move(ptr));
@@ -197,7 +199,7 @@ int main(void)
     // std::cout << gm.predict_probability(sample) << ' ' << gm.calculate_bic(sample) << '\n';
     // std::cout << m1m.predict_probability(sample) << ' ' << m1m.calculate_bic(sample) << '\n';
     // std::cout << m2m.predict_probability(sample) << ' ' << m2m.calculate_bic(sample) << '\n';
-    
+
     global_delete();
 
     return 0;

@@ -20,7 +20,7 @@ public:
             case TypeModel::MARKOV_CHAIN_2_MODEL:
                 return std::make_unique<MarkovChain2Model>();
             default:
-                throw "";
+                throw BadTypeProbabilityModelException("Invalid Type for probability model");
         }
     }
 };

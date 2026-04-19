@@ -41,6 +41,7 @@ void PoolCards::add_product(const std::string& title) noexcept
 {
     if(title_to_id.count(title)) return;
 
+    std::unique_lock<std::shared_mutex> lock(mutex);
     int future_last_idx = id_to_title.size();
     title_to_id.insert({title, future_last_idx});
     id_to_title.emplace_back(title, future_last_idx);

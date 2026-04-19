@@ -20,7 +20,7 @@ std::string get_id() noexcept {
 }
 
 std::string get_conn() noexcept {
-    std::ifstream file("/home/michael/practisecpp/projects/ParserSales/.env");
+    std::ifstream file("../.env");
     std::string temp, conn;
     getline(file, temp);
     getline(file, temp);
@@ -101,13 +101,17 @@ void check_independence_week()
     PostgresDB db;
     db.connect(get_conn());
     std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT title FROM products;"), std::vector<std::string>{});
-    std::ofstream file("../sensetive_res/independence_for_week.txt");
+    std::ofstream file("../sensetive_res/independence_for_week1.txt");
 
     int count = 0;
     for(const auto& vec : result){
         try{
-            bool r = iwh.check_hypothesis(vec[0], "2025-09-01", "2026-04-16", 0.95);
+            auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{vec[0]});
+            if(first_date.empty()) continue;
+            if(first_date[0][0] == "2026-04-18") continue;
+            bool r = iwh.check_hypothesis(vec[0], first_date[0][0], "2026-04-18", 0.95);
             if(!r) file << r << ' ' << ++count << ' ' << vec[0] << '\n';
+            std::cout << vec[0] << ": " << r << '\n';
         } catch(ZeroSampleHypothesisException& e){
             continue;
         }
@@ -127,7 +131,9 @@ void check_independence_season()
     int count = 0;
     for(const auto& vec : result){
         try{
-            bool r = ish.check_hypothesis(vec[0], "2025-09-01", "2026-02-28", 0.95);
+            auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{vec[0]});
+            if(first_date.empty()) continue;
+            bool r = ish.check_hypothesis(vec[0], first_date[0][0], "2026-02-28", 0.95);
             if(!r) file << r << ' ' << ++count << ' ' << vec[0] << '\n';
             std::cout << vec[0] << ": " << r << '\n';
         } catch(ZeroSampleHypothesisException& e){
