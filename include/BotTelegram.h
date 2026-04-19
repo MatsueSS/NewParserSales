@@ -41,6 +41,8 @@ private:
     std::string offset;
     std::set<std::string> users_with_keyboard;
 
+    std::mutex curl_mutex;
+
     std::shared_ptr<PoolCards> ptr_pc;
     ProductRecommendations observer;
     ProductSearcher searcher;
@@ -69,6 +71,9 @@ private:
     void load_users_from_db();
 
     void send_main_keyboard(const std::string& id) noexcept;
+
+    template<typename Type1, typename Type2>
+    void safety_writter(Type1&& id, Type2&& title, std::unique_lock<std::mutex>& locker) noexcept;
 
 public:
     BotTelegram(std::string, std::shared_ptr<PoolCards> ptr_pc, RecType rectype, ProdType prodtype);
@@ -133,6 +138,26 @@ void BotTelegram::notify_all(Type&& notifi) {
             //TelegramSender::get_instance()->call(obj.second.get_id(), type_msg::send, notifi);
         }
     }
+}
+
+/**
+ * @brief Safery writting message for telegram api
+ * @param id ID user
+ * @param title text message
+ * @param locker unique_lock must be in UNLOCK state
+ * 
+ * @warning after using must be call locker.unlock() or constructed with std::defer_lock
+ * 
+ * @note function lock mutex, send a data and unlock mutex.
+ *       This ensures that curl_wrapper is not used concurrently.
+ */
+
+template<typename Type1, typename Type2>
+void BotTelegram::safety_writter(Type1&& id, Type2&& title, std::unique_lock<std::mutex>& locker) noexcept
+{
+    locker.lock();
+    ts.write(std::forward<Type1>(id), std::forward<Type2>(title));
+    locker.unlock();
 }
 
 #endif // BOT_TELEGRAM_H
