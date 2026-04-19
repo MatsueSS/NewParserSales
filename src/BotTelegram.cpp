@@ -229,7 +229,6 @@ void BotTelegram::offset_reload()
 void BotTelegram::command_start(std::string&& id)
 {
     TelegramUser user(id, ptr_pc);
-    observer.add_user(id);
     this->add_user(std::move(user));
 
     send_main_keyboard(id);

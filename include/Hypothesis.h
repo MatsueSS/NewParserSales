@@ -35,6 +35,8 @@ public:
     virtual int check_hypothesis(const std::string& title, const std::string& start_date,
         const std::string& end_date, double p_value) const = 0;
 
+    virtual ~Hypothesis() = default;
+
 protected:
     virtual std::vector<std::vector<int>> prepare_table(const std::string& title, const std::string& start_date,
         const std::string& end_date) const = 0;
