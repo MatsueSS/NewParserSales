@@ -44,8 +44,8 @@ std::vector<std::vector<int>> IndependenceWeekHypothesis::prepare_table(const st
 
     std::vector<std::vector<std::string>> discounts;
     discounts = db.fetch(std::string("SELECT DISTINCT ON(date) * FROM cards WHERE title = $1 AND discount IS NOT NULL ORDER BY date DESC;"), std::vector<std::string>{title});
-    if(discounts.empty())
-        throw ZeroSampleHypothesisException("Zero rows for " + title);
+    if(discounts.empty()) throw ZeroSampleHypothesisException("Zero rows for " + title);
+    
     for(const auto& row : discounts){
         table[weeks[row[DATE_IN_ROW]] - 1][0]++;
     }

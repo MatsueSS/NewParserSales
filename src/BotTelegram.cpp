@@ -134,10 +134,15 @@ void BotTelegram::check_message()
         auto data = ts.get_response();
         locker.unlock();
         if(data == "{\"ok\":true,\"result\":[]}") continue;
-        nlohmann::json js = nlohmann::json::parse(data);
-        
-        std::string id = js["result"][0]["message"]["from"]["id"].dump();
-        std::string full_message = js["result"][0]["message"]["text"];
+
+        std::string id, full_message;
+        try{
+            nlohmann::json js = nlohmann::json::parse(data);
+            id = js["result"][0]["message"]["from"]["id"].dump();
+            full_message = js["result"][0]["message"]["text"];
+        } catch(nlohmann::json::parse_error& e){
+            continue;
+        }
 
         if(users_with_keyboard.find(id) == users_with_keyboard.end()){
             send_main_keyboard(id);

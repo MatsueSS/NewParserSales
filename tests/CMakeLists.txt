@@ -14,6 +14,7 @@ add_executable(${PROJECT_NAME}
     test_model_probability.cpp
     test_prefix_tree.cpp
     test_pool_cards.cpp
+    test_hi_square.cpp
 
     ../src/good_funcs.cpp
     ../src/PostgresDB.cpp
@@ -29,6 +30,11 @@ add_executable(${PROJECT_NAME}
     ../src/PrefixTree.cpp
     ../src/PoolCards.cpp
     ../src/Product.cpp
+
+    ../src/HiSquare.cpp
+    ../src/Hypothesis.cpp
+    ../src/IndependenceWeekHypothesis.cpp
+    ../src/IndependenceSeasonHypothesis.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

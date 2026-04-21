@@ -20,7 +20,7 @@ std::string get_id() noexcept {
 }
 
 std::string get_conn() noexcept {
-    std::ifstream file("../.env");
+    std::ifstream file("/home/michael/practisecpp/projects/NewParserSales/.env");
     std::string temp, conn;
     getline(file, temp);
     getline(file, temp);
@@ -114,6 +114,8 @@ void check_independence_week()
             std::cout << vec[0] << ": " << r << '\n';
         } catch(ZeroSampleHypothesisException& e){
             continue;
+        } catch(NoDataHiSquareException& e){
+            continue;
         }
     }
 }
@@ -137,6 +139,8 @@ void check_independence_season()
             if(!r) file << r << ' ' << ++count << ' ' << vec[0] << '\n';
             std::cout << vec[0] << ": " << r << '\n';
         } catch(ZeroSampleHypothesisException& e){
+            continue;
+        } catch(NoDataHiSquareException& e){
             continue;
         }
     }
