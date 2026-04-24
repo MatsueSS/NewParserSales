@@ -51,6 +51,17 @@ public:
         cw_ptr->write_keyboard("https://api.telegram.org/bot" + token + "/sendMessage", id, text, json_data);
     }
 
+    void close()
+    {
+        cw_ptr->close();
+    }
+
+    void build()
+    {
+        cw_ptr->build();
+        cw_ptr->set_proxy("socks5h://127.0.0.1:1080"); 
+    }
+
 private:
     std::shared_ptr<CurlWrapper> cw_ptr;
     std::string token;

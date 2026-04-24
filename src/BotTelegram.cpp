@@ -9,6 +9,7 @@
 #include "PostgresDB.h"
 
 #include <queue>
+#include <iostream>
 
 BotTelegram::BotTelegram(std::string offset, std::shared_ptr<PoolCards> ptr_pc, RecType rectype, ProdType prodtype) 
     : flag(true)
@@ -133,6 +134,15 @@ void BotTelegram::check_message()
         ts.read(offset);
         auto data = ts.get_response();
         locker.unlock();
+
+        if(data.empty()){
+            std::cerr << "ERROR: Empty response from Telegram\n";
+
+            ts.close();
+            ts.build();
+            continue;
+        }
+
         if(data == "{\"ok\":true,\"result\":[]}") continue;
 
         std::string id, full_message;

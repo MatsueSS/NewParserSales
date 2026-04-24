@@ -59,11 +59,11 @@ int main(void)
 
 //start
 
-    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    while(true){
-        inter.start_process();
-    }
+    // while(true){
+    //     inter.start_process();
+    // }
 
     // check_independence_week();
 
@@ -110,31 +110,13 @@ int main(void)
 
     // std::cout << r.best_probability << ' ' << r.best_bic << '\n';
 
-    // PostgresDB db;
-    // db.connect(get_conn());
+    PostgresDB db;
+    db.connect(get_conn());
 
-    // GeometricModel gm;
+    GeometricModel gm;
     // MarkovChain1Model m1m;
     // MarkovChain2Model m2m;
-    // ROC_AUC ra;
-    // std::vector<double> p,q;
-
-    // auto query_result = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = 'Яблоки Голден' and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{});
-
-    // std::vector<int> sample;
-    // std::chrono::year_month_day ymd {std::chrono::year{2025}, std::chrono::month{9}, std::chrono::day{6}};
-    // for(int i = 0; i < query_result.size();){
-    //     if(converte_string(query_result[i][0]) == ymd){
-    //         sample.push_back(1);
-    //         i++;
-    //     } else {
-    //         sample.push_back(0);
-    //     }
-    //     std::chrono::sys_days date = std::chrono::sys_days{ymd};
-    //     date += std::chrono::days{7};
-    //     std::chrono::year_month_day n_ymd {date};
-    //     ymd = n_ymd;
-    // }
+    ROC_AUC ra;
 
     // for(int i : sample){
     //     std::cout << i << ' ';
@@ -144,15 +126,85 @@ int main(void)
     // std::cout << gm.predict_probability(sample) << ' ' << gm.calculate_bic(sample) << '\n';
     // std::cout << m1m.predict_probability(sample) << ' ' << m1m.calculate_bic(sample) << '\n';
     // std::cout << m2m.predict_probability(sample) << ' ' << m2m.calculate_bic(sample) << '\n';
+    // int count = 0;
+    // double sum = 0;
 
-    // for(int i = 18; i < sample.size(); ++i){
-    //     std::vector<int> temp;
-    //     for(int j = 0; j < i; ++j) temp.push_back(sample[j]);
-    //     auto r = gm.predict_probability(temp);
-    //     if(sample[i] == 1) p.push_back(r);
-    //     else q.push_back(1-r);
+    // auto prod = db.fetch(std::string("SELECT title FROM products"), std::vector<std::string>{});
+    // for(const auto & obj : prod){
+    //     auto data = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{obj[0]});
+    //     auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{obj[0]});
+    //     if(first_date.empty()) continue;
+    //     std::vector<int> sample;
+    //     std::chrono::year_month_day ymd = converte_string(first_date[0][0]);
+    //     for(int i = 0; i < data.size();){
+    //         if(converte_string(data[i][0]) == ymd){
+    //             sample.push_back(1);
+    //             i++;
+    //         } else {
+    //             sample.push_back(0);
+    //         }
+    //         std::chrono::sys_days date = std::chrono::sys_days{ymd};
+    //         date += std::chrono::days{7};
+    //         std::chrono::year_month_day n_ymd {date};
+    //         ymd = n_ymd;
+    //     }
+    //     if(sample.size() < 28) continue;
+
+    //     std::vector<double> p,q;
+
+    //     for(int i = 18; i < sample.size(); ++i){
+    //         std::vector<int> temp;
+    //         for(int j = 0; j < i; ++j) temp.push_back(sample[j]);
+    //         try{
+    //             auto r = gm.predict_probability(temp);
+    //             if(sample[i] == 1) p.push_back(1-r);
+    //             else q.push_back(1-r);
+    //         } catch(std::exception& e) { continue; }
+    //     }        
+
+    //     try{
+    //         double res = ra.roc_auc(p,q);
+    //         count++;
+    //         sum+= res;
+    //         std::cout << res << ' ';
+    //     } catch (std::exception& e) { continue; }
     // }
-    // std::cout << ra.roc_auc(p,q) << '\n';
+
+    // std::cout << '\n' << sum/count << '\n';
+
+    auto data = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{"Яблоки Голден"});
+    auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{"Яблоки Голден"});
+    std::vector<int> sample;
+    std::chrono::year_month_day ymd = converte_string(first_date[0][0]);
+    for(int i = 0; i < data.size();){
+        if(converte_string(data[i][0]) == ymd){
+            sample.push_back(1);
+            i++;
+        } else {
+            sample.push_back(0);
+        }
+        std::chrono::sys_days date = std::chrono::sys_days{ymd};
+        date += std::chrono::days{7};
+        std::chrono::year_month_day n_ymd {date};
+        ymd = n_ymd;
+    }
+
+    std::vector<double> p,q;
+
+    for(int i = 18; i < sample.size(); ++i){
+        std::vector<int> temp;
+        for(int j = 0; j < i; ++j) temp.push_back(sample[j]);
+        auto r = gm.predict_probability(temp);
+        if(sample[i] == 1) p.push_back(1-r);
+        else q.push_back(1-r);
+    }  
+
+    std::cout << gm.calculate_bic(sample) << ' ' << ra.roc_auc(p,q) << '\n';
+
+    for(double i : p) std::cout << i << ' ';
+    std::cout << '\n';
+    for(double i : q) std::cout << i << ' ';
+    std::cout << '\n';
 
     // ModelSelector ms({
     //     TypeModel::GEOMETRIC_MODEL,

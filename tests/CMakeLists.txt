@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
     test_prefix_tree.cpp
     test_pool_cards.cpp
     test_hi_square.cpp
+    test_roc_auc.cpp
 
     ../src/good_funcs.cpp
     ../src/PostgresDB.cpp
@@ -35,6 +36,7 @@ add_executable(${PROJECT_NAME}
     ../src/Hypothesis.cpp
     ../src/IndependenceWeekHypothesis.cpp
     ../src/IndependenceSeasonHypothesis.cpp
+    ../src/ROC_AUC.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
