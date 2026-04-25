@@ -58,6 +58,13 @@ TEST_CASE("Test for postgres db"){
             PostgresDB db;
             CHECK(db.is_connect() == false);
         }
+
+        SUBCASE("double close"){
+            PostgresDB db;
+            db.close();
+            db.close();
+            CHECK(db.is_connect() == false);
+        }
     }
 
     SUBCASE("execute"){

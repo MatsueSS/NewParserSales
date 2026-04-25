@@ -17,9 +17,11 @@ add_executable(${PROJECT_NAME}
     test_hi_square.cpp
     test_roc_auc.cpp
     test_postgres_db.cpp
+    test_curl_wrapper.cpp
 
     ../src/good_funcs.cpp
     ../src/PostgresDB.cpp
+    ../src/CurlWrapper.cpp
     ../src/HiSquare.cpp
     
     ../src/Forecast.cpp
@@ -48,6 +50,12 @@ find_package(PostgreSQL REQUIRED)
 
 include_directories(${PostgreSQL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PostgreSQL_LIBRARIES})
+
+find_package(CURL REQUIRED)
+
+include_directories(${CURL_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${CURL_LIBRARIES})
+
 
 target_compile_options(tests PRIVATE -fsanitize=address -fsanitize=undefined -fsanitize=leak -g)
 target_link_options(tests PRIVATE -fsanitize=address -fsanitize=undefined -fsanitize=leak)
