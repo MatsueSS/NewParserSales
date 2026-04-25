@@ -3,6 +3,11 @@
 
 //Here is the code that allows you to query the database for psql
 
+/*
+    @non-thread safety
+    @note: Postgres db support work with threads - Need make for all threads connect in db
+*/
+
 #include <postgresql/libpq-fe.h>
 #include <functional>
 #include <memory>

@@ -16,6 +16,7 @@ add_executable(${PROJECT_NAME}
     test_pool_cards.cpp
     test_hi_square.cpp
     test_roc_auc.cpp
+    test_postgres_db.cpp
 
     ../src/good_funcs.cpp
     ../src/PostgresDB.cpp
