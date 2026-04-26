@@ -11,13 +11,13 @@ struct ModelGreater{
 ModelSelector::ModelSelector(std::initializer_list<TypeModel> list)
 {
     for(const auto& obj : list){
-        models.emplace_back(FactoryModel::create(obj));
+        models.emplace(FactoryModel::create(obj));
     }
 }
 
 void ModelSelector::add_model(TypeModel type) noexcept
 {
-    models.emplace_back(FactoryModel::create(type));
+    models.emplace(FactoryModel::create(type));
 }
 
 ModelSelector::Result ModelSelector::select_best(const std::vector<int>& sample)
@@ -37,4 +37,9 @@ ModelSelector::Result ModelSelector::select_best(const std::vector<int>& sample)
     }
     if(pq.empty()) throw NoSuitableProbabilityException("all models no suitable");
     return pq.top();
+}
+
+bool ModelSelector::has_model(TypeModel type) const noexcept
+{
+    return models.find(type) != models.end();
 }

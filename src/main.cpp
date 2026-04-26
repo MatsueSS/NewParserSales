@@ -21,6 +21,7 @@
 #include "CurlWrapper.h"
 #include "TelegramStategy.h"
 #include "json.hpp"
+#include "ForecastManager.h"
 
 int main(void)
 {
@@ -53,11 +54,11 @@ int main(void)
 
 //start
 
-    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    while(true){
-        inter.start_process();
-    }
+    // while(true){
+    //     inter.start_process();
+    // }
 
     // check_independence_week();
 
@@ -166,6 +167,8 @@ int main(void)
 
     // std::cout << '\n' << sum/count << '\n';
 
+    // PostgresDB db;
+    // db.connect(get_conn());
     // auto data = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{"Яблоки Голден"});
     // auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{"Яблоки Голден"});
     // std::vector<int> sample;
@@ -182,6 +185,7 @@ int main(void)
     //     std::chrono::year_month_day n_ymd {date};
     //     ymd = n_ymd;
     // }
+    // GeometricModel gm;
 
     // std::vector<double> p,q;
 
@@ -193,7 +197,9 @@ int main(void)
     //     else q.push_back(1-r);
     // }  
 
-    // std::cout << gm.calculate_bic(sample) << ' ' << ra.roc_auc(p,q) << '\n';
+    // ROC_AUC ra;
+
+    // std::cout << gm.predict_probability(sample) << ' ' << ra.roc_auc(p,q) << '\n';
 
     // for(double i : p) std::cout << i << ' ';
     // std::cout << '\n';
@@ -245,6 +251,21 @@ int main(void)
     // std::cout << gm.predict_probability(sample) << ' ' << gm.calculate_bic(sample) << '\n';
     // std::cout << m1m.predict_probability(sample) << ' ' << m1m.calculate_bic(sample) << '\n';
     // std::cout << m2m.predict_probability(sample) << ' ' << m2m.calculate_bic(sample) << '\n';
+
+    // PostgresDB db;
+    // db.connect(get_conn());
+    // auto products = db.fetch(std::string("SELECT title FROM products"), std::vector<std::string>{});
+    // for(const auto& obj : products){
+    //     auto title = obj[0];
+    //     auto sales = db.fetch(std::string("SELECT * FROM cards WHERE title = $1 AND discount IS NOT NULL"), std::vector<std::string>{title});
+    //     if(sales.size() < 3 && sales.size() >= 1){
+    //         std::cout << title << '\n';
+    //         return 0;
+    //     }
+    // }
+
+    ForecastManager fm(std::initializer_list<TypeModel>{TypeModel::GEOMETRIC_MODEL, TypeModel::MARKOV_CHAIN_1_MODEL, TypeModel::MARKOV_CHAIN_2_MODEL});
+    std::cout << fm.get_probability("Яблоки Голден") << '\n';
 
     global_delete();
 

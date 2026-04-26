@@ -9,8 +9,8 @@
 #include "PrefixTree.h"
 #include "UserStateMachine.h"
 #include "PoolCards.h"
-#include "ForecastCache.h"
 #include "TelegramStategy.h"
+#include "ForecastManager.h"
 
 #include <thread>
 #include <set>
@@ -48,7 +48,7 @@ private:
     ProductSearcher searcher;
     PrefixTree tree;
     UserStateMachine MachineState;
-    std::shared_ptr<ForecastCache> f_cache;
+    ForecastManager fm;
     TelegramStrategy ts;
     std::unique_ptr<std::mutex> ptr_mx;
 

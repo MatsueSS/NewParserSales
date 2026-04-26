@@ -18,15 +18,13 @@ BotTelegram::BotTelegram(std::string offset, std::shared_ptr<PoolCards> ptr_pc, 
     , users(std::make_shared<std::unordered_map<std::string, TelegramUser>>())
     , observer(FactoryRecommendations::create(rectype, ptr_pc, users))
     , searcher(FactoryMatcher::create(prodtype, "../sensetive_res/new_dict.txt", ptr_pc))
-    , f_cache(std::make_shared<ForecastCache>())
+    , fm(std::initializer_list<TypeModel>{TypeModel::GEOMETRIC_MODEL, TypeModel::MARKOV_CHAIN_1_MODEL, TypeModel::MARKOV_CHAIN_2_MODEL})
     , ptr_mx(std::make_unique<std::mutex>())
 {
     load_users_from_db();
     init_tree();
 
     worker = std::thread(&BotTelegram::check_message, this);
-
-    send_main_keyboard("828404782");
 }
 
 void BotTelegram::load_users_from_db()
@@ -85,7 +83,7 @@ BotTelegram::~BotTelegram()
 BotTelegram::BotTelegram(BotTelegram&& obj) noexcept
     : users(std::move(obj.users)), flag(obj.flag.load()), worker(std::move(obj.worker)), offset(std::move(obj.offset))
     , users_with_keyboard(std::move(obj.users_with_keyboard)), ptr_pc(std::move(obj.ptr_pc)), observer(std::move(obj.observer))
-    , searcher(std::move(obj.searcher)), tree(std::move(obj.tree)), MachineState(std::move(obj.MachineState)), f_cache(std::move(obj.f_cache))
+    , searcher(std::move(obj.searcher)), tree(std::move(obj.tree)), MachineState(std::move(obj.MachineState)), fm(std::move(obj.fm))
     , ts(std::move(obj.ts)), ptr_mx(std::move(obj.ptr_mx))
 {
     obj.flag = false;
@@ -106,7 +104,7 @@ BotTelegram& BotTelegram::operator=(BotTelegram&& obj) noexcept
     searcher = std::move(obj.searcher);
     tree = std::move(obj.tree);
     MachineState = std::move(obj.MachineState);
-    f_cache = std::move(obj.f_cache);
+    fm = std::move(obj.fm);
     ts = std::move(obj.ts);
     ptr_mx = std::move(obj.ptr_mx);
 
@@ -453,63 +451,22 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         return;
     }
 
-    auto load_cache = f_cache->get(data);
-    if(load_cache != std::nullopt){
-        safety_writter(id, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(load_cache.value() * 100)) + "%"), locker);
-        return;
-    }
+    int result;
 
-    PostgresDB db;
-    db.connect(get_conn());
-    std::vector<std::vector<std::string>> query_result;
     try{
-        query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
-    } catch(BadConnectionDBexception& e){
-        db.connect(get_conn());
-        query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
-    } catch(ErrorQueryResultDBexception& e){
-        query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{data});
-    }
-    if(query_result.empty()){
+        result = fm.get_probability(data);
+    } catch(EmptySampleProbabilityModelException& e){
         safety_writter(id, std::string("Данной карточки нет в базе данных или же ещё не было скидок на этот товар"), locker);
-        offset_reload();
         return;
-    }
-    if(query_result.size() < 3){
+    } catch(SmallSampleForecastManagerException& e){
         safety_writter(id, std::string("Слишком мало данных для такой карточки"), locker);
-        offset_reload();
+        return;
+    } catch(NoSuitableProbabilityException& e){
+        safety_writter(id, std::string("Данные не позволяют произвести прогнозирование"), locker);
         return;
     }
 
-    auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{data});
-    auto ymd = converte_string(first_date[0][0]);
-
-    std::vector<int> sample;
-    for(int i = 0; i < query_result.size();){
-        if(converte_string(query_result[i][0]) == ymd){
-            sample.push_back(1);
-            i++;
-        } else {
-            sample.push_back(0);
-        }
-        std::chrono::sys_days date = std::chrono::sys_days{ymd};
-        date += std::chrono::days{7};
-        std::chrono::year_month_day n_ymd {date};
-        ymd = n_ymd;
-    }
-
-    ModelSelector ms({TypeModel::GEOMETRIC_MODEL, TypeModel::MARKOV_CHAIN_1_MODEL, TypeModel::MARKOV_CHAIN_2_MODEL});
-    ModelSelector::Result r;
-
-    try{
-        r = ms.select_best(sample);
-    } catch (NoSuitableProbabilityException& e){
-        r.best_probability = 0.0;
-    }
-
-    f_cache->set(data, r.best_probability);
-
-    safety_writter(id, std::string("Вероятность скидки на данный товар: " + std::to_string(static_cast<int>(r.best_probability * 100)) + "%"), locker);
+    safety_writter(id, std::string("Вероятность скидки на данный товар: " + std::to_string(result) + "%"), locker);
 }
 
 void BotTelegram::command_recommendations(std::string&& id)
@@ -529,5 +486,5 @@ void BotTelegram::command_recommendations(std::string&& id)
 
 void BotTelegram::reset_cache() noexcept
 {
-    f_cache.reset();
+    fm.reset_cache();
 }

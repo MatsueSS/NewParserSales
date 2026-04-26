@@ -30,6 +30,14 @@ public:
 
 class ROC_AUC {
 public:
+    ROC_AUC() = default;
+
+    ROC_AUC(const ROC_AUC&) = default;
+    ROC_AUC& operator=(const ROC_AUC&) = default;
+
+    ROC_AUC(ROC_AUC&&) noexcept = default;
+    ROC_AUC& operator=(ROC_AUC&&) noexcept = default;
+
     double roc_auc(const std::vector<double>&, const std::vector<double>&) const;
     
 };
