@@ -21,7 +21,7 @@ std::string CppAutoClickParser::get_clipboard_content() const
 void CppAutoClickParser::pull_json(std::vector<ProductData>& pd, const std::string& url) const
 {
     system(("firefox --new-tab \"" + url + "\"").c_str());
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(std::chrono::seconds(7));
     system("ydotool mousemove 80 75");
     system("ydotool click 0xC0");
     system("ydotool mousemove 835 25");

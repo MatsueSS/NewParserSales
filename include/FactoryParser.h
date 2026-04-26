@@ -4,6 +4,7 @@
 #include "Parser.h"
 #include "PyAutoClickParser.h"
 #include "PyHTMLParser.h"
+#include "CppAutoClickParser.h"
 
 #include <memory>
 #include <exception>
@@ -16,6 +17,8 @@ public:
                 return std::make_unique<PyAutoClickParser>();
             case TypeParses::PY_HTML_PARSER:
                 return std::make_unique<PyHTMLParser>();
+            case TypeParses::Cpp_AUTOCLICK_PARSER:
+                return std::make_unique<CppAutoClickParser>();
             default:
                 throw BadTypeFactoryParserException("invalid type TypeParser\n");
         }

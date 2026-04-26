@@ -11,23 +11,17 @@
 #include "PoolCards.h"
 #include "ProductParser.h"
 #include "PyAutoClickParser.h"
-
 #include "ModelSelector.h"
-
 #include "GeometricModel.h"
 #include "MarkovChain1Model.h"
 #include "MarkovChain2Model.h"
-
 #include "HiSquare.h"
 #include "IndependenceWeekHypothesis.h"
-
 #include "ROC_AUC.h"
-
 #include "CurlWrapper.h"
-
 #include "TelegramStategy.h"
-
 #include "json.hpp"
+
 int main(void)
 {
     global_init();
@@ -59,11 +53,11 @@ int main(void)
 
 //start
 
-    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    // while(true){
-    //     inter.start_process();
-    // }
+    while(true){
+        inter.start_process();
+    }
 
     // check_independence_week();
 
@@ -110,13 +104,13 @@ int main(void)
 
     // std::cout << r.best_probability << ' ' << r.best_bic << '\n';
 
-    PostgresDB db;
-    db.connect(get_conn());
+    // PostgresDB db;
+    // db.connect(get_conn());
 
-    GeometricModel gm;
+    // GeometricModel gm;
     // MarkovChain1Model m1m;
     // MarkovChain2Model m2m;
-    ROC_AUC ra;
+    // ROC_AUC ra;
 
     // for(int i : sample){
     //     std::cout << i << ' ';
@@ -172,39 +166,39 @@ int main(void)
 
     // std::cout << '\n' << sum/count << '\n';
 
-    auto data = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{"Яблоки Голден"});
-    auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{"Яблоки Голден"});
-    std::vector<int> sample;
-    std::chrono::year_month_day ymd = converte_string(first_date[0][0]);
-    for(int i = 0; i < data.size();){
-        if(converte_string(data[i][0]) == ymd){
-            sample.push_back(1);
-            i++;
-        } else {
-            sample.push_back(0);
-        }
-        std::chrono::sys_days date = std::chrono::sys_days{ymd};
-        date += std::chrono::days{7};
-        std::chrono::year_month_day n_ymd {date};
-        ymd = n_ymd;
-    }
+    // auto data = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{"Яблоки Голден"});
+    // auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{"Яблоки Голден"});
+    // std::vector<int> sample;
+    // std::chrono::year_month_day ymd = converte_string(first_date[0][0]);
+    // for(int i = 0; i < data.size();){
+    //     if(converte_string(data[i][0]) == ymd){
+    //         sample.push_back(1);
+    //         i++;
+    //     } else {
+    //         sample.push_back(0);
+    //     }
+    //     std::chrono::sys_days date = std::chrono::sys_days{ymd};
+    //     date += std::chrono::days{7};
+    //     std::chrono::year_month_day n_ymd {date};
+    //     ymd = n_ymd;
+    // }
 
-    std::vector<double> p,q;
+    // std::vector<double> p,q;
 
-    for(int i = 18; i < sample.size(); ++i){
-        std::vector<int> temp;
-        for(int j = 0; j < i; ++j) temp.push_back(sample[j]);
-        auto r = gm.predict_probability(temp);
-        if(sample[i] == 1) p.push_back(1-r);
-        else q.push_back(1-r);
-    }  
+    // for(int i = 18; i < sample.size(); ++i){
+    //     std::vector<int> temp;
+    //     for(int j = 0; j < i; ++j) temp.push_back(sample[j]);
+    //     auto r = gm.predict_probability(temp);
+    //     if(sample[i] == 1) p.push_back(1-r);
+    //     else q.push_back(1-r);
+    // }  
 
-    std::cout << gm.calculate_bic(sample) << ' ' << ra.roc_auc(p,q) << '\n';
+    // std::cout << gm.calculate_bic(sample) << ' ' << ra.roc_auc(p,q) << '\n';
 
-    for(double i : p) std::cout << i << ' ';
-    std::cout << '\n';
-    for(double i : q) std::cout << i << ' ';
-    std::cout << '\n';
+    // for(double i : p) std::cout << i << ' ';
+    // std::cout << '\n';
+    // for(double i : q) std::cout << i << ' ';
+    // std::cout << '\n';
 
     // ModelSelector ms({
     //     TypeModel::GEOMETRIC_MODEL,

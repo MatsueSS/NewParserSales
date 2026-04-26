@@ -14,7 +14,7 @@ Interface::Interface(std::string str, RecType rectype, ProdType prodtype, TypePa
     : ptr_pc(std::make_shared<PoolCards>())
     , ptr(std::make_unique<BotTelegram>(std::move(str), ptr_pc, rectype, prodtype)) 
 {
-    pr = std::move(FactoryParser::create(TypeParses::PY_AUTOCLICK_PARSER));
+    pr = std::move(FactoryParser::create(TypeParses::Cpp_AUTOCLICK_PARSER));
 }
 
 bool Interface::control_date() const 

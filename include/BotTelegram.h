@@ -134,8 +134,8 @@ void BotTelegram::notify_all(Type&& notifi) {
 
     for(const auto& obj : *users){
         if(obj.second.is_has_product(notifi)){
-            ts.write(obj.second.get_id(), notifi);
-            //TelegramSender::get_instance()->call(obj.second.get_id(), type_msg::send, notifi);
+            std::unique_lock<std::mutex> locker (curl_mutex, std::defer_lock);
+            safety_writter(obj.second.get_id(), notifi, locker);
         }
     }
 }

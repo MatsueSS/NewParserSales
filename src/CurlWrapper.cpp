@@ -131,19 +131,13 @@ void CurlWrapper::write_keyboard(const std::string& url, const std::string& id,
 {
     if(!is_connect()) throw NoInitCurlWrapperException("curl wasn't initialized\n");
 
-    std::string json_data = "{";
-    json_data += "\"chat_id\":\"" + id + "\",";
-    json_data += "\"text\":\"" + text + "\",";
-    json_data += "\"reply_markup\":" + keyboard_json;
-    json_data += "}";
-    
     struct curl_slist* headers = nullptr;
     headers = curl_slist_append(headers, "Content-Type: application/json");
     
     curl_easy_setopt(curl_ptr.get(), CURLOPT_POST, 1L);
     curl_easy_setopt(curl_ptr.get(), CURLOPT_HTTPGET, 0L);
-    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDS, json_data.c_str());
-    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDSIZE, json_data.size());
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDS, keyboard_json.c_str());
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDSIZE, keyboard_json.size());
     curl_easy_setopt(curl_ptr.get(), CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl_ptr.get(), CURLOPT_HTTPHEADER, headers);
     

@@ -25,6 +25,8 @@ BotTelegram::BotTelegram(std::string offset, std::shared_ptr<PoolCards> ptr_pc, 
     init_tree();
 
     worker = std::thread(&BotTelegram::check_message, this);
+
+    send_main_keyboard("828404782");
 }
 
 void BotTelegram::load_users_from_db()
@@ -186,11 +188,11 @@ void BotTelegram::check_message()
         else if (full_message == "🎯 Рекомендации") {
             command_recommendations(std::move(id));
         }
-        else if (full_message == "➕ Добавить товар") {
+        else if (full_message == "➕ Добавить карточку") {
             MachineState.set_waiting(id, UserStateMachine::UserAction::ADD_CARD);
             safety_writter(id, std::string("Введите название товара для добавления:"), locker);
         }
-        else if (full_message == "➖ Удалить товар") {
+        else if (full_message == "➖ Удалить карточку") {
             MachineState.set_waiting(id, UserStateMachine::UserAction::DEL_CARD);
             safety_writter(id, std::string("Введите название товара для удаления:"), locker);
         }
@@ -216,7 +218,7 @@ void BotTelegram::send_main_keyboard(const std::string& id) noexcept
         "keyboard": [
             [{"text": "📋 Мои карточки"}, {"text": "💰 Статус скидок"}],
             [{"text": "🎯 Рекомендации"}],
-            [{"text": "➕ Добавить товар"}, {"text": "➖ Удалить товар"}],
+            [{"text": "➕ Добавить карточку"}, {"text": "➖ Удалить карточку"}],
             [{"text": "📊 Прогноз"}, {"text": "❓ Узнать скидку"}]
         ],
         "resize_keyboard": true,

@@ -37,7 +37,7 @@ struct ProductData{
     std::string date;
 };
 
-enum class TypeParses { PY_HTML_PARSER, PY_AUTOCLICK_PARSER, Cpp_AUTOCKICK_PARSER };
+enum class TypeParses { PY_HTML_PARSER, PY_AUTOCLICK_PARSER, Cpp_AUTOCLICK_PARSER };
 
 class Parser{
 protected:
