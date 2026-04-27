@@ -59,3 +59,6 @@ find_package(Boost REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE linear)
+target_include_directories(${PROJECT_NAME} PRIVATE /usr/include)

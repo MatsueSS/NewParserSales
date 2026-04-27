@@ -151,11 +151,12 @@ int ForecastManager::get_probability(std::string str)
     if(load_cache != std::nullopt) return static_cast<int>(load_cache.value() * 100);
 
     std::vector<int> sample;
-    if(check_ish(str) == 1){
-        sample = build_dates_typical(str);
-    } else {
-        sample = build_dates_seasons(str);
-    }
+    // if(check_ish(str) == 1){
+    //     sample = build_dates_typical(str);
+    // } else {
+    //     sample = build_dates_seasons(str);
+    // }
+    sample = build_dates_typical(str);
 
     double prob;
     try{
