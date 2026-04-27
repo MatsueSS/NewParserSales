@@ -26,7 +26,7 @@ std::vector<std::vector<int>> IndependenceSeasonHypothesis::prepare_table(const 
     std::vector<std::string> all_saturdays = generate_all_saturdays(start_date, end_date);
     for(const auto& date : all_saturdays) {
         int month = std::stoi(date.substr(5, 2));
-        int season_index = get_season_index(month);
+        int season_index = static_cast<int>(get_season_index(month));
         if(season_index >= 0 && season_index < COUNT_SEASON) {
             table[season_index][1]++;
         }
@@ -41,7 +41,7 @@ std::vector<std::vector<int>> IndependenceSeasonHypothesis::prepare_table(const 
 
     for(const auto& row : discounts) {
         int month = std::stoi(row[DATE_IN_ROW].substr(5, 2));
-        int season_index = get_season_index(month);
+        int season_index = static_cast<int>(get_season_index(month));
         if(season_index >= 0 && season_index < COUNT_SEASON) {
             table[season_index][0]++;
             table[season_index][1]--;

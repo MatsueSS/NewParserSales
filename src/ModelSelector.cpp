@@ -33,6 +33,8 @@ ModelSelector::Result ModelSelector::select_best(const std::vector<int>& sample)
             pq.emplace(std::move(r));
         } catch (InapplicabilityProbabilityModelException& exc) {
             continue;
+        } catch (ZeroDivisionForecastException& e){
+            continue;
         }
     }
     if(pq.empty()) throw NoSuitableProbabilityException("all models no suitable");

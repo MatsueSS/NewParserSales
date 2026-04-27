@@ -54,13 +54,15 @@ int main(void)
 
 //start
 
-    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    // while(true){
-    //     inter.start_process();
-    // }
+    while(true){
+        inter.start_process();
+    }
 
     // check_independence_week();
+
+    // check_independence_season();
 
 //pretest
 
@@ -169,8 +171,8 @@ int main(void)
 
     // PostgresDB db;
     // db.connect(get_conn());
-    // auto data = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{"Яблоки Голден"});
-    // auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{"Яблоки Голден"});
+    // auto data = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{"Яблоки Ред Делишес"});
+    // auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{"Яблоки Ред Делишес"});
     // std::vector<int> sample;
     // std::chrono::year_month_day ymd = converte_string(first_date[0][0]);
     // for(int i = 0; i < data.size();){
@@ -264,8 +266,8 @@ int main(void)
     //     }
     // }
 
-    ForecastManager fm(std::initializer_list<TypeModel>{TypeModel::GEOMETRIC_MODEL, TypeModel::MARKOV_CHAIN_1_MODEL, TypeModel::MARKOV_CHAIN_2_MODEL});
-    std::cout << fm.get_probability("Яблоки Голден") << '\n';
+    // ForecastManager fm(std::initializer_list<TypeModel>{TypeModel::GEOMETRIC_MODEL, TypeModel::MARKOV_CHAIN_1_MODEL, TypeModel::MARKOV_CHAIN_2_MODEL});
+    // std::cout << fm.get_probability("Яблоки Голден") << '\n';
 
     global_delete();
 

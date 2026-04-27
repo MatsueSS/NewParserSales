@@ -9,6 +9,8 @@ const char * HypothesisException::what() const noexcept { return msg.c_str(); }
 
 ZeroSampleHypothesisException::ZeroSampleHypothesisException(std::string msg) : HypothesisException(std::move(msg)) {}
 
+FalseSeasonHypothesesException::FalseSeasonHypothesesException(std::string msg) : HypothesisException(std::move(msg)) {}
+
 int Hypothesis::get_week_of_month(int day) const noexcept
 {
     return (day - 1)/7 + 1;
@@ -54,10 +56,10 @@ std::vector<std::string> Hypothesis::generate_all_saturdays(const std::string& s
     return saturdays;
 }
 
-int Hypothesis::get_season_index(int month) const noexcept {
-    if(month >= 3 && month <= 5) return 2;
-    if(month >= 6 && month <= 8) return 3;
-    if(month >= 9 && month <= 11) return 0;
-    if(month == 12 || month <= 2) return 1;
-    return -1;
+seasons Hypothesis::get_season_index(int month) const {
+    if(month >= 3 && month <= 5) return seasons::SPRING;
+    if(month >= 6 && month <= 8) return seasons::SUMMER;
+    if(month >= 9 && month <= 11) return seasons::AUTUMN;
+    if(month == 12 || month <= 2) return seasons::WINTER;
+    throw FalseSeasonHypothesesException("function take bad month");
 }

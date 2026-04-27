@@ -7,6 +7,7 @@
 #include "FactorySearcher.h"
 #include "ModelSelector.h"
 #include "PostgresDB.h"
+#include "HiSquare.h"
 
 #include <queue>
 #include <iostream>
@@ -462,6 +463,9 @@ void BotTelegram::command_forecast(std::string&& id, std::string&& data)
         safety_writter(id, std::string("Слишком мало данных для такой карточки"), locker);
         return;
     } catch(NoSuitableProbabilityException& e){
+        safety_writter(id, std::string("Данные не позволяют произвести прогнозирование"), locker);
+        return;
+    } catch (NoDataHiSquareException& e){
         safety_writter(id, std::string("Данные не позволяют произвести прогнозирование"), locker);
         return;
     }

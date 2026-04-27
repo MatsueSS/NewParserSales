@@ -12,6 +12,8 @@
 #include <string>
 #include <exception>
 
+enum class seasons { AUTUMN = 0, WINTER = 1, SPRING = 2, SUMMER = 3 };
+
 class HypothesisException : public std::exception{
 protected:
     std::string msg;
@@ -30,10 +32,18 @@ public:
     
 };
 
+class FalseSeasonHypothesesException : public HypothesisException{
+public:
+    FalseSeasonHypothesesException(std::string msg);
+    
+};
+
 class Hypothesis{
 public:
     virtual int check_hypothesis(const std::string& title, const std::string& start_date,
         const std::string& end_date, double p_value) const = 0;
+
+    seasons get_season_index(int month) const;
 
     virtual ~Hypothesis() = default;
 
@@ -43,7 +53,6 @@ protected:
 
     std::vector<std::string> generate_all_saturdays(const std::string& start_date, const std::string& end_date) const noexcept;
     int get_week_of_month(int day) const noexcept;
-    int get_season_index(int month) const noexcept;
 
 };
 

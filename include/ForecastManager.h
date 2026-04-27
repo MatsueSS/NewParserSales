@@ -6,6 +6,8 @@
 #include "PostgresDB.h"
 #include "good_funcs.h"
 #include "ROC_AUC.h"
+#include "IndependenceSeasonHypothesis.h"
+#include "IndependenceWeekHypothesis.h"
 
 #include <type_traits>
 #include <exception>
@@ -50,11 +52,13 @@ private:
     std::unique_ptr<ForecastCache> fc;
     PostgresDB db;
     ROC_AUC ra;
+    IndependenceSeasonHypothesis ish;
+    IndependenceWeekHypothesis iwh;
 
-    std::vector<int> build_dates(std::string str);
-
+    std::vector<int> build_dates_typical(std::string str);
+    std::vector<int> build_dates_seasons(std::string str);
+    int check_ish(const std::string& str);
     double get_better_probability(const std::vector<int>& sample);
-
 };
 
 template<typename T, typename = std::enable_if_t<!std::is_same<std::decay_t<T>, ForecastManager>::value>>
