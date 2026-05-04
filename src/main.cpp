@@ -22,44 +22,16 @@
 #include "TelegramStategy.h"
 #include "json.hpp"
 #include "ForecastManager.h"
-#include <linear.h>
 
 int main(void)
 {
     global_init();
 
-    // TelegramUser user(std::move(get_id()));
-    // user.notify(std::string("Hello\n"));
+    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    // std::string url = "https://api.telegram.org/bot7866507385ZoyTIJxkAE7laMt-EQA7vIwq0";
-    // url = url + "/getUpdates?offset=512291602";
-    // std::ofstream file("../res/result_512291602.json");
-    // CURL* curl = curl_easy_init();
-    // if(curl){
-    //     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    //     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
-    //     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
-    //     CURLcode res = curl_easy_perform(curl);
-    //     curl_easy_cleanup(curl);
-    // }
-    // file.close();
-
-    // auto ptr = TelegramSender::get_instance();
-    // ptr->call(std::string(""), type_msg::read, std::string("512291604"));
-
-    
-    // BotTelegram bot(get_last_offset());
-    // while(true){
-    //     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    // }
-
-//start
-
-    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
-
-    // while(true){
-    //     inter.start_process();
-    // }
+    while(true){
+        inter.start_process();
+    }
 
     // check_independence_week();
 
@@ -170,45 +142,45 @@ int main(void)
 
     // std::cout << '\n' << sum/count << '\n';
 
-    PostgresDB db;
-    db.connect(get_conn());
-    auto data = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{"Яблоки Голден"});
-    auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{"Яблоки Голден"});
-    std::vector<int> sample;
-    std::chrono::year_month_day ymd = converte_string(first_date[0][0]);
-    for(int i = 0; i < data.size();){
-        if(converte_string(data[i][0]) == ymd){
-            sample.push_back(1);
-            i++;
-        } else {
-            sample.push_back(0);
-        }
-        std::chrono::sys_days date = std::chrono::sys_days{ymd};
-        date += std::chrono::days{7};
-        std::chrono::year_month_day n_ymd {date};
-        ymd = n_ymd;
-    }
+    // PostgresDB db;
+    // db.connect(get_conn());
+    // auto data = db.fetch(std::string("SELECT DISTINCT ON (date) date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"), std::vector<std::string>{"Яблоки Голден"});
+    // auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{"Яблоки Голден"});
+    // std::vector<int> sample;
+    // std::chrono::year_month_day ymd = converte_string(first_date[0][0]);
+    // for(int i = 0; i < data.size();){
+    //     if(converte_string(data[i][0]) == ymd){
+    //         sample.push_back(1);
+    //         i++;
+    //     } else {
+    //         sample.push_back(0);
+    //     }
+    //     std::chrono::sys_days date = std::chrono::sys_days{ymd};
+    //     date += std::chrono::days{7};
+    //     std::chrono::year_month_day n_ymd {date};
+    //     ymd = n_ymd;
+    // }
 
-    for(int i : sample) std::cout << i << ' ';
-    std::cout << '\n';
+    // for(int i : sample) std::cout << i << ' ';
+    // std::cout << '\n';
 
-    GeometricModel gm;
+    // GeometricModel gm;
 
-    std::cout << gm.calculate_bic(sample) << ' ' << gm.predict_probability(sample) << '\n';
+    // std::cout << gm.calculate_bic(sample) << ' ' << gm.predict_probability(sample) << '\n';
 
-    std::vector<double> p,q;
+    // std::vector<double> p,q;
 
-    for(int i = 18; i < sample.size(); ++i){
-        std::vector<int> temp;
-        for(int j = 0; j < i; ++j) temp.push_back(sample[j]);
-        auto r = gm.predict_probability(temp);
-        if(sample[i] == 1) p.push_back(1-r);
-        else q.push_back(1-r);
-    }  
+    // for(int i = 18; i < sample.size(); ++i){
+    //     std::vector<int> temp;
+    //     for(int j = 0; j < i; ++j) temp.push_back(sample[j]);
+    //     auto r = gm.predict_probability(temp);
+    //     if(sample[i] == 1) p.push_back(1-r);
+    //     else q.push_back(1-r);
+    // }  
 
-    ROC_AUC ra;
+    // ROC_AUC ra;
 
-    std::cout << 1-gm.predict_probability(sample) << ' ' << ra.roc_auc(p,q) << '\n';
+    // std::cout << 1-gm.predict_probability(sample) << ' ' << ra.roc_auc(p,q) << '\n';
 
     // for(double i : p) std::cout << i << ' ';
     // std::cout << '\n';
@@ -277,6 +249,12 @@ int main(void)
     // std::cout << fm.get_probability("Яблоки Голден") << '\n';
 
     global_delete();
+
+    // std::vector<int> sample_1 = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1};
+    // std::vector<int> sample_2 = converte_zero_to_non_one(sample_1);
+    // lags l = create_lag(sample_2, 3);
+    // auto fe = to_linear(l);
+    
 
     return 0;
 }
