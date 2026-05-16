@@ -590,29 +590,23 @@ int main() {
     // Подготовка структуры для LIBLINEAR (только train)
     struct problem prob;
     prob.l = train_size;
-    prob.n = 5;
+    prob.n = 3;
     prob.y = new double[train_size];
     prob.x = new feature_node*[train_size];
     
     for (int i = 0; i < train_size; i++) {
-        prob.x[i] = new feature_node[6];
+        prob.x[i] = new feature_node[4];
 
         prob.x[i][0].index = 1;
-        prob.x[i][0].value = lag1[i];
+        prob.x[i][0].value = pattern00_norm[i];
 
         prob.x[i][1].index = 2;
-        prob.x[i][1].value = lag2[i];
+        prob.x[i][1].value = kurtosis_norm[i];
 
         prob.x[i][2].index = 3;
-        prob.x[i][2].value = pattern00_norm[i];
+        prob.x[i][2].value = min_run_norm[i];
 
-        prob.x[i][3].index = 4;
-        prob.x[i][3].value = kurtosis_norm[i];
-
-        prob.x[i][4].index = 5;
-        prob.x[i][4].value = min_run_norm[i];
-
-        prob.x[i][5].index = -1;
+        prob.x[i][3].index = -1;
         prob.y[i] = y[i];
     }
     
@@ -641,24 +635,24 @@ int main() {
     // ========== ТОЧНОСТЬ НА ТЕСТЕ ==========
     int test_correct = 0;
     for (int i = train_size; i < n; i++) {
-        feature_node test_point[6];
+        feature_node test_point[4];
+
+        // test_point[0].index = 1;
+        // test_point[0].value = lag1[i];
+
+        // test_point[1].index = 2;
+        // test_point[1].value = lag2[i];
 
         test_point[0].index = 1;
-        test_point[0].value = lag1[i];
+        test_point[0].value = pattern00_norm[i];
 
         test_point[1].index = 2;
-        test_point[1].value = lag2[i];
+        test_point[1].value = autocorr_norm[i];
 
         test_point[2].index = 3;
-        test_point[2].value = pattern00_norm[i];
+        test_point[2].value = min_run_norm[i];
 
-        test_point[3].index = 4;
-        test_point[3].value = kurtosis_norm[i];
-
-        test_point[4].index = 5;
-        test_point[4].value = min_run_norm[i];
-
-        test_point[5].index = -1;
+        test_point[3].index = -1;
         
         double pred_class = predict(model_, test_point);
         if (pred_class == y[i]) test_correct++;
@@ -667,112 +661,112 @@ int main() {
 
     // После вычисления test_correct, добавьте вывод вероятностей для тестовых объектов
 
-cout << "\n=== ВЕРОЯТНОСТИ ДЛЯ ТЕСТОВЫХ ОБЪЕКТОВ ===" << endl;
-for (int i = train_size; i < n; i++) {
-    feature_node test_point[6];
-    test_point[0].index = 1;
-    test_point[0].value = lag1[i];
-    test_point[1].index = 2;
-    test_point[1].value = lag2[i];
-    test_point[2].index = 3;
-    test_point[2].value = pattern00_norm[i];
-    test_point[3].index = 4;
-    test_point[3].value = kurtosis_norm[i];
-    test_point[4].index = 5;
-    test_point[4].value = min_run_norm[i];
-    test_point[5].index = -1;
-    
-    double probs[2];  // массив для вероятностей: [0] для класса 0, [1] для класса 1
-    predict_probability(model_, test_point, probs);
-    
-    double pred_class = (probs[1] >= 0.5) ? 1 : 0;
-    
-    printf("Объект %d: Истинный=%d, Предсказанный=%d, Вероятность класса 1=%.4f\n", 
-           i - train_size + 1, (int)y[i], (int)pred_class, probs[1]);
-    }
+    // cout << "\n=== ВЕРОЯТНОСТИ ДЛЯ ТЕСТОВЫХ ОБЪЕКТОВ ===" << endl;
+    // for (int i = train_size; i < n; i++) {
+    //     feature_node test_point[6];
+    //     test_point[0].index = 1;
+    //     test_point[0].value = lag1[i];
+    //     test_point[1].index = 2;
+    //     test_point[1].value = lag2[i];
+    //     test_point[2].index = 3;
+    //     test_point[2].value = pattern00_norm[i];
+    //     test_point[3].index = 4;
+    //     test_point[3].value = kurtosis_norm[i];
+    //     test_point[4].index = 5;
+    //     test_point[4].value = min_run_norm[i];
+    //     test_point[5].index = -1;
+        
+    //     double probs[2];  // массив для вероятностей: [0] для класса 0, [1] для класса 1
+    //     predict_probability(model_, test_point, probs);
+        
+    //     double pred_class = (probs[1] >= 0.5) ? 1 : 0;
+        
+    //     printf("Объект %d: Истинный=%d, Предсказанный=%d, Вероятность класса 1=%.4f\n", 
+    //         i - train_size + 1, (int)y[i], (int)pred_class, probs[1]);
+    // }
 
-    // Также можно вывести вероятность для прогноза следующего значения
-    cout << "\n=== ПРОГНОЗ СЛЕДУЮЩЕГО ЗНАЧЕНИЯ ===" << endl;
+    // // Также можно вывести вероятность для прогноза следующего значения
+    // cout << "\n=== ПРОГНОЗ СЛЕДУЮЩЕГО ЗНАЧЕНИЯ ===" << endl;
 
-    // Берём последние 4 значения из data
-    int last1 = data[data.size() - 1];
-    int last2 = data[data.size() - 2];
-    int last3 = data[data.size() - 3];
-    int last4 = data[data.size() - 4];
+    // // Берём последние 4 значения из data
+    // int last1 = data[data.size() - 1];
+    // int last2 = data[data.size() - 2];
+    // int last3 = data[data.size() - 3];
+    // int last4 = data[data.size() - 4];
 
-    // Считаем pattern00 для последнего окна
-    int last_pattern00 = 0;
-    if (last3 == 0 && last2 == 0) last_pattern00++;
-    if (last2 == 0 && last1 == 0) last_pattern00++;
+    // // Считаем pattern00 для последнего окна
+    // int last_pattern00 = 0;
+    // if (last3 == 0 && last2 == 0) last_pattern00++;
+    // if (last2 == 0 && last1 == 0) last_pattern00++;
 
-    // Нормализуем
-    double last_pattern00_norm;
-    if (max_pattern - min_pattern > 1e-8) {
-        last_pattern00_norm = (last_pattern00 - min_pattern) / (max_pattern - min_pattern);
-    } else {
-        last_pattern00_norm = 0.5;
-    }
+    // // Нормализуем
+    // double last_pattern00_norm;
+    // if (max_pattern - min_pattern > 1e-8) {
+    //     last_pattern00_norm = (last_pattern00 - min_pattern) / (max_pattern - min_pattern);
+    // } else {
+    //     last_pattern00_norm = 0.5;
+    // }
 
-    // Считаем kurtosis для последнего окна
-    vector<int> last_window = {last4, last3, last2, last1};
-    double last_kurtosis = calculate_kurtosis(last_window);
-    double last_kurtosis_norm;
-    if (max_kurtosis - min_kurtosis > 1e-8) {
-        last_kurtosis_norm = (last_kurtosis - min_kurtosis) / (max_kurtosis - min_kurtosis);
-    } else {
-        last_kurtosis_norm = 0.5;
-    }
+    // // Считаем kurtosis для последнего окна
+    // vector<int> last_window = {last4, last3, last2, last1};
+    // double last_kurtosis = calculate_kurtosis(last_window);
+    // double last_kurtosis_norm;
+    // if (max_kurtosis - min_kurtosis > 1e-8) {
+    //     last_kurtosis_norm = (last_kurtosis - min_kurtosis) / (max_kurtosis - min_kurtosis);
+    // } else {
+    //     last_kurtosis_norm = 0.5;
+    // }
 
-    // Считаем min_run для последнего окна
-    int last_min_run = calculate_min_run(last_window);
-    double last_min_run_norm;
-    if (max_run - min_run > 1e-8) {
-        last_min_run_norm = (last_min_run - min_run) / (max_run - min_run);
-    } else {
-        last_min_run_norm = 0.5;
-    }
+    // // Считаем min_run для последнего окна
+    // int last_min_run = calculate_min_run(last_window);
+    // double last_min_run_norm;
+    // if (max_run - min_run > 1e-8) {
+    //     last_min_run_norm = (last_min_run - min_run) / (max_run - min_run);
+    // } else {
+    //     last_min_run_norm = 0.5;
+    // }
 
-    feature_node next_point[6];
-    next_point[0].index = 1;
-    next_point[0].value = last1;
-    next_point[1].index = 2;
-    next_point[1].value = last2;
-    next_point[2].index = 3;
-    next_point[2].value = last_pattern00_norm;
-    next_point[3].index = 4;
-    next_point[3].value = last_kurtosis_norm;
-    next_point[4].index = 5;
-    next_point[4].value = last_min_run_norm;
-    next_point[5].index = -1;
+    // feature_node next_point[6];
+    // next_point[0].index = 1;
+    // next_point[0].value = last1;
+    // next_point[1].index = 2;
+    // next_point[1].value = last2;
+    // next_point[2].index = 3;
+    // next_point[2].value = last_pattern00_norm;
+    // next_point[3].index = 4;
+    // next_point[3].value = last_kurtosis_norm;
+    // next_point[4].index = 5;
+    // next_point[4].value = last_min_run_norm;
+    // next_point[5].index = -1;
 
-    double next_probs[2];
-    predict_probability(model_, next_point, next_probs);
+    // double next_probs[2];
+    // predict_probability(model_, next_point, next_probs);
 
-    cout << "Последние 4 значения: " << last4 << " " << last3 << " " << last2 << " " << last1 << endl;
-    printf("Pattern00: %d (норм: %.3f)\n", last_pattern00, last_pattern00_norm);
-    printf("Kurtosis: %.4f (норм: %.3f)\n", last_kurtosis, last_kurtosis_norm);
-    printf("Min_run: %d (норм: %.3f)\n", last_min_run, last_min_run_norm);
-    printf("Вероятность класса 1: %.4f\n", next_probs[1]);
-    printf("Прогноз: %d\n", next_probs[1] >= 0.5 ? 1 : 0);
+    // cout << "Последние 4 значения: " << last4 << " " << last3 << " " << last2 << " " << last1 << endl;
+    // printf("Pattern00: %d (норм: %.3f)\n", last_pattern00, last_pattern00_norm);
+    // printf("Kurtosis: %.4f (норм: %.3f)\n", last_kurtosis, last_kurtosis_norm);
+    // printf("Min_run: %d (норм: %.3f)\n", last_min_run, last_min_run_norm);
+    // printf("Вероятность класса 1: %.4f\n", next_probs[1]);
+    // printf("Прогноз: %d\n", next_probs[1] >= 0.5 ? 1 : 0);
 
     cout << "=== bic ===" << endl;
     vector<vector<double>> X (n);
     for(int i = 0; i < n; ++i){
-        X[i].push_back(lag1[i]);
-        X[i].push_back(lag2[i]);
+        // X[i].push_back(lag1[i]);
+        // X[i].push_back(lag2[i]);
         X[i].push_back(pattern00_norm[i]);
-        X[i].push_back(kurtosis_norm[i]);
+        X[i].push_back(autocorr_norm[i]);
         X[i].push_back(min_run_norm[i]);
     }
-    cout << calculate_bic(model_, X, y, 5, false) << '\n';
+    cout << calculate_bic(model_, X, y, 3, false) << '\n';
     
     // Вывод результатов
     cout << "=== РЕЗУЛЬТАТЫ ===" << endl;
-    cout << "Коэффициент при признаке (лаг 1): " << model_->w[0] << endl;
-    cout << "Коэффициент при признаке (лаг 2): " << model_->w[1] << endl;
-    cout << "Коэффициент при признаке pattern00_normalzie: " << model_->w[2] << endl;
-    cout << "Коэффициент при признаке kurtosis normalize: " << model_->w[3] << endl;
-    cout << "Коэффициент при признаке min_run: " << model_->w[4] << endl;
+    // cout << "Коэффициент при признаке (лаг 1): " << model_->w[0] << endl;
+    // cout << "Коэффициент при признаке (лаг 2): " << model_->w[1] << endl;
+    cout << "Коэффициент при признаке pattern00_normalzie: " << model_->w[0] << endl;
+    cout << "Коэффициент при признаке autocorr normalize: " << model_->w[1] << endl;
+    cout << "Коэффициент при признаке min_run: " << model_->w[2] << endl;
     
     cout << "Точность на обучении: " << train_correct << "/" << train_size 
          << " = " << train_accuracy << "%" << endl;
@@ -792,15 +786,15 @@ for (int i = train_size; i < n; i++) {
     cout << "\n=== ЦЕННОСТЬ ПРИЗНАКОВ (по модулю веса) ===" << endl;
     
     vector<pair<double, string>> importance;
-    importance.push_back({fabs(model_->w[0]), "Лаг 1"});
-    importance.push_back({fabs(model_->w[1]), "Лаг 2"});
-    importance.push_back({fabs(model_->w[2]), "Pattern00"});
-    importance.push_back({fabs(model_->w[3]), "Kurtosis"});
-    importance.push_back({fabs(model_->w[4]), "min_run"});
+    // importance.push_back({fabs(model_->w[0]), "Лаг 1"});
+    // importance.push_back({fabs(model_->w[1]), "Лаг 2"});
+    importance.push_back({fabs(model_->w[0]), "Pattern00"});
+    importance.push_back({fabs(model_->w[1]), "autocorr"});
+    importance.push_back({fabs(model_->w[2]), "min_run"});
     
     sort(importance.begin(), importance.end(), greater<pair<double, string>>());
     
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 3; i++) {
         printf("%d место: %s (|вес| = %.4f)\n", i+1, importance[i].second.c_str(), importance[i].first);
     }
     
