@@ -384,6 +384,9 @@
 #include <algorithm>
 #include <numeric>
 
+#include "Features_regression/FeaturePattern00.h"
+#include "Features_regression/FeatureExtractor.h"
+
 using namespace std;
 
 double calculate_kurtosis(const vector<int>& window){
@@ -542,21 +545,18 @@ int main() {
     vector<double> y;  // метки
 
     int window_size = 4;
+    using MyExtractor = FeatureExtractor<FeaturePattern00>;
     
     for (size_t i = window_size; i < data.size(); i++) {
         lag1.push_back(data[i-1]);
         lag2.push_back(data[i-2]);
 
-        int count00 = 0;
-        for(size_t j = i - window_size + 1; j < i; j++){
-            if(data[j-1] == 0 && data[j] == 0) count00++;
-        }
-        pattern00_raw.push_back(count00);
-
         vector<int> window;
         for(size_t j = i - window_size; j < i; ++j){
             window.push_back(data[j]);
         }
+
+        pattern00_raw.push_back(MyExtractor::extract(window)[0]);
 
         kurtosis_raw.push_back(calculate_kurtosis(window));
         autocorr_raw.push_back(calculate_autocurr_lag2(window));
@@ -581,23 +581,7 @@ int main() {
     cout << "Всего объектов: " << n << endl;
     cout << "Train: " << train_size << ", Test: " << test_size << endl << endl;
 
-    // нормализация pattern00
-
-    double max_pattern = 0;
-    double min_pattern = 100;
-    for(int i = 0; i < train_size; ++i){
-        max_pattern = max(max_pattern, pattern00_raw[i]);
-        min_pattern = min(min_pattern, pattern00_raw[i]);
-    }
-
-    vector<double> pattern00_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(max_pattern - min_pattern > 1e-8){
-            pattern00_norm[i] = (pattern00_raw[i]-min_pattern)/(max_pattern-min_pattern);
-        } else {
-            pattern00_norm[i] = 0.5;
-        }
-    }
+    vector<double> pattern00_norm = MyExtractor::normalize(pattern00_raw, train_size)[0];
 
     //нормализация kurtosis
 
