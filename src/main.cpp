@@ -386,6 +386,7 @@
 
 #include "Features_regression/FeaturePattern00.h"
 #include "Features_regression/FeatureExtractor.h"
+#include "Features_regression/FeatureKurtosis.h"
 
 using namespace std;
 
@@ -545,7 +546,7 @@ int main() {
     vector<double> y;  // метки
 
     int window_size = 4;
-    using MyExtractor = FeatureExtractor<FeaturePattern00>;
+    using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis>;
     
     for (size_t i = window_size; i < data.size(); i++) {
         lag1.push_back(data[i-1]);
@@ -556,9 +557,11 @@ int main() {
             window.push_back(data[j]);
         }
 
-        pattern00_raw.push_back(MyExtractor::extract(window)[0]);
+        std::vector<double> ext_result = MyExtractor::extract(window);
+        
+        pattern00_raw.push_back(ext_result[0]);
+        kurtosis_raw.push_back(ext_result[1]);
 
-        kurtosis_raw.push_back(calculate_kurtosis(window));
         autocorr_raw.push_back(calculate_autocurr_lag2(window));
         min_run_raw.push_back(calculate_min_run(window));
         max_run_raw.push_back(calculate_max_run(window));
@@ -581,26 +584,10 @@ int main() {
     cout << "Всего объектов: " << n << endl;
     cout << "Train: " << train_size << ", Test: " << test_size << endl << endl;
 
-    vector<double> pattern00_norm = MyExtractor::normalize(pattern00_raw, train_size)[0];
+    vector<vector<double>> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw}, train_size);
 
-    //нормализация kurtosis
-
-    double max_kurtosis = -1e9;
-    double min_kurtosis = 1e9;
-
-    for(int i = 0; i < train_size; ++i){
-        max_kurtosis = max(max_kurtosis, kurtosis_raw[i]);
-        min_kurtosis = min(min_kurtosis, kurtosis_raw[i]);
-    }
-
-    vector<double> kurtosis_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(max_kurtosis - min_kurtosis > 1e-8){
-            kurtosis_norm[i] = (kurtosis_raw[i]-min_kurtosis)/(max_kurtosis-min_kurtosis);
-        } else {
-            kurtosis_norm[i] = 0.5;
-        }
-    }
+    vector<double> pattern00_norm = norm_result[0];
+    vector<double> kurtosis_norm = norm_result[1];
 
     // нормализация автокорреляции с лагом 2
 
@@ -749,7 +736,7 @@ int main() {
         prob.x[i] = new feature_node[2];
 
         prob.x[i][0].index = 1;
-        prob.x[i][0].value = pattern00_norm[i];
+        prob.x[i][0].value = kurtosis_norm[i];
 
         prob.x[i][1].index = -1;
         prob.y[i] = y[i];
@@ -783,7 +770,7 @@ int main() {
         feature_node test_point[2];
 
         test_point[0].index = 1;
-        test_point[0].value = pattern00_norm[i];
+        test_point[0].value = kurtosis_norm[i];
 
         test_point[1].index = -1;
         
@@ -885,7 +872,7 @@ int main() {
     cout << "=== bic ===" << endl;
     vector<vector<double>> X (n);
     for(int i = 0; i < n; ++i){
-        X[i].push_back(pattern00_norm[i]);
+        X[i].push_back(kurtosis_norm[i]);
     }
     cout << calculate_bic(model_, X, y, 1, false) << '\n';
     
@@ -914,7 +901,7 @@ int main() {
     cout << "\n=== ЦЕННОСТЬ ПРИЗНАКОВ (по модулю веса) ===" << endl;
     
     vector<pair<double, string>> importance;
-    importance.push_back({fabs(model_->w[0]), "Pattern00"});
+    importance.push_back({fabs(model_->w[0]), "Kurtosis"});
     
     sort(importance.begin(), importance.end(), greater<pair<double, string>>());
     
