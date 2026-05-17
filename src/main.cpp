@@ -382,6 +382,7 @@
 #include <linear.h>
 #include <cmath>
 #include <algorithm>
+#include <numeric>
 
 using namespace std;
 
@@ -449,6 +450,63 @@ int calculate_min_run(const vector<int>& window){
     return min_run;
 }
 
+int calculate_max_run(const vector<int>& window){
+    if(window.empty()) return 0;
+
+    vector<int> runs;
+    int current_run = 1;
+
+    for(size_t i = 1; i < window.size(); ++i){
+        if(window[i] == window[i-1]) current_run++;
+        else {
+            runs.push_back(current_run);
+            current_run = 1;
+        }
+    }
+    runs.push_back(current_run);
+
+    int max_run = runs[0];
+    for(int r : runs) max_run = max(max_run, r);
+    return max_run;
+}
+
+int calculate_transitions(const vector<int>& window, int i1, int i2){
+    if(window.size() < 2) return 0;
+
+    int count = 0;
+    for(int i = 1; i < window.size(); ++i){
+        if(window[i] == i2 && window[i-1] == i1) count++;
+    }
+
+    return count;
+}
+
+int calculate_sum(const vector<int>& window){
+    return accumulate(window.begin(), window.end(), 0);
+}
+
+int calculate_weighted_sum(const vector<int>& window){
+    int weighted_sum = 0;
+    for(int i = 0; i < window.size(); ++i){
+        weighted_sum += window[i]*(i+1);
+    }
+    return weighted_sum;
+}
+
+int calculate_mode(const vector<int>& window){
+    int sum = accumulate(window.begin(), window.end(), 0);
+    return sum > window.size()/2;
+}
+
+double calculate_entropy(const vector<int>& window){
+    double entropy = 0;
+    double p1 = accumulate(window.begin(), window.end(), 0) / (double)window.size();
+    double p0 = 1 - p1;
+    if(p0 > 0) entropy -= p0 * log(p0);
+    if(p1 > 0) entropy -= p1 * log(p1);
+    return entropy;
+}
+
 double calculate_bic(struct model* model_, const vector<vector<double>>& X, 
                      const vector<double>& y, int n_features, bool has_bias = false) {
     int n = X.size();
@@ -480,7 +538,7 @@ double calculate_bic(struct model* model_, const vector<vector<double>>& X,
 int main() {
     vector<int> data = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1};
     
-    vector<double> lag1, lag2, pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw;  // признаки
+    vector<double> lag1, lag2, pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans10, trans01, calc_sum, w_sum, mode_norm, entropy_raw;  // признаки
     vector<double> y;  // метки
 
     int window_size = 4;
@@ -503,13 +561,20 @@ int main() {
         kurtosis_raw.push_back(calculate_kurtosis(window));
         autocorr_raw.push_back(calculate_autocurr_lag2(window));
         min_run_raw.push_back(calculate_min_run(window));
+        max_run_raw.push_back(calculate_max_run(window));
+        trans10.push_back(calculate_transitions(window, 1, 0));
+        trans01.push_back(calculate_transitions(window, 0, 1));
+        calc_sum.push_back(calculate_sum(window));
+        w_sum.push_back(calculate_weighted_sum(window));
+        mode_norm.push_back(calculate_mode(window));
+        entropy_raw.push_back(calculate_entropy(window));
 
         y.push_back(data[i]);     // метка: текущее значение
     }
     
     int n = lag1.size();
     
-    // Разделяем на train (80%) и test (20%)
+    // Разделяем на train (50%) и test (50%)
     int train_size = n * 0.5;
     int test_size = n - train_size;
     
@@ -572,48 +637,144 @@ int main() {
 
     // нормализация min_run
 
-    double max_run = 0, min_run = 100;
+    double max_min_run = 0, min_min_run = 100;
     for(int i = 0; i < n; ++i){
-        max_run = max(max_run, min_run_raw[i]);
-        min_run = min(min_run, min_run_raw[i]);
+        max_min_run = max(max_min_run, min_run_raw[i]);
+        min_min_run = min(min_min_run, min_run_raw[i]);
     }
 
     vector<double> min_run_norm(n);
     for(int i = 0; i < n; ++i){
-        if(max_run - min_run > 1e-8){
-            min_run_norm[i] = (min_run_raw[i]-min_run)/(max_run-min_run);
+        if(max_min_run - min_min_run > 1e-8){
+            min_run_norm[i] = (min_run_raw[i]-min_min_run)/(max_min_run-min_min_run);
         } else {
             min_run_norm[i] = 0.5;
+        }
+    }
+
+    // нормализация max_run
+
+    double max_max_run = 0, min_max_run = 100;
+    for(int i = 0; i < n; ++i){
+        max_max_run = max(max_max_run, max_run_raw[i]);
+        min_max_run = min(min_max_run, max_run_raw[i]);
+    }
+
+    vector<double> max_run_norm(n);
+    for(int i = 0; i < n; ++i){
+        if(max_max_run - min_max_run > 1e-8){
+            max_run_norm[i] = (max_run_raw[i]-min_max_run)/(max_max_run-min_max_run);
+        } else {
+            max_run_norm[i] = 0.5;
+        }
+    }
+
+    // нормализация trans01
+
+    double max_t01 = 0, min_t01 = 100;
+    for(int i = 0; i < n; ++i){
+        max_t01 = max(max_t01, trans01[i]);
+        min_t01 = min(min_t01, trans01[i]);
+    }
+
+    vector<double> trans01_norm(n);
+    for(int i = 0; i < n; ++i){
+        if(max_t01 - min_t01 > 1e-8){
+            trans01_norm[i] = (trans01[i]-min_t01)/(max_t01-min_t01);
+        } else {
+            trans01_norm[i] = 0.5;
+        }
+    }
+
+    // нормализация trans10
+
+    double max_t10 = 0, min_t10 = 100;
+    for(int i = 0; i < n; ++i){
+        max_t10 = max(max_t10, trans10[i]);
+        min_t10 = min(min_t10, trans10[i]);
+    }
+
+    vector<double> trans10_norm(n);
+    for(int i = 0 ; i < n; ++i){
+        if(max_t10 - min_t10 > 1e-8){
+            trans10_norm[i] = (trans10[i]-min_t10)/(max_t10-min_t10);
+        } else {
+            trans10_norm[i] = 0.5;
+        }
+    }
+
+    // нормализация calc_sum
+
+    double max_sum = 0, min_sum = 100;
+    for(int i = 0; i < n; ++i){
+        max_sum = max(max_sum, calc_sum[i]);
+        min_sum = min(min_sum, calc_sum[i]);
+    }
+
+    vector<double> sum_norm(n);
+    for(int i = 0; i < n; ++i){
+        if(max_sum - min_sum > 1e-8){
+            sum_norm[i] = (calc_sum[i]-min_sum)/(max_sum-min_sum);
+        } else {
+            sum_norm[i] = 0.5;
+        }
+    }
+
+    // нормализация w_sum
+
+    double max_w_sum = 0, min_w_sum = 1000;
+    for(int i = 0; i < n; ++i){
+        max_w_sum = max(max_w_sum, w_sum[i]);
+        min_w_sum = min(min_w_sum, w_sum[i]);
+    }
+
+    vector<double> w_sum_norm(n);
+    for(int i = 0; i < n; ++i){
+        if(max_w_sum - min_w_sum > 1e-8){
+            w_sum_norm[i] = (w_sum[i]-min_w_sum)/(max_w_sum-min_w_sum);
+        } else {
+            w_sum_norm[i] = 0.5;
+        }
+    }
+
+    // нормализация entropy_raw
+
+    double max_entr = INT32_MIN, min_entr = INT32_MAX;
+    for(int i = 0; i < n; ++i){
+        max_entr = max(max_entr, entropy_raw[i]);
+        min_entr = min(min_entr, entropy_raw[i]);
+    }
+
+    vector<double> entropy_norm(n);
+    for(int i = 0; i < n; ++i){
+        if(max_entr - min_entr > 1e-8){
+            entropy_norm[i] = (entropy_raw[i]-min_entr)/(max_entr-min_entr);
+        } else {
+            entropy_norm[i] = 0.5;
         }
     }
     
     // Подготовка структуры для LIBLINEAR (только train)
     struct problem prob;
     prob.l = train_size;
-    prob.n = 3;
+    prob.n = 1;
     prob.y = new double[train_size];
     prob.x = new feature_node*[train_size];
     
     for (int i = 0; i < train_size; i++) {
-        prob.x[i] = new feature_node[4];
+        prob.x[i] = new feature_node[2];
 
         prob.x[i][0].index = 1;
         prob.x[i][0].value = pattern00_norm[i];
 
-        prob.x[i][1].index = 2;
-        prob.x[i][1].value = kurtosis_norm[i];
-
-        prob.x[i][2].index = 3;
-        prob.x[i][2].value = min_run_norm[i];
-
-        prob.x[i][3].index = -1;
+        prob.x[i][1].index = -1;
         prob.y[i] = y[i];
     }
     
     // Параметры
     struct parameter param;
     param.solver_type = L2R_LR;
-    param.C = 10.0;
+    param.C = 0.1;
     param.eps = 0.01;
     param.nr_weight = 0;
     param.weight_label = NULL;
@@ -635,24 +796,12 @@ int main() {
     // ========== ТОЧНОСТЬ НА ТЕСТЕ ==========
     int test_correct = 0;
     for (int i = train_size; i < n; i++) {
-        feature_node test_point[4];
-
-        // test_point[0].index = 1;
-        // test_point[0].value = lag1[i];
-
-        // test_point[1].index = 2;
-        // test_point[1].value = lag2[i];
+        feature_node test_point[2];
 
         test_point[0].index = 1;
         test_point[0].value = pattern00_norm[i];
 
-        test_point[1].index = 2;
-        test_point[1].value = autocorr_norm[i];
-
-        test_point[2].index = 3;
-        test_point[2].value = min_run_norm[i];
-
-        test_point[3].index = -1;
+        test_point[1].index = -1;
         
         double pred_class = predict(model_, test_point);
         if (pred_class == y[i]) test_correct++;
@@ -752,21 +901,17 @@ int main() {
     cout << "=== bic ===" << endl;
     vector<vector<double>> X (n);
     for(int i = 0; i < n; ++i){
-        // X[i].push_back(lag1[i]);
-        // X[i].push_back(lag2[i]);
         X[i].push_back(pattern00_norm[i]);
-        X[i].push_back(autocorr_norm[i]);
-        X[i].push_back(min_run_norm[i]);
     }
-    cout << calculate_bic(model_, X, y, 3, false) << '\n';
+    cout << calculate_bic(model_, X, y, 1, false) << '\n';
     
     // Вывод результатов
     cout << "=== РЕЗУЛЬТАТЫ ===" << endl;
     // cout << "Коэффициент при признаке (лаг 1): " << model_->w[0] << endl;
     // cout << "Коэффициент при признаке (лаг 2): " << model_->w[1] << endl;
-    cout << "Коэффициент при признаке pattern00_normalzie: " << model_->w[0] << endl;
-    cout << "Коэффициент при признаке autocorr normalize: " << model_->w[1] << endl;
-    cout << "Коэффициент при признаке min_run: " << model_->w[2] << endl;
+    // cout << "Коэффициент при признаке pattern00_normalzie: " << model_->w[0] << endl;
+    // cout << "Коэффициент при признаке autocorr normalize: " << model_->w[1] << endl;
+    // cout << "Коэффициент при признаке min_run: " << model_->w[2] << endl;
     
     cout << "Точность на обучении: " << train_correct << "/" << train_size 
          << " = " << train_accuracy << "%" << endl;
@@ -782,19 +927,14 @@ int main() {
         cout << "✅ Модель в порядке" << endl;
     }
 
-        // ========== ОЦЕНКА ВАЖНОСТИ ПРИЗНАКОВ ==========
     cout << "\n=== ЦЕННОСТЬ ПРИЗНАКОВ (по модулю веса) ===" << endl;
     
     vector<pair<double, string>> importance;
-    // importance.push_back({fabs(model_->w[0]), "Лаг 1"});
-    // importance.push_back({fabs(model_->w[1]), "Лаг 2"});
     importance.push_back({fabs(model_->w[0]), "Pattern00"});
-    importance.push_back({fabs(model_->w[1]), "autocorr"});
-    importance.push_back({fabs(model_->w[2]), "min_run"});
     
     sort(importance.begin(), importance.end(), greater<pair<double, string>>());
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 1; i++) {
         printf("%d место: %s (|вес| = %.4f)\n", i+1, importance[i].second.c_str(), importance[i].first);
     }
     
