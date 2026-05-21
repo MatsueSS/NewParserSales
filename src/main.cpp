@@ -387,52 +387,10 @@
 #include "Features_regression/FeaturePattern00.h"
 #include "Features_regression/FeatureExtractor.h"
 #include "Features_regression/FeatureKurtosis.h"
+#include "Features_regression/FeatureAutocorrLag2.h"
+#include "Features_regression/FeatureMinRun.h"
 
 using namespace std;
-
-double calculate_kurtosis(const vector<int>& window){
-    if(window.size() < 4) return 0.0;
-
-    double mean = 0.0;
-    for(int val : window) mean += val;
-    mean /= window.size();
-
-    double variance = 0.0;
-    for(int val : window) variance += (val-mean)*(val-mean);
-    variance /= window.size();
-
-    if(variance < 1e-8) return -3.0;
-
-    double fourth_moment = 0.0;
-    for(int val : window) fourth_moment += pow((val-mean)/sqrt(variance), 4);
-    fourth_moment /= window.size();
-
-    return fourth_moment - 3.0;
-}
-
-double calculate_autocurr_lag2(const vector<int>& window){
-    if(window.size() < 4) return 0.0;
-
-    int n = window.size() - 2;
-
-    double mean1 = 0.0, mean2 = 0.0;
-    for(int i = 0; i < n; ++i){
-        mean1 += window[i];
-        mean2 += window[i+2];
-    }
-    mean1/=n;
-    mean2/=n;
-
-    double cov = 0.0, var1 = 0.0, var2 = 0.0;
-    for(int i = 0; i < n; ++i){
-        cov += (window[i]-mean1)*(window[i+2]-mean2);
-        var1 += (window[i]-mean1)*(window[i]-mean1);
-        var2 += (window[i+2]-mean2)*(window[i+2]-mean2);
-    }
-    if(var1 < 1e-8 || var2 < 1e-8) return 0.0;
-
-    return cov/sqrt(var1*var2);
-}
 
 int calculate_min_run(const vector<int>& window){
     if(window.empty()) return 0;
@@ -542,11 +500,11 @@ double calculate_bic(struct model* model_, const vector<vector<double>>& X,
 int main() {
     vector<int> data = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1};
     
-    vector<double> lag1, lag2, pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans10, trans01, calc_sum, w_sum, mode_norm, entropy_raw;  // признаки
+    vector<double> lag1, lag2, pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans10, trans01, calc_sum, w_sum, mode_norm, entropy_raw, combini;  // признаки
     vector<double> y;  // метки
 
     int window_size = 4;
-    using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis>;
+    using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis, FeatureAutocorrLag2, FeatureMinRun>;
     
     for (size_t i = window_size; i < data.size(); i++) {
         lag1.push_back(data[i-1]);
@@ -561,9 +519,10 @@ int main() {
         
         pattern00_raw.push_back(ext_result[0]);
         kurtosis_raw.push_back(ext_result[1]);
+        autocorr_raw.push_back(ext_result[2]);
+        min_run_raw.push_back(ext_result[3]);
+        combini.push_back(calculate_max_run(window)+calculate_min_run(window));
 
-        autocorr_raw.push_back(calculate_autocurr_lag2(window));
-        min_run_raw.push_back(calculate_min_run(window));
         max_run_raw.push_back(calculate_max_run(window));
         trans10.push_back(calculate_transitions(window, 1, 0));
         trans01.push_back(calculate_transitions(window, 0, 1));
@@ -584,44 +543,12 @@ int main() {
     cout << "Всего объектов: " << n << endl;
     cout << "Train: " << train_size << ", Test: " << test_size << endl << endl;
 
-    vector<vector<double>> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw}, train_size);
+    vector<vector<double>> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw}, train_size);
 
     vector<double> pattern00_norm = norm_result[0];
     vector<double> kurtosis_norm = norm_result[1];
-
-    // нормализация автокорреляции с лагом 2
-
-    double max_autocorr = -1e9, min_autocorr = 1e9;
-    for(int i = 0; i < train_size; ++i){
-        max_autocorr = max(max_autocorr, autocorr_raw[i]);
-        min_autocorr = min(min_autocorr, autocorr_raw[i]);
-    }
-
-    vector<double> autocorr_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(max_autocorr - min_autocorr > 1e-8){
-            autocorr_norm[i] = (autocorr_raw[i]-min_autocorr)/(max_autocorr-min_autocorr);
-        } else {
-            autocorr_norm[i] = 0.5;
-        }
-    }
-
-    // нормализация min_run
-
-    double max_min_run = 0, min_min_run = 100;
-    for(int i = 0; i < n; ++i){
-        max_min_run = max(max_min_run, min_run_raw[i]);
-        min_min_run = min(min_min_run, min_run_raw[i]);
-    }
-
-    vector<double> min_run_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(max_min_run - min_min_run > 1e-8){
-            min_run_norm[i] = (min_run_raw[i]-min_min_run)/(max_min_run-min_min_run);
-        } else {
-            min_run_norm[i] = 0.5;
-        }
-    }
+    vector<double> autocorr_norm = norm_result[2];
+    vector<double> min_run_norm = norm_result[3];
 
     // нормализация max_run
 
@@ -724,6 +651,23 @@ int main() {
             entropy_norm[i] = 0.5;
         }
     }
+
+    // normalize max_run+min_run
+
+    double comb_min = INT32_MAX, comb_max = INT32_MIN;
+    for(int i = 0; i < train_size; ++i){
+        comb_min = min(comb_min, combini[i]);
+        comb_max = max(comb_max, combini[i]);
+    }
+
+    vector<double> combini_norm(n);
+    for(int i = 0; i < n; ++i){
+        if(comb_max-comb_min > 1e-8){
+            combini_norm[i] = (combini[i]-comb_min)/(comb_max-comb_min);
+        } else {
+            combini_norm[i] = 0.5;
+        }
+    }
     
     // Подготовка структуры для LIBLINEAR (только train)
     struct problem prob;
@@ -736,7 +680,7 @@ int main() {
         prob.x[i] = new feature_node[2];
 
         prob.x[i][0].index = 1;
-        prob.x[i][0].value = kurtosis_norm[i];
+        prob.x[i][0].value = min_run_norm[i];
 
         prob.x[i][1].index = -1;
         prob.y[i] = y[i];
@@ -770,7 +714,7 @@ int main() {
         feature_node test_point[2];
 
         test_point[0].index = 1;
-        test_point[0].value = kurtosis_norm[i];
+        test_point[0].value = min_run_norm[i];
 
         test_point[1].index = -1;
         
@@ -872,7 +816,7 @@ int main() {
     cout << "=== bic ===" << endl;
     vector<vector<double>> X (n);
     for(int i = 0; i < n; ++i){
-        X[i].push_back(kurtosis_norm[i]);
+        X[i].push_back(autocorr_norm[i]);
     }
     cout << calculate_bic(model_, X, y, 1, false) << '\n';
     
@@ -901,7 +845,7 @@ int main() {
     cout << "\n=== ЦЕННОСТЬ ПРИЗНАКОВ (по модулю веса) ===" << endl;
     
     vector<pair<double, string>> importance;
-    importance.push_back({fabs(model_->w[0]), "Kurtosis"});
+    importance.push_back({fabs(model_->w[0]), "autocorr"});
     
     sort(importance.begin(), importance.end(), greater<pair<double, string>>());
     
