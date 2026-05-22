@@ -383,6 +383,7 @@
 #include <cmath>
 #include <algorithm>
 #include <numeric>
+#include <tuple>
 
 #include "Features_regression/FeaturePattern00.h"
 #include "Features_regression/FeatureExtractor.h"
@@ -392,71 +393,22 @@
 #include "Features_regression/FeatureMaxRun.h"
 #include "Features_regression/FeatureTransitions01.h"
 #include "Features_regression/FeatureTransitions10.h"
+#include "Features_regression/FeatureSum.h"
+#include "Features_regression/FeatureWeightSum.h"
+#include "Features_regression/FeatureMode.h"
+#include "Features_regression/FeatureEntropy.h"
 
 using namespace std;
-
-int calculate_sum(const vector<int>& window){
-    return accumulate(window.begin(), window.end(), 0);
-}
-
-int calculate_weighted_sum(const vector<int>& window){
-    int weighted_sum = 0;
-    for(int i = 0; i < window.size(); ++i){
-        weighted_sum += window[i]*(i+1);
-    }
-    return weighted_sum;
-}
-
-int calculate_mode(const vector<int>& window){
-    int sum = accumulate(window.begin(), window.end(), 0);
-    return sum > window.size()/2;
-}
-
-double calculate_entropy(const vector<int>& window){
-    double entropy = 0;
-    double p1 = accumulate(window.begin(), window.end(), 0) / (double)window.size();
-    double p0 = 1 - p1;
-    if(p0 > 0) entropy -= p0 * log(p0);
-    if(p1 > 0) entropy -= p1 * log(p1);
-    return entropy;
-}
-
-double calculate_bic(struct model* model_, const vector<vector<double>>& X, 
-                     const vector<double>& y, int n_features, bool has_bias = false) {
-    int n = X.size();
-    int k = has_bias ? n_features + 1 : n_features;
-    
-    double log_likelihood = 0.0;
-    const double epsilon = 1e-15;
-    
-    for (int i = 0; i < n; i++) {
-        vector<feature_node> nodes(n_features + 1);
-        for (int j = 0; j < n_features; j++) {
-            nodes[j].index = j + 1;
-            nodes[j].value = X[i][j];
-        }
-        nodes[n_features].index = -1;
-        
-        double probs[2];
-        predict_probability(model_, nodes.data(), probs);
-        
-        double prob = (y[i] == 1.0) ? probs[1] : probs[0];
-        prob = max(epsilon, min(1.0 - epsilon, prob));
-        
-        log_likelihood += log(prob);
-    }
-    
-    return -2.0 * log_likelihood + k * log(n);
-}
 
 int main() {
     vector<int> data = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1};
     
-    vector<double> lag1, lag2, pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans01, calc_sum, w_sum, mode_norm, entropy_raw, combini;  // признаки
+    vector<double> pattern00_raw, min_run_raw, max_run_raw, kurtosis_raw, autocorr_raw, lag1, lag2,
+                    trans01_raw, trans10_raw, sum_raw, w_sum_raw, mode_raw, entropy_raw;  // признаки
     vector<double> y;  // метки
 
     int window_size = 4;
-    using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis, FeatureAutocorrLag2, FeatureMinRun, FeatureMaxRun, FeatureTransitions01>;
+    using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis, FeatureAutocorrLag2, FeatureMinRun, FeatureMaxRun, FeatureTransitions01, FeatureTransitions10, FeatureSum, FeatureWeightSum, FeatureMode, FeatureEntropy>;
     
     for (size_t i = window_size; i < data.size(); i++) {
         lag1.push_back(data[i-1]);
@@ -473,19 +425,18 @@ int main() {
         kurtosis_raw.push_back(ext_result[1]);
         autocorr_raw.push_back(ext_result[2]);
         min_run_raw.push_back(ext_result[3]);
-        combini.push_back(ext_result[4]+ext_result[3]);
         max_run_raw.push_back(ext_result[4]);
-
-        trans01.push_back(ext_result[5]);
-        calc_sum.push_back(calculate_sum(window));
-        w_sum.push_back(calculate_weighted_sum(window));
-        mode_norm.push_back(calculate_mode(window));
-        entropy_raw.push_back(calculate_entropy(window));
+        trans01_raw.push_back(ext_result[5]);
+        trans10_raw.push_back(ext_result[6]);
+        sum_raw.push_back(ext_result[7]);
+        w_sum_raw.push_back(ext_result[8]);
+        mode_raw.push_back(ext_result[9]);
+        entropy_raw.push_back(ext_result[10]);
 
         y.push_back(data[i]);     // метка: текущее значение
     }
     
-    int n = lag1.size();
+    int n = y.size();
     
     // Разделяем на train (50%) и test (50%)
     int train_size = n * 0.5;
@@ -494,7 +445,7 @@ int main() {
     cout << "Всего объектов: " << n << endl;
     cout << "Train: " << train_size << ", Test: " << test_size << endl << endl;
 
-    vector<vector<double>> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans01}, train_size);
+    vector<vector<double>> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans01_raw, trans10_raw, sum_raw, w_sum_raw, mode_raw, entropy_raw}, train_size);
 
     vector<double> pattern00_norm = norm_result[0];
     vector<double> kurtosis_norm = norm_result[1];
@@ -502,89 +453,59 @@ int main() {
     vector<double> min_run_norm = norm_result[3];
     vector<double> max_run_norm = norm_result[4];
     vector<double> trans01_norm = norm_result[5];
+    vector<double> trans10_norm = norm_result[6];
+    vector<double> sum_norm = norm_result[7];
+    vector<double> w_sum_norm = norm_result[8];
+    vector<double> mode_norm = norm_result[9];
+    vector<double> entropy_norm = norm_result[10];
 
-    // нормализация calc_sum
+    vector<vector<double>> features = {pattern00_norm, kurtosis_norm, autocorr_norm, min_run_norm, max_run_norm, lag1, lag2,
+                                        trans01_norm, trans10_norm, sum_norm, w_sum_norm, mode_norm, entropy_norm};
 
-    double max_sum = 0, min_sum = 100;
-    for(int i = 0; i < n; ++i){
-        max_sum = max(max_sum, calc_sum[i]);
-        min_sum = min(min_sum, calc_sum[i]);
-    }
-
-    vector<double> sum_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(max_sum - min_sum > 1e-8){
-            sum_norm[i] = (calc_sum[i]-min_sum)/(max_sum-min_sum);
-        } else {
-            sum_norm[i] = 0.5;
+    vector<tuple<double, int, int>> correlations;
+    for(int i = 0; i < features.size(); ++i){
+        for(int j = i+1; j < features.size(); ++j){
+            double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i], features[j]);
+            correlations.push_back(make_tuple(corr, i, j));
         }
     }
 
-    // нормализация w_sum
+    sort(correlations.begin(), correlations.end(), greater<>());
 
-    double max_w_sum = 0, min_w_sum = 1000;
-    for(int i = 0; i < n; ++i){
-        max_w_sum = max(max_w_sum, w_sum[i]);
-        min_w_sum = min(min_w_sum, w_sum[i]);
+    vector<bool> removed(features.size(), false);
+    for(auto& [corr, i, j] : correlations){
+        if(corr > 0.7 && !removed[i] && !removed[j]) removed[j] = true;
+    }   
+
+    vector<int> selected;
+    for(int i = 0; i < features.size() && selected.size() < 3; ++i){
+        if(!removed[i]) selected.push_back(i);
     }
 
-    vector<double> w_sum_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(max_w_sum - min_w_sum > 1e-8){
-            w_sum_norm[i] = (w_sum[i]-min_w_sum)/(max_w_sum-min_w_sum);
-        } else {
-            w_sum_norm[i] = 0.5;
-        }
-    }
+    for(int i :  selected) cout << i << ' ';
+    cout << '\n';
 
-    // нормализация entropy_raw
-
-    double max_entr = INT32_MIN, min_entr = INT32_MAX;
-    for(int i = 0; i < n; ++i){
-        max_entr = max(max_entr, entropy_raw[i]);
-        min_entr = min(min_entr, entropy_raw[i]);
-    }
-
-    vector<double> entropy_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(max_entr - min_entr > 1e-8){
-            entropy_norm[i] = (entropy_raw[i]-min_entr)/(max_entr-min_entr);
-        } else {
-            entropy_norm[i] = 0.5;
-        }
-    }
-
-    // normalize max_run+min_run
-
-    double comb_min = INT32_MAX, comb_max = INT32_MIN;
-    for(int i = 0; i < train_size; ++i){
-        comb_min = min(comb_min, combini[i]);
-        comb_max = max(comb_max, combini[i]);
-    }
-
-    vector<double> combini_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(comb_max-comb_min > 1e-8){
-            combini_norm[i] = (combini[i]-comb_min)/(comb_max-comb_min);
-        } else {
-            combini_norm[i] = 0.5;
-        }
-    }
     
     // Подготовка структуры для LIBLINEAR (только train)
     struct problem prob;
     prob.l = train_size;
-    prob.n = 1;
+    prob.n = 3;
     prob.y = new double[train_size];
     prob.x = new feature_node*[train_size];
     
     for (int i = 0; i < train_size; i++) {
-        prob.x[i] = new feature_node[2];
+        prob.x[i] = new feature_node[4];
 
         prob.x[i][0].index = 1;
-        prob.x[i][0].value = mode_norm[i];
+        prob.x[i][0].value = pattern00_norm[i];
 
-        prob.x[i][1].index = -1;
+        prob.x[i][1].index = 2;
+        prob.x[i][1].value = autocorr_norm[i];
+
+        prob.x[i][2].index = 3;
+        prob.x[i][2].value = kurtosis_norm[i];
+
+        prob.x[i][3].index = -1;
         prob.y[i] = y[i];
     }
     
@@ -613,12 +534,18 @@ int main() {
     // ========== ТОЧНОСТЬ НА ТЕСТЕ ==========
     int test_correct = 0;
     for (int i = train_size; i < n; i++) {
-        feature_node test_point[2];
+        feature_node test_point[4];
 
         test_point[0].index = 1;
-        test_point[0].value = mode_norm[i];
+        test_point[0].value = pattern00_norm[i];
 
-        test_point[1].index = -1;
+        test_point[1].index = 2;
+        test_point[1].value = autocorr_norm[i];
+
+        test_point[2].index = 3;
+        test_point[2].value = kurtosis_norm[i];
+
+        test_point[3].index = -1;
         
         double pred_class = predict(model_, test_point);
         if (pred_class == y[i]) test_correct++;
@@ -718,9 +645,11 @@ int main() {
     cout << "=== bic ===" << endl;
     vector<vector<double>> X (n);
     for(int i = 0; i < n; ++i){
-        X[i].push_back(mode_norm[i]);
+        X[i].push_back(pattern00_norm[i]);
+        X[i].push_back(autocorr_norm[i]);
+        X[i].push_back(kurtosis_norm[i]);
     }
-    cout << calculate_bic(model_, X, y, 1, false) << '\n';
+    cout << Feature<FeatureAutocorrLag2>::calculate_bic(model_, X, y, 3, false) << '\n';
     
     // Вывод результатов
     cout << "=== РЕЗУЛЬТАТЫ ===" << endl;
@@ -747,11 +676,13 @@ int main() {
     cout << "\n=== ЦЕННОСТЬ ПРИЗНАКОВ (по модулю веса) ===" << endl;
     
     vector<pair<double, string>> importance;
-    importance.push_back({fabs(model_->w[0]), "w_sum"});
+    importance.push_back({fabs(model_->w[0]), "patetrn00"});
+    importance.push_back({fabs(model_->w[1]), "autocorr"});
+    importance.push_back({fabs(model_->w[2]), "kurtosis"});
     
     sort(importance.begin(), importance.end(), greater<pair<double, string>>());
     
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 2; i++) {
         printf("%d место: %s (|вес| = %.4f)\n", i+1, importance[i].second.c_str(), importance[i].first);
     }
     

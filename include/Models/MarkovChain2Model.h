@@ -1,7 +1,7 @@
 #ifndef MARKOV_CHAIN_2_MODEL_H
 #define MARKOV_CHAIN_2_MODEL_H
 
-#include "ProbabilityModel.h"
+#include "Models/ProbabilityModel.h"
 
 #include <map>
 #include <tuple>
@@ -12,6 +12,8 @@ public:
 
     virtual double predict_probability(const std::vector<int>&) override;
     virtual double calculate_bic(const std::vector<int>&) override;
+
+    virtual void change_regular(double C) noexcept override {}
 
 private:
     std::map<std::tuple<int, int, int>, int> transition_type;

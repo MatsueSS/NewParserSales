@@ -1,4 +1,4 @@
-#include "MarkovChain2Model.h"
+#include "Models/MarkovChain2Model.h"
 
 #include <cmath>
 #include <numeric>

@@ -1,4 +1,4 @@
-#include "GeometricModel.h"
+#include "Models/GeometricModel.h"
 
 #include <numeric>
 #include <cmath>

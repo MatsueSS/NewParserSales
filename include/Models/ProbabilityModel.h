@@ -50,7 +50,10 @@ public:
     virtual ~ProbabilityModel() noexcept = default;
     virtual double predict_probability(const std::vector<int>&) = 0;
     virtual double calculate_bic(const std::vector<int>&) = 0;
+    virtual void change_regular(double C) noexcept = 0;
+
     TypeModel get_name() const noexcept { return name; };
+
     int find_max(const std::vector<int>& sample){
         int max_val = -1;
         for(int i : sample) max_val = std::max(max_val, i);

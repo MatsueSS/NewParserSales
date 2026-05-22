@@ -1,11 +1,11 @@
 #ifndef FACTORY_MODEL_H
 #define FACTORY_MODEL_H
 
-#include "ProbabilityModel.h"
+#include "Models/ProbabilityModel.h"
 
-#include "GeometricModel.h"
-#include "MarkovChain1Model.h"
-#include "MarkovChain2Model.h"
+#include "Models/GeometricModel.h"
+#include "Models/MarkovChain1Model.h"
+#include "Models/MarkovChain2Model.h"
 
 #include <memory>
 
