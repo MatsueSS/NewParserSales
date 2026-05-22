@@ -389,59 +389,11 @@
 #include "Features_regression/FeatureKurtosis.h"
 #include "Features_regression/FeatureAutocorrLag2.h"
 #include "Features_regression/FeatureMinRun.h"
+#include "Features_regression/FeatureMaxRun.h"
+#include "Features_regression/FeatureTransitions01.h"
+#include "Features_regression/FeatureTransitions10.h"
 
 using namespace std;
-
-int calculate_min_run(const vector<int>& window){
-    if(window.empty()) return 0;
-
-    vector<int> runs;
-    int current_run = 1;
-
-    for(size_t i = 1; i < window.size(); ++i){
-        if(window[i] == window[i-1]) current_run++;
-        else {
-            runs.push_back(current_run);
-            current_run = 1;
-        }
-    }
-    runs.push_back(current_run);
-
-    int min_run = runs[0];
-    for(int r : runs) min_run = min(min_run, r);
-    return min_run;
-}
-
-int calculate_max_run(const vector<int>& window){
-    if(window.empty()) return 0;
-
-    vector<int> runs;
-    int current_run = 1;
-
-    for(size_t i = 1; i < window.size(); ++i){
-        if(window[i] == window[i-1]) current_run++;
-        else {
-            runs.push_back(current_run);
-            current_run = 1;
-        }
-    }
-    runs.push_back(current_run);
-
-    int max_run = runs[0];
-    for(int r : runs) max_run = max(max_run, r);
-    return max_run;
-}
-
-int calculate_transitions(const vector<int>& window, int i1, int i2){
-    if(window.size() < 2) return 0;
-
-    int count = 0;
-    for(int i = 1; i < window.size(); ++i){
-        if(window[i] == i2 && window[i-1] == i1) count++;
-    }
-
-    return count;
-}
 
 int calculate_sum(const vector<int>& window){
     return accumulate(window.begin(), window.end(), 0);
@@ -500,11 +452,11 @@ double calculate_bic(struct model* model_, const vector<vector<double>>& X,
 int main() {
     vector<int> data = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1};
     
-    vector<double> lag1, lag2, pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans10, trans01, calc_sum, w_sum, mode_norm, entropy_raw, combini;  // признаки
+    vector<double> lag1, lag2, pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans01, calc_sum, w_sum, mode_norm, entropy_raw, combini;  // признаки
     vector<double> y;  // метки
 
     int window_size = 4;
-    using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis, FeatureAutocorrLag2, FeatureMinRun>;
+    using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis, FeatureAutocorrLag2, FeatureMinRun, FeatureMaxRun, FeatureTransitions01>;
     
     for (size_t i = window_size; i < data.size(); i++) {
         lag1.push_back(data[i-1]);
@@ -521,11 +473,10 @@ int main() {
         kurtosis_raw.push_back(ext_result[1]);
         autocorr_raw.push_back(ext_result[2]);
         min_run_raw.push_back(ext_result[3]);
-        combini.push_back(calculate_max_run(window)+calculate_min_run(window));
+        combini.push_back(ext_result[4]+ext_result[3]);
+        max_run_raw.push_back(ext_result[4]);
 
-        max_run_raw.push_back(calculate_max_run(window));
-        trans10.push_back(calculate_transitions(window, 1, 0));
-        trans01.push_back(calculate_transitions(window, 0, 1));
+        trans01.push_back(ext_result[5]);
         calc_sum.push_back(calculate_sum(window));
         w_sum.push_back(calculate_weighted_sum(window));
         mode_norm.push_back(calculate_mode(window));
@@ -543,63 +494,14 @@ int main() {
     cout << "Всего объектов: " << n << endl;
     cout << "Train: " << train_size << ", Test: " << test_size << endl << endl;
 
-    vector<vector<double>> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw}, train_size);
+    vector<vector<double>> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans01}, train_size);
 
     vector<double> pattern00_norm = norm_result[0];
     vector<double> kurtosis_norm = norm_result[1];
     vector<double> autocorr_norm = norm_result[2];
     vector<double> min_run_norm = norm_result[3];
-
-    // нормализация max_run
-
-    double max_max_run = 0, min_max_run = 100;
-    for(int i = 0; i < n; ++i){
-        max_max_run = max(max_max_run, max_run_raw[i]);
-        min_max_run = min(min_max_run, max_run_raw[i]);
-    }
-
-    vector<double> max_run_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(max_max_run - min_max_run > 1e-8){
-            max_run_norm[i] = (max_run_raw[i]-min_max_run)/(max_max_run-min_max_run);
-        } else {
-            max_run_norm[i] = 0.5;
-        }
-    }
-
-    // нормализация trans01
-
-    double max_t01 = 0, min_t01 = 100;
-    for(int i = 0; i < n; ++i){
-        max_t01 = max(max_t01, trans01[i]);
-        min_t01 = min(min_t01, trans01[i]);
-    }
-
-    vector<double> trans01_norm(n);
-    for(int i = 0; i < n; ++i){
-        if(max_t01 - min_t01 > 1e-8){
-            trans01_norm[i] = (trans01[i]-min_t01)/(max_t01-min_t01);
-        } else {
-            trans01_norm[i] = 0.5;
-        }
-    }
-
-    // нормализация trans10
-
-    double max_t10 = 0, min_t10 = 100;
-    for(int i = 0; i < n; ++i){
-        max_t10 = max(max_t10, trans10[i]);
-        min_t10 = min(min_t10, trans10[i]);
-    }
-
-    vector<double> trans10_norm(n);
-    for(int i = 0 ; i < n; ++i){
-        if(max_t10 - min_t10 > 1e-8){
-            trans10_norm[i] = (trans10[i]-min_t10)/(max_t10-min_t10);
-        } else {
-            trans10_norm[i] = 0.5;
-        }
-    }
+    vector<double> max_run_norm = norm_result[4];
+    vector<double> trans01_norm = norm_result[5];
 
     // нормализация calc_sum
 
@@ -680,7 +582,7 @@ int main() {
         prob.x[i] = new feature_node[2];
 
         prob.x[i][0].index = 1;
-        prob.x[i][0].value = min_run_norm[i];
+        prob.x[i][0].value = mode_norm[i];
 
         prob.x[i][1].index = -1;
         prob.y[i] = y[i];
@@ -714,7 +616,7 @@ int main() {
         feature_node test_point[2];
 
         test_point[0].index = 1;
-        test_point[0].value = min_run_norm[i];
+        test_point[0].value = mode_norm[i];
 
         test_point[1].index = -1;
         
@@ -816,7 +718,7 @@ int main() {
     cout << "=== bic ===" << endl;
     vector<vector<double>> X (n);
     for(int i = 0; i < n; ++i){
-        X[i].push_back(autocorr_norm[i]);
+        X[i].push_back(mode_norm[i]);
     }
     cout << calculate_bic(model_, X, y, 1, false) << '\n';
     
@@ -845,7 +747,7 @@ int main() {
     cout << "\n=== ЦЕННОСТЬ ПРИЗНАКОВ (по модулю веса) ===" << endl;
     
     vector<pair<double, string>> importance;
-    importance.push_back({fabs(model_->w[0]), "autocorr"});
+    importance.push_back({fabs(model_->w[0]), "w_sum"});
     
     sort(importance.begin(), importance.end(), greater<pair<double, string>>());
     

@@ -1,9 +1,9 @@
-#ifndef FEATURE_MIN_RUN_H
-#define FEATURE_MIN_RUN_H
+#ifndef FEATURE_MAX_RUN_H
+#define FEATURE_MAX_RUN_H
 
 #include "Features_regression/Feature.h"
 
-class FeatureMinRun : public Feature<FeatureMinRun> {
+class FeatureMaxRun : public Feature<FeatureMaxRun>{
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         if(window.empty()) return 0;
@@ -20,32 +20,32 @@ public:
         }
         runs.push_back(current_run);
 
-        int min_run = runs[0];
-        for(int r : runs) min_run = std::min(min_run, r);
-        return min_run;
+        int max_run = runs[0];
+        for(int r : runs) max_run = std::max(max_run, r);
+        return max_run;
     }
 
     static type_feature name_impl() noexcept {
-        return type_feature::min_run;
+        return type_feature::max_run;
     }
 
     static std::vector<double> normalize_impl(const std::vector<double>& sample, int train_size) noexcept {
-        double max_min_run = INT32_MIN, min_min_run = INT32_MAX;
+        double max_max_run = INT32_MIN, min_max_run = INT32_MAX;
         for(int i = 0; i < train_size; ++i){
-            max_min_run = std::max(max_min_run, sample[i]);
-            min_min_run = std::min(min_min_run, sample[i]);
+            max_max_run = std::max(max_max_run, sample[i]);
+            min_max_run = std::min(min_max_run, sample[i]);
         }
 
         int n = sample.size();
-        std::vector<double> min_run_norm(n);
+        std::vector<double> max_run_norm(n);
         for(int i = 0; i < n; ++i){
-            if(max_min_run - min_min_run > 1e-8){
-                min_run_norm[i] = (sample[i]-min_min_run)/(max_min_run-min_min_run);
+            if(max_max_run - min_max_run > 1e-8){
+                max_run_norm[i] = (sample[i]-min_max_run)/(max_max_run-min_max_run);
             } else {
-                min_run_norm[i] = 0.5;
+                max_run_norm[i] = 0.5;
             }
         }
-        return min_run_norm;
+        return max_run_norm;
     }
 
 };
