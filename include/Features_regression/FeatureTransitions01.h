@@ -20,23 +20,23 @@ public:
         return type_feature::transitions01;
     }
 
-    static std::vector<double> normalize_impl(const std::vector<double>& sample, int train_size) noexcept {
-        double max_t01 = INT32_MIN, min_t01 = INT32_MAX;
+    static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
+        double max_t01 = -1e9, min_t01 = 1e9;
         for(int i = 0; i < train_size; ++i){
             max_t01 = std::max(max_t01, sample[i]);
             min_t01 = std::min(min_t01, sample[i]);
         }
 
         int n = sample.size();
-        std::vector<double> trans01_norm(n);
+        std::vector<double> trans01_norm(n, 0.5);
         for(int i = 0; i < n; ++i){
-            if(max_t01 - min_t01 > 1e-8){
-                trans01_norm[i] = (sample[i]-min_t01)/(max_t01-min_t01);
-            } else {
-                trans01_norm[i] = 0.5;
-            }
+            if(max_t01 - min_t01 > 1e-8) trans01_norm[i] = (sample[i]-min_t01)/(max_t01-min_t01);
         }
-        return trans01_norm;
+
+        double raw_trans01 = compute_impl(lasted_data), norm_trans01 = 0.5;
+        if(max_t01 - min_t01 > 1e-8) norm_trans01 = (raw_trans01-min_t01)/(max_t01-min_t01);
+
+        return {trans01_norm, norm_trans01};
     }
 };
 

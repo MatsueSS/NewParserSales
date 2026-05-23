@@ -12,9 +12,6 @@
 // #include "ProductParser.h"
 // #include "PyAutoClickParser.h"
 // #include "ModelSelector.h"
-// #include "GeometricModel.h"
-// #include "MarkovChain1Model.h"
-// #include "MarkovChain2Model.h"
 // #include "HiSquare.h"
 // #include "IndependenceWeekHypothesis.h"
 // #include "ROC_AUC.h"
@@ -29,11 +26,11 @@
 // {
 //     global_init();
 
-//     // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+//     Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-//     // while(true){
-//     //     inter.start_process();
-//     // }
+//     while(true){
+//         inter.start_process();
+//     }
 
 //     // check_independence_week();
 
@@ -252,128 +249,6 @@
 
 //     global_delete();
 
-//     // std::vector<int> sample_1 = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1};
-//     // std::vector<int> sample_2 = converte_zero_to_non_one(sample_1);
-//     // lags l = create_lag(sample_2, 3);
-//     // auto fe = to_linear(l);
-    
-//     std::vector<int> sample = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1};
-
-//     std::vector<int> lag1, lag2, lag3, lag4, target;
-//     for(int i = 4; i < sample.size(); ++i){
-//         lag1.push_back(sample[i-1]);
-//         lag2.push_back(sample[i-2]);
-//         lag3.push_back(sample[i-3]);
-//         lag4.push_back(sample[i-4]);
-//         target.push_back(sample[i]);
-//     }
-
-//     int n_features = 4;
-//     int n_samples = target.size();
-
-//     struct problem prob;
-//     prob.l = n_samples;
-//     prob.n = n_features;
-//     prob.y = (double*)malloc(n_samples * sizeof(double));
-//     prob.x = (struct feature_node**)malloc(n_samples * sizeof(struct feature_node*));
-//     prob.bias = 1;
-
-//     for(int i = 0; i < n_samples; ++i) {
-//         struct feature_node* node = (struct feature_node*)malloc((n_features + 1) * sizeof(struct feature_node));
-        
-//         node[0].index = 1;
-//         node[0].value = lag1[i];
-        
-//         node[1].index = 2;
-//         node[1].value = lag2[i];
-        
-//         node[2].index = 3;
-//         node[2].value = lag3[i];
-        
-//         node[3].index = 4;
-//         node[3].value = lag4[i];
-        
-//         node[4].index = -1;
-        
-//         prob.x[i] = node;
-//         prob.y[i] = target[i];
-//     }
-    
-//     struct parameter param;
-//     param.solver_type = 0;
-//     param.C = 1.0;
-//     param.eps = 0.01;
-//     param.nr_weight = 0;
-//     param.weight_label = NULL;
-//     param.weight = NULL;
-    
-//     const char* error_msg = check_parameter(&prob, &param);
-//     if(error_msg) {
-//         printf("Ошибка в параметрах: %s\n", error_msg);
-//         return 1;
-//     }
-
-//     struct model* model_ = train(&prob, &param);
-    
-//     printf("Модель успешно создана!\n");
-//     printf("Количество классов: %d\n", model_->nr_class);
-    
-//     const char* model_file = "model.txt";
-//     if(save_model(model_file, model_) == 0) {
-//         printf("Модель сохранена в %s\n", model_file);
-//     }
-    
-//     // Пример предсказания
-//     std::vector<int> new_lags = {1, 0, 1, 0};
-    
-//     // Для bias нужно создать дополнительный признак
-//     struct feature_node test_nodes[6];  // 4 признака + bias + маркер конца
-//     test_nodes[0].index = 1;
-//     test_nodes[0].value = new_lags[0];
-//     test_nodes[1].index = 2;
-//     test_nodes[1].value = new_lags[1];
-//     test_nodes[2].index = 3;
-//     test_nodes[2].value = new_lags[2];
-//     test_nodes[3].index = 4;
-//     test_nodes[3].value = new_lags[3];
-//     test_nodes[4].index = prob.bias;  // Добавляем bias признак
-//     test_nodes[4].value = 1;
-//     test_nodes[5].index = -1;  // Маркер конца
-    
-//     // ИСПРАВЛЕННАЯ ЧАСТЬ - используем predict_probability
-//     double* probabilities = (double*)malloc(model_->nr_class * sizeof(double));
-//     int predicted_class = predict_probability(model_, test_nodes, probabilities);
-    
-//     printf("\nПрогноз для новых данных [%d,%d,%d,%d]:\n", 
-//            new_lags[0], new_lags[1], new_lags[2], new_lags[3]);
-//     printf("Предсказанный класс: %d\n", predicted_class);
-//     printf("Вероятности: класс0=%.4f, класс1=%.4f\n", probabilities[0], probabilities[1]);
-//     printf("Сумма вероятностей: %.4f\n", probabilities[0] + probabilities[1]);
-    
-//     // Дополнительно: покажем веса модели для понимания важности лагов
-//     printf("\nВеса модели (важность признаков):\n");
-//     if(model_->w) {
-//         // Для бинарной классификации веса хранятся в model_->w
-//         // Первые n_features весов - для класса 0, следующие - для класса 1
-//         printf("Признак 1 (Lag1): %.4f\n", model_->w[0]);
-//         printf("Признак 2 (Lag2): %.4f\n", model_->w[1]);
-//         printf("Признак 3 (Lag3): %.4f\n", model_->w[2]);
-//         printf("Признак 4 (Lag4): %.4f\n", model_->w[3]);
-//         if(prob.bias >= 0) {
-//             printf("Bias (свободный член): %.4f\n", model_->w[4]);
-//         }
-//     }
-    
-//     // Очистка
-//     free(probabilities);
-//     free_and_destroy_model(&model_);
-//     destroy_param(&param);
-//     free(prob.y);
-//     for(int i = 0; i < n_samples; ++i) {
-//         free(prob.x[i]);
-//     }
-//     free(prob.x);
-
 //     return 0;
 // }
 
@@ -403,17 +278,13 @@ using namespace std;
 int main() {
     vector<int> data = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1};
     
-    vector<double> pattern00_raw, min_run_raw, max_run_raw, kurtosis_raw, autocorr_raw, lag1, lag2,
-                    trans01_raw, trans10_raw, sum_raw, w_sum_raw, mode_raw, entropy_raw;  // признаки
+    vector<double> pattern00_raw;// признаки
     vector<double> y;  // метки
 
     int window_size = 4;
-    using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis, FeatureAutocorrLag2, FeatureMinRun, FeatureMaxRun, FeatureTransitions01, FeatureTransitions10, FeatureSum, FeatureWeightSum, FeatureMode, FeatureEntropy>;
+    using MyExtractor = FeatureExtractor<FeatureAutocorrLag2>;
     
     for (size_t i = window_size; i < data.size(); i++) {
-        lag1.push_back(data[i-1]);
-        lag2.push_back(data[i-2]);
-
         vector<int> window;
         for(size_t j = i - window_size; j < i; ++j){
             window.push_back(data[j]);
@@ -422,16 +293,6 @@ int main() {
         std::vector<double> ext_result = MyExtractor::extract(window);
         
         pattern00_raw.push_back(ext_result[0]);
-        kurtosis_raw.push_back(ext_result[1]);
-        autocorr_raw.push_back(ext_result[2]);
-        min_run_raw.push_back(ext_result[3]);
-        max_run_raw.push_back(ext_result[4]);
-        trans01_raw.push_back(ext_result[5]);
-        trans10_raw.push_back(ext_result[6]);
-        sum_raw.push_back(ext_result[7]);
-        w_sum_raw.push_back(ext_result[8]);
-        mode_raw.push_back(ext_result[9]);
-        entropy_raw.push_back(ext_result[10]);
 
         y.push_back(data[i]);     // метка: текущее значение
     }
@@ -445,67 +306,53 @@ int main() {
     cout << "Всего объектов: " << n << endl;
     cout << "Train: " << train_size << ", Test: " << test_size << endl << endl;
 
-    vector<vector<double>> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans01_raw, trans10_raw, sum_raw, w_sum_raw, mode_raw, entropy_raw}, train_size);
+    int data_size = data.size();
+    vector<result_normalize> norm_result = MyExtractor::normalize({pattern00_raw}, train_size, {data[data_size-4], data[data_size-3], data[data_size-2], data[data_size-1]});
 
-    vector<double> pattern00_norm = norm_result[0];
-    vector<double> kurtosis_norm = norm_result[1];
-    vector<double> autocorr_norm = norm_result[2];
-    vector<double> min_run_norm = norm_result[3];
-    vector<double> max_run_norm = norm_result[4];
-    vector<double> trans01_norm = norm_result[5];
-    vector<double> trans10_norm = norm_result[6];
-    vector<double> sum_norm = norm_result[7];
-    vector<double> w_sum_norm = norm_result[8];
-    vector<double> mode_norm = norm_result[9];
-    vector<double> entropy_norm = norm_result[10];
+    vector<double> pattern00_norm = norm_result[0].norm_sample;
+    double last_norm = norm_result[0].last_norm;
 
-    vector<vector<double>> features = {pattern00_norm, kurtosis_norm, autocorr_norm, min_run_norm, max_run_norm, lag1, lag2,
-                                        trans01_norm, trans10_norm, sum_norm, w_sum_norm, mode_norm, entropy_norm};
+    // vector<vector<double>> features = {pattern00_norm, kurtosis_norm, autocorr_norm, min_run_norm, max_run_norm, lag1, lag2,
+    //                                     trans01_norm, trans10_norm, sum_norm, w_sum_norm, mode_norm, entropy_norm};
 
-    vector<tuple<double, int, int>> correlations;
-    for(int i = 0; i < features.size(); ++i){
-        for(int j = i+1; j < features.size(); ++j){
-            double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i], features[j]);
-            correlations.push_back(make_tuple(corr, i, j));
-        }
-    }
+    // vector<tuple<double, int, int>> correlations;
+    // for(int i = 0; i < features.size(); ++i){
+    //     for(int j = i+1; j < features.size(); ++j){
+    //         double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i], features[j]);
+    //         correlations.push_back(make_tuple(corr, i, j));
+    //     }
+    // }
 
-    sort(correlations.begin(), correlations.end(), greater<>());
+    // sort(correlations.begin(), correlations.end(), greater<>());
 
-    vector<bool> removed(features.size(), false);
-    for(auto& [corr, i, j] : correlations){
-        if(corr > 0.7 && !removed[i] && !removed[j]) removed[j] = true;
-    }   
+    // vector<bool> removed(features.size(), false);
+    // for(auto& [corr, i, j] : correlations){
+    //     if(corr > 0.7 && !removed[i] && !removed[j]) removed[j] = true;
+    // }   
 
-    vector<int> selected;
-    for(int i = 0; i < features.size() && selected.size() < 3; ++i){
-        if(!removed[i]) selected.push_back(i);
-    }
+    // vector<int> selected;
+    // for(int i = 0; i < features.size() && selected.size() < 3; ++i){
+    //     if(!removed[i]) selected.push_back(i);
+    // }
 
-    for(int i :  selected) cout << i << ' ';
-    cout << '\n';
+    // for(int i :  selected) cout << i << ' ';
+    // cout << '\n';
 
     
     // Подготовка структуры для LIBLINEAR (только train)
     struct problem prob;
     prob.l = train_size;
-    prob.n = 3;
+    prob.n = 1;
     prob.y = new double[train_size];
     prob.x = new feature_node*[train_size];
     
     for (int i = 0; i < train_size; i++) {
-        prob.x[i] = new feature_node[4];
+        prob.x[i] = new feature_node[2];
 
         prob.x[i][0].index = 1;
         prob.x[i][0].value = pattern00_norm[i];
 
-        prob.x[i][1].index = 2;
-        prob.x[i][1].value = autocorr_norm[i];
-
-        prob.x[i][2].index = 3;
-        prob.x[i][2].value = kurtosis_norm[i];
-
-        prob.x[i][3].index = -1;
+        prob.x[i][1].index = -1;
         prob.y[i] = y[i];
     }
     
@@ -534,122 +381,38 @@ int main() {
     // ========== ТОЧНОСТЬ НА ТЕСТЕ ==========
     int test_correct = 0;
     for (int i = train_size; i < n; i++) {
-        feature_node test_point[4];
+        feature_node test_point[2];
 
         test_point[0].index = 1;
         test_point[0].value = pattern00_norm[i];
 
-        test_point[1].index = 2;
-        test_point[1].value = autocorr_norm[i];
-
-        test_point[2].index = 3;
-        test_point[2].value = kurtosis_norm[i];
-
-        test_point[3].index = -1;
+        test_point[1].index = -1;
         
         double pred_class = predict(model_, test_point);
         if (pred_class == y[i]) test_correct++;
     }
     double test_accuracy = 100.0 * test_correct / test_size;
 
-    // После вычисления test_correct, добавьте вывод вероятностей для тестовых объектов
+    // Также можно вывести вероятность для прогноза следующего значения
+    cout << "\n=== ПРОГНОЗ СЛЕДУЮЩЕГО ЗНАЧЕНИЯ ===" << endl;
 
-    // cout << "\n=== ВЕРОЯТНОСТИ ДЛЯ ТЕСТОВЫХ ОБЪЕКТОВ ===" << endl;
-    // for (int i = train_size; i < n; i++) {
-    //     feature_node test_point[6];
-    //     test_point[0].index = 1;
-    //     test_point[0].value = lag1[i];
-    //     test_point[1].index = 2;
-    //     test_point[1].value = lag2[i];
-    //     test_point[2].index = 3;
-    //     test_point[2].value = pattern00_norm[i];
-    //     test_point[3].index = 4;
-    //     test_point[3].value = kurtosis_norm[i];
-    //     test_point[4].index = 5;
-    //     test_point[4].value = min_run_norm[i];
-    //     test_point[5].index = -1;
-        
-    //     double probs[2];  // массив для вероятностей: [0] для класса 0, [1] для класса 1
-    //     predict_probability(model_, test_point, probs);
-        
-    //     double pred_class = (probs[1] >= 0.5) ? 1 : 0;
-        
-    //     printf("Объект %d: Истинный=%d, Предсказанный=%d, Вероятность класса 1=%.4f\n", 
-    //         i - train_size + 1, (int)y[i], (int)pred_class, probs[1]);
-    // }
+    feature_node next_point[2];
+    next_point[0].index = 1;
+    next_point[0].value = last_norm;
+    next_point[1].index = -1;
 
-    // // Также можно вывести вероятность для прогноза следующего значения
-    // cout << "\n=== ПРОГНОЗ СЛЕДУЮЩЕГО ЗНАЧЕНИЯ ===" << endl;
+    double next_probs[2];
+    predict_probability(model_, next_point, next_probs);
 
-    // // Берём последние 4 значения из data
-    // int last1 = data[data.size() - 1];
-    // int last2 = data[data.size() - 2];
-    // int last3 = data[data.size() - 3];
-    // int last4 = data[data.size() - 4];
-
-    // // Считаем pattern00 для последнего окна
-    // int last_pattern00 = 0;
-    // if (last3 == 0 && last2 == 0) last_pattern00++;
-    // if (last2 == 0 && last1 == 0) last_pattern00++;
-
-    // // Нормализуем
-    // double last_pattern00_norm;
-    // if (max_pattern - min_pattern > 1e-8) {
-    //     last_pattern00_norm = (last_pattern00 - min_pattern) / (max_pattern - min_pattern);
-    // } else {
-    //     last_pattern00_norm = 0.5;
-    // }
-
-    // // Считаем kurtosis для последнего окна
-    // vector<int> last_window = {last4, last3, last2, last1};
-    // double last_kurtosis = calculate_kurtosis(last_window);
-    // double last_kurtosis_norm;
-    // if (max_kurtosis - min_kurtosis > 1e-8) {
-    //     last_kurtosis_norm = (last_kurtosis - min_kurtosis) / (max_kurtosis - min_kurtosis);
-    // } else {
-    //     last_kurtosis_norm = 0.5;
-    // }
-
-    // // Считаем min_run для последнего окна
-    // int last_min_run = calculate_min_run(last_window);
-    // double last_min_run_norm;
-    // if (max_run - min_run > 1e-8) {
-    //     last_min_run_norm = (last_min_run - min_run) / (max_run - min_run);
-    // } else {
-    //     last_min_run_norm = 0.5;
-    // }
-
-    // feature_node next_point[6];
-    // next_point[0].index = 1;
-    // next_point[0].value = last1;
-    // next_point[1].index = 2;
-    // next_point[1].value = last2;
-    // next_point[2].index = 3;
-    // next_point[2].value = last_pattern00_norm;
-    // next_point[3].index = 4;
-    // next_point[3].value = last_kurtosis_norm;
-    // next_point[4].index = 5;
-    // next_point[4].value = last_min_run_norm;
-    // next_point[5].index = -1;
-
-    // double next_probs[2];
-    // predict_probability(model_, next_point, next_probs);
-
-    // cout << "Последние 4 значения: " << last4 << " " << last3 << " " << last2 << " " << last1 << endl;
-    // printf("Pattern00: %d (норм: %.3f)\n", last_pattern00, last_pattern00_norm);
-    // printf("Kurtosis: %.4f (норм: %.3f)\n", last_kurtosis, last_kurtosis_norm);
-    // printf("Min_run: %d (норм: %.3f)\n", last_min_run, last_min_run_norm);
-    // printf("Вероятность класса 1: %.4f\n", next_probs[1]);
-    // printf("Прогноз: %d\n", next_probs[1] >= 0.5 ? 1 : 0);
+    printf("Вероятность класса 1: %.4f\n", next_probs[1]);
+    printf("Прогноз: %d\n", next_probs[1] >= 0.5 ? 1 : 0);
 
     cout << "=== bic ===" << endl;
     vector<vector<double>> X (n);
     for(int i = 0; i < n; ++i){
         X[i].push_back(pattern00_norm[i]);
-        X[i].push_back(autocorr_norm[i]);
-        X[i].push_back(kurtosis_norm[i]);
     }
-    cout << Feature<FeatureAutocorrLag2>::calculate_bic(model_, X, y, 3, false) << '\n';
+    cout << Feature<FeaturePattern00>::calculate_bic(model_, X, y, 1, false) << '\n';
     
     // Вывод результатов
     cout << "=== РЕЗУЛЬТАТЫ ===" << endl;
@@ -677,12 +440,10 @@ int main() {
     
     vector<pair<double, string>> importance;
     importance.push_back({fabs(model_->w[0]), "patetrn00"});
-    importance.push_back({fabs(model_->w[1]), "autocorr"});
-    importance.push_back({fabs(model_->w[2]), "kurtosis"});
     
     sort(importance.begin(), importance.end(), greater<pair<double, string>>());
     
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 1; i++) {
         printf("%d место: %s (|вес| = %.4f)\n", i+1, importance[i].second.c_str(), importance[i].first);
     }
     

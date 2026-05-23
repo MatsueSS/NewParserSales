@@ -24,12 +24,12 @@ public:
         return sizeof...(Features);
     }
 
-    static std::vector<std::vector<double>> normalize(const std::vector<std::vector<double>>& sample, int train_size) noexcept {
-        std::vector<std::vector<double>> all_norm;
+    static std::vector<result_normalize> normalize(const std::vector<std::vector<double>>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
+        std::vector<result_normalize> all_norm;
         all_norm.reserve(sizeof...(Features));
 
-        [&all_norm, &sample, train_size]<size_t... Is>(std::index_sequence<Is...>){
-            ((all_norm.push_back(Features::normalize(sample[Is], train_size))), ...);
+        [&all_norm, &sample, train_size, &lasted_data]<size_t... Is>(std::index_sequence<Is...>){
+            ((all_norm.push_back(Features::normalize(sample[Is], train_size, lasted_data))), ...);
         }(std::index_sequence_for<Features...>{});
 
         return all_norm;

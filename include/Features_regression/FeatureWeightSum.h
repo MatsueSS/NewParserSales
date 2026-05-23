@@ -17,23 +17,23 @@ public:
         return type_feature::weighted_sum;
     }
 
-    static std::vector<double> normalize_impl(const std::vector<double>& sample, int train_size) noexcept {
-        double min_w = INT32_MAX, max_w = INT32_MIN;
+    static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
+        double min_w = 1e9, max_w = -1e9;
         for(int i = 0; i < train_size; ++i){
             max_w = std::max(max_w, sample[i]);
             min_w = std::min(min_w, sample[i]);
         }
 
         int n = sample.size();
-        std::vector<double> norm_w(n);
+        std::vector<double> norm_w(n, 0.5);
         for(int i = 0; i < n; ++i){
-            if(max_w-min_w > 1e-8){
-                norm_w[i] = (sample[i]-min_w)/(max_w-min_w);
-            } else {
-                norm_w[i] = 0.5;
-            }
+            if(max_w-min_w > 1e-8) norm_w[i] = (sample[i]-min_w)/(max_w-min_w);
         }
-        return norm_w;
+
+        double raw_w = compute_impl(lasted_data), nw = 0.5;
+        if(max_w-min_w > 1e-8) nw = (raw_w-min_w)/(max_w-min_w);
+
+        return {norm_w, nw};
     }
 
 };

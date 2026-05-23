@@ -18,23 +18,23 @@ public:
         return type_feature::entropy;
     }
 
-    static std::vector<double> normalize_impl(const std::vector<double>& sample, int train_size) noexcept {
-        double max_entr = INT32_MIN, min_entr = INT32_MAX;
+    static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
+        double max_entr = -1e9, min_entr = 1e9;
         for(int i = 0; i < train_size; ++i){
             max_entr = std::max(max_entr, sample[i]);
             min_entr = std::min(min_entr, sample[i]);
         }
 
         int n = sample.size();
-        std::vector<double> entropy_norm(n);
+        std::vector<double> entropy_norm(n, 0.5);
         for(int i = 0; i < n; ++i){
-            if(max_entr - min_entr > 1e-8){
-                entropy_norm[i] = (sample[i]-min_entr)/(max_entr-min_entr);
-            } else {
-                entropy_norm[i] = 0.5;
-            }
+            if(max_entr - min_entr > 1e-8) entropy_norm[i] = (sample[i]-min_entr)/(max_entr-min_entr);
         }
-        return entropy_norm;
+
+        double raw_entr = compute_impl(lasted_data), norm_entr = 0.5;
+        if(max_entr - min_entr > 1e-8) norm_entr = (raw_entr-min_entr)/(max_entr-min_entr);
+
+        return {entropy_norm, norm_entr};
     }
 
 };

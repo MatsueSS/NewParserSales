@@ -29,7 +29,7 @@ public:
         return type_feature::kurtosis;
     }
 
-    static std::vector<double> normalize_impl(const std::vector<double>& sample, int train_size){
+    static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
         double max_kurtosis = -1e9;
         double min_kurtosis = 1e9;
 
@@ -39,15 +39,15 @@ public:
         }
 
         int n = sample.size();
-        std::vector<double> kurtosis_norm(n);
+        std::vector<double> kurtosis_norm(n, 0.5);
         for(int i = 0; i < n; ++i){
-            if(max_kurtosis - min_kurtosis > 1e-8){
-                kurtosis_norm[i] = (sample[i]-min_kurtosis)/(max_kurtosis-min_kurtosis);
-            } else {
-                kurtosis_norm[i] = 0.5;
-            }
+            if(max_kurtosis - min_kurtosis > 1e-8) kurtosis_norm[i] = (sample[i]-min_kurtosis)/(max_kurtosis-min_kurtosis);
         }
-        return kurtosis_norm;
+
+        double raw_kurt = compute_impl(lasted_data), norm_kurt = 0.5;
+        if(max_kurtosis - min_kurtosis > 1e-8) norm_kurt = (raw_kurt-min_kurtosis)/(max_kurtosis-min_kurtosis);
+
+        return {kurtosis_norm, norm_kurt};
     }
 
 };

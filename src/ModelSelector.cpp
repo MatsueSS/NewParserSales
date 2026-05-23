@@ -27,8 +27,9 @@ ModelSelector::Result ModelSelector::select_best(const std::vector<int>& sample)
     for(const auto& obj : models){
         Result r;
         try{
-            r.best_probability = obj->predict_probability(sample);
-            r.best_bic = obj->calculate_bic(sample);
+            auto p = obj->calculate_bic_with_prob(sample);
+            r.best_probability = p.first;
+            r.best_bic = p.second;
             r.name = obj->get_name();
             pq.emplace(std::move(r));
         } catch (InapplicabilityProbabilityModelException& exc) {

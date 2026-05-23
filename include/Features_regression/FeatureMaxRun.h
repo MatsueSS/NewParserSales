@@ -29,23 +29,23 @@ public:
         return type_feature::max_run;
     }
 
-    static std::vector<double> normalize_impl(const std::vector<double>& sample, int train_size) noexcept {
-        double max_max_run = INT32_MIN, min_max_run = INT32_MAX;
+    static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
+        double max_max_run = -1e9, min_max_run = 1e9;
         for(int i = 0; i < train_size; ++i){
             max_max_run = std::max(max_max_run, sample[i]);
             min_max_run = std::min(min_max_run, sample[i]);
         }
 
         int n = sample.size();
-        std::vector<double> max_run_norm(n);
+        std::vector<double> max_run_norm(n, 0.5);
         for(int i = 0; i < n; ++i){
-            if(max_max_run - min_max_run > 1e-8){
-                max_run_norm[i] = (sample[i]-min_max_run)/(max_max_run-min_max_run);
-            } else {
-                max_run_norm[i] = 0.5;
-            }
+            if(max_max_run - min_max_run > 1e-8) max_run_norm[i] = (sample[i]-min_max_run)/(max_max_run-min_max_run);
         }
-        return max_run_norm;
+
+        double raw_mr = compute_impl(lasted_data), norm_mr = 0.5;
+        if(max_max_run - min_max_run > 1e-8) norm_mr = (raw_mr-min_max_run)/(max_max_run-min_max_run);
+
+        return {max_run_norm, norm_mr};
     }
 
 };

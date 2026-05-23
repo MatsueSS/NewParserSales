@@ -18,7 +18,7 @@ double MarkovChain2Model::predict_probability(const std::vector<int>& sample)
     return (transition_type[{prelast, last, 1}])/static_cast<double>(total);
 }
 
-double MarkovChain2Model::calculate_bic(const std::vector<int>& sample)
+std::pair<double, double> MarkovChain2Model::calculate_bic_with_prob(const std::vector<int>& sample)
 {
     build_transitions(sample);
     double lg = 0;
@@ -39,7 +39,7 @@ double MarkovChain2Model::calculate_bic(const std::vector<int>& sample)
         }
     }
     if(N <= 0) N = 1;
-    return -2*lg + 4*log(N);
+    return {predict_probability(sample), -2*lg + 4*log(N)};
 }
 
 void MarkovChain2Model::build_transitions(const std::vector<int>& sample) noexcept

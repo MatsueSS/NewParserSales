@@ -48,8 +48,8 @@ enum class TypeModel{
 class ProbabilityModel {
 public:
     virtual ~ProbabilityModel() noexcept = default;
-    virtual double predict_probability(const std::vector<int>&) = 0;
-    virtual double calculate_bic(const std::vector<int>&) = 0;
+    
+    virtual std::pair<double, double> calculate_bic_with_prob(const std::vector<int>&) = 0;
     virtual void change_regular(double C) noexcept = 0;
 
     TypeModel get_name() const noexcept { return name; };

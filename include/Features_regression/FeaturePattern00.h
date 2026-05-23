@@ -17,7 +17,7 @@ public:
         return type_feature::pattern00;
     }
 
-    static std::vector<double> normalize_impl(const std::vector<double>& sample, int train_size) noexcept {
+    static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
         double max_pattern = INT32_MIN;
         double min_pattern = INT32_MAX;
         for(int i = 0; i < train_size; ++i){
@@ -26,16 +26,17 @@ public:
         }
 
         int n = sample.size();
-        std::vector<double> pattern00_norm(n);
+        std::vector<double> pattern00_norm(n, 0.5);
         for(int i = 0; i < n; ++i){
-            if(max_pattern - min_pattern > 1e-8){
-                pattern00_norm[i] = (sample[i]-min_pattern)/(max_pattern-min_pattern);
-            } else {
-                pattern00_norm[i] = 0.5;
-            }
+            if(max_pattern - min_pattern > 1e-8) pattern00_norm[i] = (sample[i]-min_pattern)/(max_pattern-min_pattern);
         }
-        return pattern00_norm;
+
+        double raw_pattern = compute_impl(lasted_data), norm_pattern = 0.5;
+        if(max_pattern - min_pattern > 1e-8) norm_pattern = (raw_pattern-min_pattern)/(max_pattern-min_pattern);
+
+        return {pattern00_norm, norm_pattern};
     }
+
 };
 
 #endif

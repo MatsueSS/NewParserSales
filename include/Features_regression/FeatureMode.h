@@ -14,8 +14,8 @@ public:
         return type_feature::mode;
     }
 
-    static std::vector<double> normalize_impl(const std::vector<double>& sample, int train_size) noexcept {
-        return sample;
+    static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
+        return {sample, compute_impl(lasted_data)};
     }
 
 };

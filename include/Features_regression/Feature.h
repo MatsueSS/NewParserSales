@@ -13,6 +13,11 @@ enum class type_feature {
     mode, entropy
 };
 
+struct result_normalize {
+    std::vector<double> norm_sample;
+    double last_norm;
+};
+
 template<typename Derived>
 class Feature{
 public:
@@ -24,8 +29,8 @@ public:
         return Derived::name_impl();
     }
 
-    static std::vector<double> normalize(const std::vector<double>& sample, int train_size) noexcept {
-        return Derived::normalize_impl(sample, train_size);
+    static result_normalize normalize(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
+        return Derived::normalize_impl(sample, train_size, lasted_data);
     }
 
     static double calculate_bic(struct model* model_, const std::vector<std::vector<double>>& X, const std::vector<double>& y, int n_features, bool has_bias = false) noexcept {
