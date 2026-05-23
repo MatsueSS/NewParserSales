@@ -272,19 +272,24 @@
 #include "Features_regression/FeatureWeightSum.h"
 #include "Features_regression/FeatureMode.h"
 #include "Features_regression/FeatureEntropy.h"
+#include "ModelWrapper.h"
 
 using namespace std;
 
 int main() {
     vector<int> data = {0,0,0,0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1};
     
-    vector<double> pattern00_raw;// признаки
-    vector<double> y;  // метки
+    vector<double> pattern00_raw, min_run_raw, max_run_raw, kurtosis_raw, autocorr_raw, lag1, lag2,
+                    trans01_raw, trans10_raw, sum_raw, w_sum_raw, mode_raw, entropy_raw;  // признаки
+    vector<int> y;  // метки
 
     int window_size = 4;
-    using MyExtractor = FeatureExtractor<FeatureAutocorrLag2>;
+    using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis, FeatureAutocorrLag2, FeatureMinRun, FeatureMaxRun, FeatureTransitions01, FeatureTransitions10, FeatureSum, FeatureWeightSum, FeatureMode, FeatureEntropy>;
     
     for (size_t i = window_size; i < data.size(); i++) {
+        lag1.push_back(data[i-1]);
+        lag2.push_back(data[i-2]);
+
         vector<int> window;
         for(size_t j = i - window_size; j < i; ++j){
             window.push_back(data[j]);
@@ -293,6 +298,16 @@ int main() {
         std::vector<double> ext_result = MyExtractor::extract(window);
         
         pattern00_raw.push_back(ext_result[0]);
+        kurtosis_raw.push_back(ext_result[1]);
+        autocorr_raw.push_back(ext_result[2]);
+        min_run_raw.push_back(ext_result[3]);
+        max_run_raw.push_back(ext_result[4]);
+        trans01_raw.push_back(ext_result[5]);
+        trans10_raw.push_back(ext_result[6]);
+        sum_raw.push_back(ext_result[7]);
+        w_sum_raw.push_back(ext_result[8]);
+        mode_raw.push_back(ext_result[9]);
+        entropy_raw.push_back(ext_result[10]);
 
         y.push_back(data[i]);     // метка: текущее значение
     }
@@ -300,159 +315,183 @@ int main() {
     int n = y.size();
     
     // Разделяем на train (50%) и test (50%)
-    int train_size = n * 0.5;
+    int train_size = n * 1;
     int test_size = n - train_size;
     
     cout << "Всего объектов: " << n << endl;
     cout << "Train: " << train_size << ", Test: " << test_size << endl << endl;
 
-    int data_size = data.size();
-    vector<result_normalize> norm_result = MyExtractor::normalize({pattern00_raw}, train_size, {data[data_size-4], data[data_size-3], data[data_size-2], data[data_size-1]});
+    vector<result_normalize> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw, trans01_raw, trans10_raw, sum_raw, w_sum_raw, mode_raw, entropy_raw}, train_size, {data[data.size()-4], data[data.size()-3], data[data.size()-2], data[data.size()-1]});
 
     vector<double> pattern00_norm = norm_result[0].norm_sample;
-    double last_norm = norm_result[0].last_norm;
+    vector<double> kurtosis_norm = norm_result[1].norm_sample;
+    vector<double> autocorr_norm = norm_result[2].norm_sample;
+    vector<double> min_run_norm = norm_result[3].norm_sample;
+    vector<double> max_run_norm = norm_result[4].norm_sample;
+    vector<double> trans01_norm = norm_result[5].norm_sample;
+    vector<double> trans10_norm = norm_result[6].norm_sample;
+    vector<double> sum_norm = norm_result[7].norm_sample;
+    vector<double> w_sum_norm = norm_result[8].norm_sample;
+    vector<double> mode_norm = norm_result[9].norm_sample;
+    vector<double> entropy_norm = norm_result[10].norm_sample;
 
-    // vector<vector<double>> features = {pattern00_norm, kurtosis_norm, autocorr_norm, min_run_norm, max_run_norm, lag1, lag2,
-    //                                     trans01_norm, trans10_norm, sum_norm, w_sum_norm, mode_norm, entropy_norm};
+    vector<vector<double>> features = {pattern00_norm, kurtosis_norm, autocorr_norm, min_run_norm, max_run_norm, lag1, lag2,
+                                        trans01_norm, trans10_norm, sum_norm, w_sum_norm, mode_norm, entropy_norm};
 
-    // vector<tuple<double, int, int>> correlations;
-    // for(int i = 0; i < features.size(); ++i){
-    //     for(int j = i+1; j < features.size(); ++j){
-    //         double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i], features[j]);
-    //         correlations.push_back(make_tuple(corr, i, j));
-    //     }
-    // }
-
-    // sort(correlations.begin(), correlations.end(), greater<>());
-
-    // vector<bool> removed(features.size(), false);
-    // for(auto& [corr, i, j] : correlations){
-    //     if(corr > 0.7 && !removed[i] && !removed[j]) removed[j] = true;
-    // }   
-
-    // vector<int> selected;
-    // for(int i = 0; i < features.size() && selected.size() < 3; ++i){
-    //     if(!removed[i]) selected.push_back(i);
-    // }
-
-    // for(int i :  selected) cout << i << ' ';
-    // cout << '\n';
-
-    
-    // Подготовка структуры для LIBLINEAR (только train)
-    struct problem prob;
-    prob.l = train_size;
-    prob.n = 1;
-    prob.y = new double[train_size];
-    prob.x = new feature_node*[train_size];
-    
-    for (int i = 0; i < train_size; i++) {
-        prob.x[i] = new feature_node[2];
-
-        prob.x[i][0].index = 1;
-        prob.x[i][0].value = pattern00_norm[i];
-
-        prob.x[i][1].index = -1;
-        prob.y[i] = y[i];
+    vector<tuple<double, int, int>> correlations;
+    for(int i = 0; i < features.size(); ++i){
+        for(int j = i+1; j < features.size(); ++j){
+            double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i], features[j]);
+            correlations.push_back(make_tuple(corr, i, j));
+        }
     }
-    
-    // Параметры
-    struct parameter param;
-    param.solver_type = L2R_LR;
-    param.C = 0.1;
-    param.eps = 0.01;
-    param.nr_weight = 0;
-    param.weight_label = NULL;
-    param.weight = NULL;
-    param.p = 0.1;
-    param.init_sol = NULL;
-    
-    // Обучение
-    struct model* model_ = train(&prob, &param);
-    
-    // ========== ТОЧНОСТЬ НА ОБУЧЕНИИ ==========
-    int train_correct = 0;
-    for (int i = 0; i < train_size; i++) {
-        double pred_class = predict(model_, prob.x[i]);
-        if (pred_class == prob.y[i]) train_correct++;
+
+    sort(correlations.begin(), correlations.end(), greater<>());
+
+    vector<bool> removed(features.size(), false);
+    for(auto& [corr, i, j] : correlations){
+        if(corr > 0.5 && !removed[i] && !removed[j]) removed[j] = true;
+    }   
+
+    vector<int> selected;
+    for(int i = 0; i < features.size() && selected.size() < 3; ++i){
+        if(!removed[i]) selected.push_back(i);
     }
-    double train_accuracy = 100.0 * train_correct / train_size;
+
+    for(int i :  selected) cout << i << ' ';
+    cout << '\n';
+
+    vector<result_normalize> new_norm = {norm_result[0]};
+
+    ModelWrapper mw;
+    mw.change_C(0.1);
+    mw.set_signs(std::move(new_norm), y, train_size);
+    mw.train_model();
+    cout << mw.get_weight()[0] << '\n';
+    cout << mw.get_probability() << '\n';
+    cout << mw.get_test_correct() << '\n';
+    cout << mw.get_train_correct() << '\n';
     
-    // ========== ТОЧНОСТЬ НА ТЕСТЕ ==========
-    int test_correct = 0;
-    for (int i = train_size; i < n; i++) {
-        feature_node test_point[2];
+    // // Подготовка структуры для LIBLINEAR (только train)
+    // struct problem prob;
+    // prob.l = train_size;
+    // prob.n = 1;
+    // prob.y = new double[train_size];
+    // prob.x = new feature_node*[train_size];
+    
+    // for (int i = 0; i < train_size; i++) {
+    //     prob.x[i] = new feature_node[2];
 
-        test_point[0].index = 1;
-        test_point[0].value = pattern00_norm[i];
+    //     prob.x[i][0].index = 1;
+    //     prob.x[i][0].value = pattern00_norm[i];
 
-        test_point[1].index = -1;
+    //     prob.x[i][1].index = -1;
+    //     prob.y[i] = y[i];
+    // }
+    
+    // // Параметры
+    // struct parameter param;
+    // param.solver_type = L2R_LR;
+    // param.C = 0.1;
+    // param.eps = 0.01;
+    // param.nr_weight = 0;
+    // param.weight_label = NULL;
+    // param.weight = NULL;
+    // param.p = 0.1;
+    // param.init_sol = NULL;
+    
+    // // Обучение
+    // struct model* model_ = train(&prob, &param);
+    
+    // // ========== ТОЧНОСТЬ НА ОБУЧЕНИИ ==========
+    // int train_correct = 0;
+    // for (int i = 0; i < train_size; i++) {
+    //     double pred_class = predict(model_, prob.x[i]);
+    //     if (pred_class == prob.y[i]) train_correct++;
+    // }
+    // double train_accuracy = 100.0 * train_correct / train_size;
+    
+    // // ========== ТОЧНОСТЬ НА ТЕСТЕ ==========
+    // int test_correct = 0;
+    // for (int i = train_size; i < n; i++) {
+    //     feature_node test_point[2];
+
+    //     test_point[0].index = 1;
+    //     test_point[0].value = pattern00_norm[i];
+
+    //     test_point[1].index = -1;
         
-        double pred_class = predict(model_, test_point);
-        if (pred_class == y[i]) test_correct++;
-    }
-    double test_accuracy = 100.0 * test_correct / test_size;
+    //     double pred_class = predict(model_, test_point);
+    //     if (pred_class == y[i]) test_correct++;
+    // }
+    // double test_accuracy = 100.0 * test_correct / test_size;
 
-    // Также можно вывести вероятность для прогноза следующего значения
-    cout << "\n=== ПРОГНОЗ СЛЕДУЮЩЕГО ЗНАЧЕНИЯ ===" << endl;
+    // // Также можно вывести вероятность для прогноза следующего значения
+    // cout << "\n=== ПРОГНОЗ СЛЕДУЮЩЕГО ЗНАЧЕНИЯ ===" << endl;
 
-    feature_node next_point[2];
-    next_point[0].index = 1;
-    next_point[0].value = last_norm;
-    next_point[1].index = -1;
+    // feature_node next_point[2];
 
-    double next_probs[2];
-    predict_probability(model_, next_point, next_probs);
+    // next_point[0].index = 1;
+    // next_point[0].value = norm_result[0].last_norm;
 
-    printf("Вероятность класса 1: %.4f\n", next_probs[1]);
-    printf("Прогноз: %d\n", next_probs[1] >= 0.5 ? 1 : 0);
+    // next_point[1].index = -1;
 
-    cout << "=== bic ===" << endl;
-    vector<vector<double>> X (n);
-    for(int i = 0; i < n; ++i){
-        X[i].push_back(pattern00_norm[i]);
-    }
-    cout << Feature<FeaturePattern00>::calculate_bic(model_, X, y, 1, false) << '\n';
-    
-    // Вывод результатов
-    cout << "=== РЕЗУЛЬТАТЫ ===" << endl;
-    // cout << "Коэффициент при признаке (лаг 1): " << model_->w[0] << endl;
-    // cout << "Коэффициент при признаке (лаг 2): " << model_->w[1] << endl;
-    // cout << "Коэффициент при признаке pattern00_normalzie: " << model_->w[0] << endl;
-    // cout << "Коэффициент при признаке autocorr normalize: " << model_->w[1] << endl;
-    // cout << "Коэффициент при признаке min_run: " << model_->w[2] << endl;
-    
-    cout << "Точность на обучении: " << train_correct << "/" << train_size 
-         << " = " << train_accuracy << "%" << endl;
-    cout << "Точность на тесте: " << test_correct << "/" << test_size 
-         << " = " << test_accuracy << "%" << endl << endl;
-    
-    // Диагноз
-    if (train_accuracy > 90 && test_accuracy < 70) {
-        cout << "⚠️  ПЕРЕОБУЧЕНИЕ! Уменьшите C" << endl;
-    } else if (train_accuracy < 60 && test_accuracy < 60) {
-        cout << "⚠️  НЕДООБУЧЕНИЕ! Увеличьте C" << endl;
-    } else {
-        cout << "✅ Модель в порядке" << endl;
-    }
+    // double next_probs[2];
+    // predict_probability(model_, next_point, next_probs);
 
-    cout << "\n=== ЦЕННОСТЬ ПРИЗНАКОВ (по модулю веса) ===" << endl;
+    // // cout << "Последние 4 значения: " << last4 << " " << last3 << " " << last2 << " " << last1 << endl;
+    // // printf("Pattern00: %d (норм: %.3f)\n", last_pattern00, last_pattern00_norm);
+    // // printf("Kurtosis: %.4f (норм: %.3f)\n", last_kurtosis, last_kurtosis_norm);
+    // // printf("Min_run: %d (норм: %.3f)\n", last_min_run, last_min_run_norm);
+    // printf("Вероятность класса 1: %.4f\n", next_probs[1]);
+    // printf("Прогноз: %d\n", next_probs[1] >= 0.5 ? 1 : 0);
+
+    // cout << "=== bic ===" << endl;
+    // vector<vector<double>> X (n);
+    // for(int i = 0; i < n; ++i){
+    //     X[i].push_back(pattern00_norm[i]);
+    // }
+    // cout << Feature<FeatureAutocorrLag2>::calculate_bic(model_, X, y, 1, false) << '\n';
     
-    vector<pair<double, string>> importance;
-    importance.push_back({fabs(model_->w[0]), "patetrn00"});
+    // // Вывод результатов
+    // cout << "=== РЕЗУЛЬТАТЫ ===" << endl;
+    // // cout << "Коэффициент при признаке (лаг 1): " << model_->w[0] << endl;
+    // // cout << "Коэффициент при признаке (лаг 2): " << model_->w[1] << endl;
+    // // cout << "Коэффициент при признаке pattern00_normalzie: " << model_->w[0] << endl;
+    // // cout << "Коэффициент при признаке autocorr normalize: " << model_->w[1] << endl;
+    // // cout << "Коэффициент при признаке min_run: " << model_->w[2] << endl;
     
-    sort(importance.begin(), importance.end(), greater<pair<double, string>>());
+    // cout << "Точность на обучении: " << train_correct << "/" << train_size 
+    //      << " = " << train_accuracy << "%" << endl;
+    // cout << "Точность на тесте: " << test_correct << "/" << test_size 
+    //      << " = " << test_accuracy << "%" << endl << endl;
     
-    for (int i = 0; i < 1; i++) {
-        printf("%d место: %s (|вес| = %.4f)\n", i+1, importance[i].second.c_str(), importance[i].first);
-    }
+    // //Диагноз
+    // if (train_accuracy > 90 && test_accuracy < 70) {
+    //     cout << "⚠️  ПЕРЕОБУЧЕНИЕ! Уменьшите C" << endl;
+    // } else if (train_accuracy < 60 && test_accuracy < 60) {
+    //     cout << "⚠️  НЕДООБУЧЕНИЕ! Увеличьте C" << endl;
+    // } else {
+    //     cout << "✅ Модель в порядке" << endl;
+    // }
+
+    // cout << "\n=== ЦЕННОСТЬ ПРИЗНАКОВ (по модулю веса) ===" << endl;
     
-    // Очистка
-    delete[] prob.y;
-    for (int i = 0; i < train_size; i++) delete[] prob.x[i];
-    delete[] prob.x;
-    free_and_destroy_model(&model_);
-    destroy_param(&param);
+    // vector<pair<double, string>> importance;
+    // importance.push_back({fabs(model_->w[0]), "patetrn00"});
+    
+    // sort(importance.begin(), importance.end(), greater<pair<double, string>>());
+    
+    // for (int i = 0; i < 1; i++) {
+    //     printf("%d место: %s (|вес| = %.4f)\n", i+1, importance[i].second.c_str(), importance[i].first);
+    // }
+    
+    // // Очистка
+    // delete[] prob.y;
+    // for (int i = 0; i < train_size; i++) delete[] prob.x[i];
+    // delete[] prob.x;
+    // free_and_destroy_model(&model_);
+    // destroy_param(&param);
     
     return 0;
 }
