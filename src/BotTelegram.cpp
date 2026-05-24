@@ -5,7 +5,7 @@
 #include "Wrappers/PostgresDB.h"
 #include "FactoryRecommendations.h"
 #include "FactorySearcher.h"
-#include "ModelSelector.h"
+#include "Models/ModelSelector.h"
 #include "HiSquare.h"
 
 #include <queue>

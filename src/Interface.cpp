@@ -4,7 +4,7 @@
 #include "json.hpp"
 #include "Recommendations.h"
 #include "Wrappers/PostgresDB.h"
-#include "FactoryParser.h"
+#include "Parsers/FactoryParser.h"
 
 #include <sstream>
 #include <chrono>

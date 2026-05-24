@@ -1,7 +1,7 @@
 #ifndef MODEL_SELECTOR_H
 #define MODEL_SELECTOR_H
 
-#include "FactoryModel.h"
+#include "Models/FactoryModel.h"
 
 #include <set>
 #include <memory>

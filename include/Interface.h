@@ -4,7 +4,7 @@
 //This is the interface that runs the bot and controls the time for scripts to run.
 
 #include "BotTelegram.h"
-#include "ProductParser.h"
+#include "Parsers/ProductParser.h"
 
 class Interface{
     std::shared_ptr<PoolCards> ptr_pc;

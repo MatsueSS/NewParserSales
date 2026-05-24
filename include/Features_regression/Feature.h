@@ -60,7 +60,7 @@ public:
         return -2.0 * log_likelihood + k * log(n);
     }
 
-    static double pearson_correlation(const std::vector<double>& x, const std::vector<double>& y) noexcept {
+    static double pearson_correlation(const std::vector<double>& x, const std::vector<int>& y) noexcept {
         int n = x.size();
 
         double mean_x = 0.0, mean_y = 0.0;

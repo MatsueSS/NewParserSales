@@ -1,7 +1,7 @@
 #ifndef PY_HTML_PARSER_H
 #define PY_HTML_PARSER_H
 
-#include "Parser.h"
+#include "Parsers/Parser.h"
 
 class PyHTMLParser : public Parser{
 public:

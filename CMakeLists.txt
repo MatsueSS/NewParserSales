@@ -18,7 +18,7 @@ add_executable(${PROJECT_NAME}
     src/good_funcs.cpp
     src/BotTelegram.cpp
     src/Interface.cpp
-    src/Forecast.cpp
+    src/Forecast/Forecast.cpp
     src/Matrix.cpp
     src/FileMatcher.cpp
     src/ProductSearcher.cpp
@@ -27,22 +27,22 @@ add_executable(${PROJECT_NAME}
     src/ProductRecommendations.cpp
     src/PoolCards.cpp
     src/Product.cpp
-    src/Parser.cpp
-    src/ProductParser.cpp
-    src/PyAutoClickParser.cpp
-    src/PyHTMLParser.cpp
-    src/GeometricModel.cpp
-    src/MarkovChain1Model.cpp
-    src/MarkovChain2Model.cpp
-    src/ModelSelector.cpp
-    src/ForecastCache.cpp
+    src/Parsers/Parser.cpp
+    src/Parsers/ProductParser.cpp
+    src/Parsers/PyAutoClickParser.cpp
+    src/Parsers/PyHTMLParser.cpp
+    src/Models/GeometricModel.cpp
+    src/Models/MarkovChain1Model.cpp
+    src/Models/MarkovChain2Model.cpp
+    src/Models/ModelSelector.cpp
+    src/Forecast/ForecastCache.cpp
     src/ROC_AUC.cpp
-    src/CppAutoClickParser.cpp
+    src/Parsers/CppAutoClickParser.cpp
     src/Hypothesis.cpp
     src/IndependenceWeekHypothesis.cpp
     src/IndependenceSeasonHypothesis.cpp
     src/Wrappers/CurlWrapper.cpp
-    src/ForecastManager.cpp
+    src/Forecast/ForecastManager.cpp
     src/Wrappers/ModelWrapper.cpp
 )
 

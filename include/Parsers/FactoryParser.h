@@ -1,10 +1,10 @@
 #ifndef FACTORY_PARSER_H
 #define FACTORY_PARSER_H
 
-#include "Parser.h"
-#include "PyAutoClickParser.h"
-#include "PyHTMLParser.h"
-#include "CppAutoClickParser.h"
+#include "Parsers/Parser.h"
+#include "Parsers/PyAutoClickParser.h"
+#include "Parsers/PyHTMLParser.h"
+#include "Parsers/CppAutoClickParser.h"
 
 #include <memory>
 #include <exception>

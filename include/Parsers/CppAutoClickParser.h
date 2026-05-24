@@ -1,7 +1,7 @@
 #ifndef CPP_AUTOCLICK_PARSER_H
 #define CPP_AUTOCLICK_PARSER_H
 
-#include "Parser.h"
+#include "Parsers/Parser.h"
 
 class CppAutoClickParser : public Parser {
 private:

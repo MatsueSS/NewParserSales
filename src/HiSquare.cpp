@@ -1,6 +1,6 @@
 #include "HiSquare.h"
 
-#include "Forecast.h"
+#include "Forecast/Forecast.h"
 #include "Wrappers/PostgresDB.h"
 #include "good_funcs.h"
 

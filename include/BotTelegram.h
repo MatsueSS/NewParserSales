@@ -10,7 +10,7 @@
 #include "UserStateMachine.h"
 #include "PoolCards.h"
 #include "TelegramStategy.h"
-#include "ForecastManager.h"
+#include "Forecast/ForecastManager.h"
 
 #include <thread>
 #include <set>

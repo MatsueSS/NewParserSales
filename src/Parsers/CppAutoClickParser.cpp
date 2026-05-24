@@ -1,4 +1,4 @@
-#include "CppAutoClickParser.h"
+#include "Parsers/CppAutoClickParser.h"
 
 #include "json.hpp"
 #include "good_funcs.h"

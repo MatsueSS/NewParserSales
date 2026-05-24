@@ -1,4 +1,4 @@
-#include "PyAutoClickParser.h"
+#include "Parsers/PyAutoClickParser.h"
 
 #include "PyLoader.h"
 #include "json.hpp"

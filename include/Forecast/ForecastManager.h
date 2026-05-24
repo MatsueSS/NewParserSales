@@ -1,8 +1,8 @@
 #ifndef FORECAST_MANAGER
 #define FORECAST_MANAGER
 
-#include "ModelSelector.h"
-#include "ForecastCache.h"
+#include "Models/ModelSelector.h"
+#include "Forecast/ForecastCache.h"
 #include "Wrappers/PostgresDB.h"
 #include "good_funcs.h"
 #include "ROC_AUC.h"

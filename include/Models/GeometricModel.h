@@ -2,7 +2,7 @@
 #define GEOMETRIC_MODEL_H
 
 #include "Models/ProbabilityModel.h"
-#include "Forecast.h"
+#include "Forecast/Forecast.h"
 
 class GeometricModel : public ProbabilityModel {
 public:

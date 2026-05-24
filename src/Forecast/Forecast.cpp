@@ -1,4 +1,4 @@
-#include "Forecast.h"
+#include "Forecast/Forecast.h"
 
 ForecastException::ForecastException(std::string msg) noexcept : msg(std::move(msg)) {}
 ForecastException::ForecastException(const ForecastException& obj) : msg(obj.msg) {}

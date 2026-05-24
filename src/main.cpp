@@ -333,30 +333,43 @@ int main() {
     vector<vector<double>> features = {pattern00_norm, kurtosis_norm, autocorr_norm, min_run_norm, max_run_norm, lag1, lag2,
                                         trans01_norm, trans10_norm, sum_norm, w_sum_norm, mode_norm, entropy_norm};
 
-    vector<tuple<double, int, int>> correlations;
+
+    vector<pair<double, int>> feature_scores;
     for(int i = 0; i < features.size(); ++i){
-        for(int j = i+1; j < features.size(); ++j){
-            double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i], features[j]);
-            correlations.push_back(make_tuple(corr, i, j));
-        }
+        double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i], y);
+        feature_scores.push_back({fabs(corr), i});
     }
 
-    sort(correlations.begin(), correlations.end(), greater<>());
+    sort(feature_scores.begin(), feature_scores.end(), greater<>());
 
-    vector<bool> removed(features.size(), false);
-    for(auto& [corr, i, j] : correlations){
-        if(corr > 0.5 && !removed[i] && !removed[j]) removed[j] = true;
-    }   
-
-    vector<int> selected;
-    for(int i = 0; i < features.size() && selected.size() < 3; ++i){
-        if(!removed[i]) selected.push_back(i);
+    for(int i = 0; i < feature_scores.size(); ++i){
+        cout << feature_scores[i].first << ' ' << feature_scores[i].second << '\n';
     }
 
-    for(int i :  selected) cout << i << ' ';
-    cout << '\n';
+    // vector<tuple<double, int, int>> correlations;
+    // for(int i = 0; i < features.size(); ++i){
+    //     for(int j = i+1; j < features.size(); ++j){
+    //         double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i], features[j]);
+    //         correlations.push_back(make_tuple(corr, i, j));
+    //     }
+    // }
 
-    vector<result_normalize> new_norm = {norm_result[0]};
+    // sort(correlations.begin(), correlations.end(), greater<>());
+
+    // vector<bool> removed(features.size(), false);
+    // for(auto& [corr, i, j] : correlations){
+    //     if(corr > 0.5 && !removed[i] && !removed[j]) removed[j] = true;
+    // }   
+
+    // vector<int> selected;
+    // for(int i = 0; i < features.size() && selected.size() < 3; ++i){
+    //     if(!removed[i]) selected.push_back(i);
+    // }
+
+    // for(int i :  selected) cout << i << ' ';
+    // cout << '\n';
+
+    vector<result_normalize> new_norm = {norm_result[5]};
 
     ModelWrapper mw;
     mw.change_C(0.1);
