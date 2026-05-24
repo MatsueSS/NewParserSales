@@ -10,7 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_executable(${PROJECT_NAME}
     src/main.cpp
-    src/PostgresDB.cpp
+    src/Wrappers/PostgresDB.cpp
     src/PyLoader.cpp
     #src/TelegramSender.cpp
     #src/JsonReader.cpp
@@ -41,9 +41,9 @@ add_executable(${PROJECT_NAME}
     src/Hypothesis.cpp
     src/IndependenceWeekHypothesis.cpp
     src/IndependenceSeasonHypothesis.cpp
-    src/CurlWrapper.cpp
+    src/Wrappers/CurlWrapper.cpp
     src/ForecastManager.cpp
-    src/ModelWrapper.cpp
+    src/Wrappers/ModelWrapper.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

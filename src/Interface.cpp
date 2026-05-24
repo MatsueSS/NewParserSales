@@ -3,7 +3,7 @@
 #include "PyLoader.h"
 #include "json.hpp"
 #include "Recommendations.h"
-#include "PostgresDB.h"
+#include "Wrappers/PostgresDB.h"
 #include "FactoryParser.h"
 
 #include <sstream>

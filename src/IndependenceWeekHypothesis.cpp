@@ -1,6 +1,6 @@
 #include "IndependenceWeekHypothesis.h"
 
-#include "PostgresDB.h"
+#include "Wrappers/PostgresDB.h"
 #include "good_funcs.h"
 #include "HiSquare.h"
 

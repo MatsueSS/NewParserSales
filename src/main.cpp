@@ -253,12 +253,7 @@
 // }
 
 #include <iostream>
-#include <vector>
 #include <linear.h>
-#include <cmath>
-#include <algorithm>
-#include <numeric>
-#include <tuple>
 
 #include "Features_regression/FeaturePattern00.h"
 #include "Features_regression/FeatureExtractor.h"
@@ -272,7 +267,7 @@
 #include "Features_regression/FeatureWeightSum.h"
 #include "Features_regression/FeatureMode.h"
 #include "Features_regression/FeatureEntropy.h"
-#include "ModelWrapper.h"
+#include "Wrappers/ModelWrapper.h"
 
 using namespace std;
 
@@ -371,80 +366,6 @@ int main() {
     cout << mw.get_probability() << '\n';
     cout << mw.get_test_correct() << '\n';
     cout << mw.get_train_correct() << '\n';
-    
-    // // Подготовка структуры для LIBLINEAR (только train)
-    // struct problem prob;
-    // prob.l = train_size;
-    // prob.n = 1;
-    // prob.y = new double[train_size];
-    // prob.x = new feature_node*[train_size];
-    
-    // for (int i = 0; i < train_size; i++) {
-    //     prob.x[i] = new feature_node[2];
-
-    //     prob.x[i][0].index = 1;
-    //     prob.x[i][0].value = pattern00_norm[i];
-
-    //     prob.x[i][1].index = -1;
-    //     prob.y[i] = y[i];
-    // }
-    
-    // // Параметры
-    // struct parameter param;
-    // param.solver_type = L2R_LR;
-    // param.C = 0.1;
-    // param.eps = 0.01;
-    // param.nr_weight = 0;
-    // param.weight_label = NULL;
-    // param.weight = NULL;
-    // param.p = 0.1;
-    // param.init_sol = NULL;
-    
-    // // Обучение
-    // struct model* model_ = train(&prob, &param);
-    
-    // // ========== ТОЧНОСТЬ НА ОБУЧЕНИИ ==========
-    // int train_correct = 0;
-    // for (int i = 0; i < train_size; i++) {
-    //     double pred_class = predict(model_, prob.x[i]);
-    //     if (pred_class == prob.y[i]) train_correct++;
-    // }
-    // double train_accuracy = 100.0 * train_correct / train_size;
-    
-    // // ========== ТОЧНОСТЬ НА ТЕСТЕ ==========
-    // int test_correct = 0;
-    // for (int i = train_size; i < n; i++) {
-    //     feature_node test_point[2];
-
-    //     test_point[0].index = 1;
-    //     test_point[0].value = pattern00_norm[i];
-
-    //     test_point[1].index = -1;
-        
-    //     double pred_class = predict(model_, test_point);
-    //     if (pred_class == y[i]) test_correct++;
-    // }
-    // double test_accuracy = 100.0 * test_correct / test_size;
-
-    // // Также можно вывести вероятность для прогноза следующего значения
-    // cout << "\n=== ПРОГНОЗ СЛЕДУЮЩЕГО ЗНАЧЕНИЯ ===" << endl;
-
-    // feature_node next_point[2];
-
-    // next_point[0].index = 1;
-    // next_point[0].value = norm_result[0].last_norm;
-
-    // next_point[1].index = -1;
-
-    // double next_probs[2];
-    // predict_probability(model_, next_point, next_probs);
-
-    // // cout << "Последние 4 значения: " << last4 << " " << last3 << " " << last2 << " " << last1 << endl;
-    // // printf("Pattern00: %d (норм: %.3f)\n", last_pattern00, last_pattern00_norm);
-    // // printf("Kurtosis: %.4f (норм: %.3f)\n", last_kurtosis, last_kurtosis_norm);
-    // // printf("Min_run: %d (норм: %.3f)\n", last_min_run, last_min_run_norm);
-    // printf("Вероятность класса 1: %.4f\n", next_probs[1]);
-    // printf("Прогноз: %d\n", next_probs[1] >= 0.5 ? 1 : 0);
 
     // cout << "=== bic ===" << endl;
     // vector<vector<double>> X (n);
@@ -453,28 +374,6 @@ int main() {
     // }
     // cout << Feature<FeatureAutocorrLag2>::calculate_bic(model_, X, y, 1, false) << '\n';
     
-    // // Вывод результатов
-    // cout << "=== РЕЗУЛЬТАТЫ ===" << endl;
-    // // cout << "Коэффициент при признаке (лаг 1): " << model_->w[0] << endl;
-    // // cout << "Коэффициент при признаке (лаг 2): " << model_->w[1] << endl;
-    // // cout << "Коэффициент при признаке pattern00_normalzie: " << model_->w[0] << endl;
-    // // cout << "Коэффициент при признаке autocorr normalize: " << model_->w[1] << endl;
-    // // cout << "Коэффициент при признаке min_run: " << model_->w[2] << endl;
-    
-    // cout << "Точность на обучении: " << train_correct << "/" << train_size 
-    //      << " = " << train_accuracy << "%" << endl;
-    // cout << "Точность на тесте: " << test_correct << "/" << test_size 
-    //      << " = " << test_accuracy << "%" << endl << endl;
-    
-    // //Диагноз
-    // if (train_accuracy > 90 && test_accuracy < 70) {
-    //     cout << "⚠️  ПЕРЕОБУЧЕНИЕ! Уменьшите C" << endl;
-    // } else if (train_accuracy < 60 && test_accuracy < 60) {
-    //     cout << "⚠️  НЕДООБУЧЕНИЕ! Увеличьте C" << endl;
-    // } else {
-    //     cout << "✅ Модель в порядке" << endl;
-    // }
-
     // cout << "\n=== ЦЕННОСТЬ ПРИЗНАКОВ (по модулю веса) ===" << endl;
     
     // vector<pair<double, string>> importance;
@@ -485,13 +384,6 @@ int main() {
     // for (int i = 0; i < 1; i++) {
     //     printf("%d место: %s (|вес| = %.4f)\n", i+1, importance[i].second.c_str(), importance[i].first);
     // }
-    
-    // // Очистка
-    // delete[] prob.y;
-    // for (int i = 0; i < train_size; i++) delete[] prob.x[i];
-    // delete[] prob.x;
-    // free_and_destroy_model(&model_);
-    // destroy_param(&param);
     
     return 0;
 }

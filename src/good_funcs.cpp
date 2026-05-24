@@ -1,7 +1,7 @@
 #include "good_funcs.h"
 
 #include "HiSquare.h"
-#include "PostgresDB.h"
+#include "Wrappers/PostgresDB.h"
 #include "IndependenceWeekHypothesis.h"
 #include "IndependenceSeasonHypothesis.h"
 

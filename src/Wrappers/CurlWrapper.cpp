@@ -1,4 +1,4 @@
-#include "CurlWrapper.h"
+#include "Wrappers/CurlWrapper.h"
 
 CurlWrapperException::CurlWrapperException(std::string msg) : msg(std::move(msg)) {}
 CurlWrapperException::CurlWrapperException(const CurlWrapperException& obj) : msg(obj.msg) {}

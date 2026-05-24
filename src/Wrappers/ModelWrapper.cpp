@@ -1,4 +1,14 @@
-#include "ModelWrapper.h"
+#include "Wrappers/ModelWrapper.h"
+
+ModelWrapperException::ModelWrapperException(std::string msg) : msg(std::move(msg)) {}
+
+ModelWrapperException::ModelWrapperException(const ModelWrapperException& obj) : msg(obj.msg) {}
+
+const char * ModelWrapperException::what() const noexcept { return msg.c_str(); }
+
+NoInitModelWrapperException::NoInitModelWrapperException(std::string msg) : ModelWrapperException(std::move(msg)) {}
+
+NotEnoughDataModelWrapperException::NotEnoughDataModelWrapperException(std::string msg) : ModelWrapperException(std::move(msg)) {}
 
 ModelWrapper::ModelWrapper() : prob_ptr(nullptr), mw_ptr(nullptr)
 {
@@ -12,7 +22,11 @@ ModelWrapper::ModelWrapper() : prob_ptr(nullptr), mw_ptr(nullptr)
     param.init_sol = NULL;
 }
 
-ModelWrapper::ModelWrapper(ModelWrapper&& obj) noexcept : train_size(obj.train_size), n(obj.n), prob_ptr(std::move(obj.prob_ptr)), mw_ptr(std::move(obj.mw_ptr)), param(std::move(obj.param)) {}
+ModelWrapper::ModelWrapper(ModelWrapper&& obj) noexcept : 
+    train_size(obj.train_size), n(obj.n), count_signs(obj.count_signs),
+    prob_ptr(std::move(obj.prob_ptr)), mw_ptr(std::move(obj.mw_ptr)),
+    param(std::move(obj.param)), features(std::move(features)), sample(std::move(sample)) {}
+    
 
 ModelWrapper& ModelWrapper::operator=(ModelWrapper&& obj) noexcept
 {
@@ -20,9 +34,12 @@ ModelWrapper& ModelWrapper::operator=(ModelWrapper&& obj) noexcept
 
     this->train_size = obj.train_size;
     this->n = obj.n;
+    this->count_signs = obj.count_signs;
     this->prob_ptr = std::move(obj.prob_ptr);
     this->mw_ptr = std::move(obj.mw_ptr);
     this->param = std::move(obj.param);
+    this->features = std::move(obj.features);
+    this->sample = std::move(obj.sample);
 
     return *this;
 }
@@ -32,18 +49,18 @@ void ModelWrapper::change_C(double C) noexcept
     param.C = C;
 }
 
-void ModelWrapper::train_model() noexcept
+void ModelWrapper::train_model()
 {
-    if(!prob_ptr) return;
+    if(!prob_ptr) throw NoInitModelWrapperException("struct of problem wasn't initialized");
 
     model* model_ = train(prob_ptr.get(), &param);
     if(mw_ptr) mw_ptr.reset();
     mw_ptr = ModelWrapperPTR(model_, [](model* model_){ free_and_destroy_model(&model_); });
 }
 
-std::vector<double> ModelWrapper::get_weight() noexcept
+std::vector<double> ModelWrapper::get_weight() const
 {
-    if(!mw_ptr) return {};
+    if(!mw_ptr) throw NoInitModelWrapperException("method train_model() wasn't called");
 
     std::vector<double> weight(count_signs);
     for(int i = 0; i < count_signs; ++i){
@@ -52,9 +69,9 @@ std::vector<double> ModelWrapper::get_weight() noexcept
     return weight;
 }
 
-double ModelWrapper::get_probability() noexcept
+double ModelWrapper::get_probability() const
 {
-    if(!mw_ptr) return -1;
+    if(!mw_ptr) throw NoInitModelWrapperException("method train_model() wasn't called");
 
     std::vector<feature_node> next_point(count_signs+1);
 
@@ -71,8 +88,14 @@ double ModelWrapper::get_probability() noexcept
     return next_probs[1];
 }
 
-void ModelWrapper::set_signs(std::vector<result_normalize>&& signs, const std::vector<int>& sample, int train_size) noexcept
+void ModelWrapper::set_signs(std::vector<result_normalize>&& signs, const std::vector<int>& sample, int train_size)
 {
+    if(sample.size() < train_size) throw NotEnoughDataModelWrapperException("In sample not enough data");
+    
+    for(int i = 0; i < signs.size(); ++i){
+        if(signs[i].norm_sample.size() < train_size) throw NotEnoughDataModelWrapperException("In signs (row: " + std::to_string(i) + ") not enough data");
+    }
+
     if(prob_ptr) prob_ptr.reset();
 
     this->train_size = train_size;
@@ -106,9 +129,10 @@ void ModelWrapper::set_signs(std::vector<result_normalize>&& signs, const std::v
     });
 }
 
-double ModelWrapper::get_train_correct() noexcept
+double ModelWrapper::get_train_correct() const
 {
-    if(!mw_ptr) return -1;
+    if(!mw_ptr) throw NoInitModelWrapperException("method train_model() wasn't called");
+
     int train_correct = 0;
     for (int i = 0; i < train_size; i++) {
         double pred_class = predict(mw_ptr.get(), prob_ptr->x[i]);
@@ -117,9 +141,10 @@ double ModelWrapper::get_train_correct() noexcept
     return static_cast<double>(train_correct) / train_size;
 }
 
-double ModelWrapper::get_test_correct() noexcept
+double ModelWrapper::get_test_correct() const
 {
-    if(!mw_ptr) return -1;
+    if(!mw_ptr) throw NoInitModelWrapperException("method train_model() wasn't called");
+
     int test_correct = 0;
     for (int i = train_size; i < n; i++) {
         std::vector<feature_node> test_point(count_signs+1);

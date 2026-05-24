@@ -3,7 +3,7 @@
 
 #include "ModelSelector.h"
 #include "ForecastCache.h"
-#include "PostgresDB.h"
+#include "Wrappers/PostgresDB.h"
 #include "good_funcs.h"
 #include "ROC_AUC.h"
 #include "IndependenceSeasonHypothesis.h"

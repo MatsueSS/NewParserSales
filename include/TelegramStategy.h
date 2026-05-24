@@ -1,7 +1,7 @@
 #ifndef TELEGRAM_STRATEGY_H
 #define TELEGRAM_STRATEGY_H
 
-#include "CurlWrapper.h"
+#include "Wrappers/CurlWrapper.h"
 #include "good_funcs.h"
 
 #include <future>

@@ -8,12 +8,37 @@
 #include <memory>
 #include <functional>
 #include <vector>
+#include <exception>
 
 using ModelDeleter = std::function<void(model*)>;
 using ProblemDeleter = std::function<void(problem*)>;
 
 using ModelWrapperPTR = std::unique_ptr<model, ModelDeleter>;
 using ProblemPTR = std::unique_ptr<problem, ProblemDeleter>;
+
+class ModelWrapperException : public std::exception {
+protected:
+    std::string msg;
+
+public:
+    ModelWrapperException(std::string msg);
+    ModelWrapperException(const ModelWrapperException& obj);
+
+    const char * what() const noexcept override;
+
+};
+
+class NoInitModelWrapperException : public ModelWrapperException {
+public:
+    NoInitModelWrapperException(std::string msg);
+
+};
+
+class NotEnoughDataModelWrapperException : public ModelWrapperException {
+public:
+    NotEnoughDataModelWrapperException(std::string msg);
+    
+};
 
 class ModelWrapper {
 public:
@@ -27,16 +52,16 @@ public:
 
     void change_C(double C) noexcept;
 
-    void train_model() noexcept;
+    void train_model();
 
     bool is_trained() const noexcept;
 
-    std::vector<double> get_weight() noexcept;
-    double get_probability() noexcept;
-    double get_test_correct() noexcept;
-    double get_train_correct() noexcept;
+    std::vector<double> get_weight() const;
+    double get_probability() const;
+    double get_test_correct() const;
+    double get_train_correct() const;
 
-    void set_signs(std::vector<result_normalize>&& signs, const std::vector<int>& sample, int train_size) noexcept;
+    void set_signs(std::vector<result_normalize>&& signs, const std::vector<int>& sample, int train_size);
 
     //for use bic
     friend LogisticRegressionModel;

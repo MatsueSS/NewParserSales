@@ -2,11 +2,10 @@
 
 #include "good_funcs.h"
 #include "json.hpp"
-#include "PostgresDB.h"
+#include "Wrappers/PostgresDB.h"
 #include "FactoryRecommendations.h"
 #include "FactorySearcher.h"
 #include "ModelSelector.h"
-#include "PostgresDB.h"
 #include "HiSquare.h"
 
 #include <queue>
