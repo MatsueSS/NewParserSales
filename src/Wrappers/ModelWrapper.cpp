@@ -88,7 +88,7 @@ double ModelWrapper::get_probability() const
     return next_probs[1];
 }
 
-void ModelWrapper::set_signs(std::vector<result_normalize>&& signs, const std::vector<int>& sample, int train_size)
+void ModelWrapper::set_signs(std::vector<result_normalize>&& signs, const std::vector<double>& sample, int train_size)
 {
     if(sample.size() < train_size) throw NotEnoughDataModelWrapperException("In sample not enough data");
     

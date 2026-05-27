@@ -1,7 +1,6 @@
 #ifndef MODEL_WRAPPER_H
 #define MODEL_WRAPPER_H
 
-#include "Models/LogisticRegressionModel.h"
 #include "Features_regression/Feature.h"
 
 #include <linear.h>
@@ -9,6 +8,8 @@
 #include <functional>
 #include <vector>
 #include <exception>
+
+class LogisticRegressionModel;
 
 using ModelDeleter = std::function<void(model*)>;
 using ProblemDeleter = std::function<void(problem*)>;
@@ -61,7 +62,7 @@ public:
     double get_test_correct() const;
     double get_train_correct() const;
 
-    void set_signs(std::vector<result_normalize>&& signs, const std::vector<int>& sample, int train_size);
+    void set_signs(std::vector<result_normalize>&& signs, const std::vector<double>& sample, int train_size);
 
     //for use bic
     friend LogisticRegressionModel;
@@ -72,7 +73,7 @@ private:
     ModelWrapperPTR mw_ptr;
     parameter param;
     std::vector<result_normalize> features;
-    std::vector<int> sample;
+    std::vector<double> sample;
 
 };
 

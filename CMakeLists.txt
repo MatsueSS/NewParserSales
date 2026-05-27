@@ -44,6 +44,7 @@ add_executable(${PROJECT_NAME}
     src/Wrappers/CurlWrapper.cpp
     src/Forecast/ForecastManager.cpp
     src/Wrappers/ModelWrapper.cpp
+    src/Models/LogisticRegressionModel.cpp
 )
 
 find_package(PostgreSQL REQUIRED)

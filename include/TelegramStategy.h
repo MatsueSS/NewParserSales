@@ -13,6 +13,7 @@ public:
     TelegramStrategy() : cw_ptr(std::make_shared<CurlWrapper>()) 
     { 
         cw_ptr->set_proxy("socks5h://127.0.0.1:1080"); 
+        //cw_ptr->set_proxy("socks5h://m:N@95.182.114.10:1080"); 
         std::ifstream file("../.env");
         file >> token;
     }

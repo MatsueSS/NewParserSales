@@ -8,9 +8,9 @@
 #include <linear.h>
 
 enum class type_feature {
-    pattern00, kurtosis, autocorr_lag2, min_run, max_run, lag1, 
-    lag2, transitions01, transitions10, transitions11, sum, weighted_sum,
-    mode, entropy
+    pattern00 = 0, kurtosis = 1, autocorr_lag2 = 2, min_run = 3, max_run = 4, lag1 = 5, 
+    lag2 = 6, transitions01 = 7, transitions10 = 8, transitions11 = 9, sum = 10, weighted_sum = 11,
+    mode = 12, entropy = 13
 };
 
 struct result_normalize {
@@ -33,34 +33,7 @@ public:
         return Derived::normalize_impl(sample, train_size, lasted_data);
     }
 
-    static double calculate_bic(struct model* model_, const std::vector<std::vector<double>>& X, const std::vector<double>& y, int n_features, bool has_bias = false) noexcept {
-        int n = X.size();
-        int k = has_bias ? n_features + 1 : n_features;
-        
-        double log_likelihood = 0.0;
-        const double epsilon = 1e-15;
-        
-        for (int i = 0; i < n; i++) {
-            std::vector<feature_node> nodes(n_features + 1);
-            for (int j = 0; j < n_features; j++) {
-                nodes[j].index = j + 1;
-                nodes[j].value = X[i][j];
-            }
-            nodes[n_features].index = -1;
-            
-            double probs[2];
-            predict_probability(model_, nodes.data(), probs);
-            
-            double prob = (y[i] == 1.0) ? probs[1] : probs[0];
-            prob = std::max(epsilon, std::min(1.0 - epsilon, prob));
-            
-            log_likelihood += log(prob);
-        }
-        
-        return -2.0 * log_likelihood + k * log(n);
-    }
-
-    static double pearson_correlation(const std::vector<double>& x, const std::vector<int>& y) noexcept {
+    static double pearson_correlation(const std::vector<double>& x, const std::vector<double>& y) noexcept {
         int n = x.size();
 
         double mean_x = 0.0, mean_y = 0.0;
