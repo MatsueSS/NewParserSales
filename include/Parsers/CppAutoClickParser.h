@@ -6,7 +6,7 @@
 class CppAutoClickParser : public Parser {
 private:
     std::string get_clipboard_content() const;
-    void pull_json(std::vector<ProductData>& pd, const std::string& url) const;
+    void pull_json(std::vector<ProductData>& pd, const std::string& url, int i) const;
 
 public:
     virtual std::vector<ProductData> fetch_product() const override;

@@ -17,6 +17,11 @@
 
 #include <iostream>
 
+LogisticRegressionModel::LogisticRegressionModel()
+{
+    name = TypeModel::LOGISTIC_REGRESSION;
+}
+
 void LogisticRegressionModel::change_regular(double C) noexcept
 {
     mw.change_C(C);
@@ -99,7 +104,7 @@ double LogisticRegressionModel::make_train(const std::vector<int>& sample)
 
     std::vector<double> y;
 
-    int window_size = 4;
+    int window_size = 12;
 
     for (size_t i = window_size; i < sample.size(); i++) {
         lag1.push_back(sample[i-1]);
@@ -133,9 +138,13 @@ double LogisticRegressionModel::make_train(const std::vector<int>& sample)
     
     int train_size = n * 0.5;
 
+    std::vector<int> back_sample;
+    for(int i = sample.size()-window_size; i < sample.size(); ++i){
+        back_sample.push_back(sample[i]);
+    }
     std::vector<result_normalize> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw, autocorr_raw,
             lag1, lag2, min_run_raw, max_run_raw, trans01_raw, trans10_raw, sum_raw, w_sum_raw, mode_raw, entropy_raw}, 
-            train_size, {sample[sample.size()-4], sample[sample.size()-3], sample[sample.size()-2], sample[sample.size()-1]});
+            train_size, back_sample);
 
     int k = 1;
 

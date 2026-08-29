@@ -1,8 +1,11 @@
 build/
-.env
+*.env
 .vscode
 *.json
 *.html
 *.odp
 *.pdf
 *.docx
+*.ods
+*.txt
+*.xlsx

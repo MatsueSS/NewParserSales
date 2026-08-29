@@ -100,6 +100,7 @@ std::vector<int> ForecastManager::build_dates_seasons(std::string str)
 std::vector<int> ForecastManager::build_dates_typical(std::string str)
 {
     auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{str});
+    auto end_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date DESC LIMIT 1;"), std::vector<std::string>{str});
     if(first_date.empty()) throw EmptySampleProbabilityModelException("empty sample");
     std::vector<std::vector<std::string>> query_result;
     try{
@@ -114,12 +115,16 @@ std::vector<int> ForecastManager::build_dates_typical(std::string str)
     if(query_result.size() < 4) throw SmallSampleForecastManagerException("small sample");
 
     auto ymd = converte_string(first_date[0][0]);
+    auto end_ymd = converte_string(end_date[0][0]);
+
 
     std::vector<int> sample;
-    for(int i = 0; i < query_result.size();){
-        if(converte_string(query_result[i][0]) == ymd){
+
+    int pos = 0;
+    while(ymd <= end_ymd){
+        if(pos < query_result.size() && converte_string(query_result[pos][0]) == ymd){
             sample.push_back(1);
-            i++;
+            pos++;
         } else {
             sample.push_back(0);
         }
@@ -128,6 +133,19 @@ std::vector<int> ForecastManager::build_dates_typical(std::string str)
         std::chrono::year_month_day n_ymd {date};
         ymd = n_ymd;
     }
+
+    // for(int i = 0; i < query_result.size();){
+    //     if(converte_string(query_result[i][0]) == ymd){
+    //         sample.push_back(1);
+    //         i++;
+    //     } else {
+    //         sample.push_back(0);
+    //     }
+    //     std::chrono::sys_days date = std::chrono::sys_days{ymd};
+    //     date += std::chrono::days{7};
+    //     std::chrono::year_month_day n_ymd {date};
+    //     ymd = n_ymd;
+    // }
 
     return sample;
 }
@@ -173,25 +191,29 @@ double ForecastManager::get_better_probability(const std::vector<int>& sample)
 {
     std::vector<double> p,q;
     std::vector<int> new_sample;
-    for(int i = 0; i <= 17 && i < sample.size(); ++i) new_sample.push_back(sample[i]);
-    for(int i = 18; i < sample.size(); ++i){
-        auto r = ms.select_best(new_sample);
-        if(sample[i] == 1) p.push_back(r.best_probability);
-        else q.push_back(r.best_probability);
-        new_sample.push_back(sample[i]);
+    auto first_r = ms.select_best(sample);
+    if(first_r.name == TypeModel::GEOMETRIC_MODEL){
+        for(int i = 0; i <= 17 && i < sample.size(); ++i) new_sample.push_back(sample[i]);
+        for(int i = 18; i < sample.size(); ++i){
+            auto r = ms.select_best(new_sample);
+            if(sample[i] == 1) p.push_back(r.best_probability);
+            else q.push_back(r.best_probability);
+            new_sample.push_back(sample[i]);
+        }
+
+        auto true_prob = ms.select_best(sample);
+
+        double res_ra;
+
+        try{
+            res_ra = ra.roc_auc(p,q);
+        } catch (EmptySampleROC_AUC_Exception& e){
+            res_ra = 1.0;
+        }
+
+        return res_ra < 0.5 ? 1-true_prob.best_probability : true_prob.best_probability;
     }
-
-    auto true_prob = ms.select_best(sample);
-
-    double res_ra;
-
-    try{
-        res_ra = ra.roc_auc(p,q);
-    } catch (EmptySampleROC_AUC_Exception& e){
-        res_ra = 1.0;
-    }
-
-    return res_ra < 0.5 ? 1-true_prob.best_probability : true_prob.best_probability;
+    return first_r.best_probability;
 }
 
 void ForecastManager::reset_cache()

@@ -15,23 +15,159 @@
 #include "json.hpp"
 #include "Wrappers/PostgresDB.h"
 
+#include "Features_regression/FeaturePattern00.h"
 #include "Features_regression/FeatureExtractor.h"
 #include "Features_regression/FeatureKurtosis.h"
-#include "Features_regression/FeaturePattern00.h"
+#include "Features_regression/FeatureAutocorrLag2.h"
+#include "Features_regression/FeatureMinRun.h"
+#include "Features_regression/FeatureMaxRun.h"
+#include "Features_regression/FeatureTransitions01.h"
+#include "Features_regression/FeatureTransitions10.h"
+#include "Features_regression/FeatureSum.h"
+#include "Features_regression/FeatureWeightSum.h"
+#include "Features_regression/FeatureMode.h"
+#include "Features_regression/FeatureEntropy.h"
+#include "Features_regression/FeatureLag1.h"
+#include "Features_regression/FeatureLag2.h"
 
 #include <linear.h>
+
+void print(std::vector<double> v){
+    for(double i : v) std::cout << i << ' ';
+    std::cout << '\n';
+}
 
 int main(void)
 {
     global_init();
 
-    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    while(true){
-        inter.start_process();
-    }   
+    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
-    // std::vector<int> sample = {0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1,1,0,0,0};
+    // while(true){
+    //     inter.start_process();
+    // }   
+
+    
+
+    std::vector<int> sample = {0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1,1,0,0,0,1,0,0,0,1};
+
+    // std::cout << sample.size() << '\n';
+
+    // LogisticRegressionModel lrm;
+
+    // auto r = lrm.calculate_bic_with_prob(sample);
+    // std::cout << r.first << ' ' << r.second << '\n';
+    
+    std::vector<int> windows = {6,7,8,9,10};
+    std::vector<double> C_f = {0.1,1.0,10.0,100.0};
+    std::vector<double> coef = {0.5, 0.6, 0.7, 0.8};
+
+    for(int window_size : windows){
+        for(double C : C_f){
+            for(double co : coef){
+                using MyExtractor = FeatureExtractor<FeaturePattern00, FeatureKurtosis, FeatureAutocorrLag2, FeatureMinRun,
+                        FeatureMaxRun, FeatureLag1, FeatureLag2, FeatureTransitions01, FeatureTransitions10,
+                        FeatureSum, FeatureWeightSum, FeatureMode, FeatureEntropy>;
+
+                std::vector<double> pattern00_raw, min_run_raw, max_run_raw, kurtosis_raw, autocorr_raw, lag1, lag2,
+                                trans01_raw, trans10_raw, sum_raw, w_sum_raw, mode_raw, entropy_raw;
+
+                std::vector<double> y;
+
+                for (size_t i = window_size; i < sample.size(); i++) {
+                    lag1.push_back(sample[i-1]);
+                    lag2.push_back(sample[i-2]);
+
+                    std::vector<int> window;
+                    for(size_t j = i - window_size; j < i; ++j){
+                        window.push_back(sample[j]);
+                    }
+
+                    std::vector<double> ext_result = MyExtractor::extract(window);
+                    
+                    pattern00_raw.push_back(ext_result[0]);
+                    kurtosis_raw.push_back(ext_result[1]);
+                    autocorr_raw.push_back(ext_result[2]);
+                    min_run_raw.push_back(ext_result[3]);
+                    max_run_raw.push_back(ext_result[4]);
+                    trans01_raw.push_back(ext_result[7]);
+                    trans10_raw.push_back(ext_result[8]);
+                    sum_raw.push_back(ext_result[9]);
+                    w_sum_raw.push_back(ext_result[10]);
+                    mode_raw.push_back(ext_result[11]);
+                    entropy_raw.push_back(ext_result[12]);
+
+                    y.push_back(sample[i]);
+                }   
+
+                ModelWrapper mw;
+
+                int n = y.size();
+                
+                int train_size = n*co;
+
+                std::vector<int> back_vals;
+                for(int i = sample.size()-window_size; i < sample.size(); ++i){
+                    back_vals.push_back(sample[i]);
+                }
+
+                std::vector<result_normalize> norm_result = MyExtractor::normalize({pattern00_raw, kurtosis_raw, autocorr_raw, min_run_raw, max_run_raw,
+                        lag1, lag2, trans01_raw, trans10_raw, sum_raw, w_sum_raw, mode_raw, entropy_raw}, 
+                        train_size, back_vals);
+
+                std::vector<result_normalize> new_result = {norm_result[3]};
+
+                mw.change_C(C);
+
+                mw.set_signs(std::move(new_result), y, train_size);
+
+                mw.train_model();
+
+                std::cout << "window_size: " << window_size << '\n';
+                std::cout << "C: " << C << '\n';
+                std::cout << "coef: " << co << '\n';
+                std::cout << "Вероятность класса 1: " << mw.get_probability() << '\n';
+                std::cout << "Проверка модели на тестах: " << mw.get_test_correct() << '\n';
+                std::cout << "Обучение модели: " << mw.get_train_correct() << '\n';
+                auto r = mw.get_weight();
+                for(double w : r) std::cout << w << ' ';
+                std::cout << '\n';
+            }
+        }
+    }
+
+    // LogisticRegressionModel lrm;
+    // std::cout << lrm.calculate_bic_with_prob(sample).first << '\n';
+
+    // GeometricModel gm;
+    // auto r = gm.calculate_bic_with_prob(sample);
+    // std::cout << 1-r.first << ' ' << r.second << '\n';
+
+    // LogisticRegressionModel lrm;
+    // auto nr = lrm.calculate_bic_with_prob(sample);
+    // std::cout << nr.first << ' ' << nr.second << '\n';
+
+    // std::vector<double> psk, y;
+
+    // int ws = 4, n = sample.size();
+
+    // for(int i = ws; i < n; ++i){
+    //     std::vector<int> window;
+    //     for(int j = i - ws; j < i; ++j){
+    //         window.push_back(sample[j]);
+    //     }
+
+    //     psk.push_back(Feature<FeatureKurtosis>::compute(window) * Feature<FeatureKurtosis>::compute(window) + Feature<FeatureAutocorrLag2>::compute(window) + Feature<FeatureMinRun>::compute(window) * Feature<FeaturePattern00>::compute(window));
+    //     y.push_back(sample[i]);
+    // }
+
+    // result_normalize rn = Feature<FeatureKurtosis>::normalize(psk, y.size(), {sample[n-4], sample[n-3], sample[n-2], sample[n-1]});
+
+    // double ncorr = std::fabs(Feature<FeatureKurtosis>::pearson_correlation(psk, y));
+    // std::cout << ncorr << '\n';
+
+
     //std::vector<int> sample = {0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1,1,0,0,0,0,1};
 
     // LogisticRegressionModel lrm;

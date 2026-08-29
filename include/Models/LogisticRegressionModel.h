@@ -6,7 +6,7 @@
 
 class LogisticRegressionModel : public ProbabilityModel{
 public:
-    LogisticRegressionModel() = default;
+    LogisticRegressionModel();
     
     virtual std::pair<double, double> calculate_bic_with_prob(const std::vector<int>&) override;
 

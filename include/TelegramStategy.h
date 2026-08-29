@@ -12,8 +12,10 @@ class TelegramStrategy{
 public:
     TelegramStrategy() : cw_ptr(std::make_shared<CurlWrapper>()) 
     { 
-        cw_ptr->set_proxy("socks5h://127.0.0.1:1080"); 
-        //cw_ptr->set_proxy("socks5h://m:N@95.182.114.10:1080"); 
+        std::ifstream proxy_file("../proxy.env");
+        std::string proxy;
+        proxy_file >> proxy;
+        cw_ptr->set_proxy(proxy); 
         std::ifstream file("../.env");
         file >> token;
     }
@@ -59,8 +61,11 @@ public:
 
     void build()
     {
+        std::ifstream proxy_file("../proxy.env");
+        std::string proxy;
+        proxy_file >> proxy;
         cw_ptr->build();
-        cw_ptr->set_proxy("socks5h://127.0.0.1:1080"); 
+        cw_ptr->set_proxy(proxy); 
     }
 
 private:

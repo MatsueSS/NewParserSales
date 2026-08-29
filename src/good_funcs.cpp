@@ -135,9 +135,10 @@ void check_independence_season()
         try{
             auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{vec[0]});
             if(first_date.empty()) continue;
-            bool r = ish.check_hypothesis(vec[0], first_date[0][0], "2026-02-28", 0.95);
+            std::cout << vec[0] << '\n';
+            bool r = ish.check_hypothesis(vec[0], first_date[0][0], "2026-05-31", 0.95);
             if(!r) file << r << ' ' << ++count << ' ' << vec[0] << '\n';
-            std::cout << vec[0] << ": " << r << '\n';
+            std::cout << ": " << r << '\n';
         } catch(ZeroSampleHypothesisException& e){
             continue;
         } catch(NoDataHiSquareException& e){
