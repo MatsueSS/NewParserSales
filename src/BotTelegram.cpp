@@ -18,7 +18,7 @@ BotTelegram::BotTelegram(std::string offset, std::shared_ptr<PoolCards> ptr_pc, 
     , users(std::make_shared<std::unordered_map<std::string, TelegramUser>>())
     , observer(FactoryRecommendations::create(rectype, ptr_pc, users))
     , searcher(FactoryMatcher::create(prodtype, "../sensetive_res/new_dict.txt", ptr_pc))
-    , fm(std::initializer_list<TypeModel>{TypeModel::GEOMETRIC_MODEL, TypeModel::MARKOV_CHAIN_1_MODEL, TypeModel::MARKOV_CHAIN_2_MODEL, TypeModel::LOGISTIC_REGRESSION})
+    , fm(std::initializer_list<TypeModel>{TypeModel::GEOMETRIC_MODEL, TypeModel::LOGISTIC_REGRESSION})
     , ptr_mx(std::make_unique<std::mutex>())
 {
     load_users_from_db();

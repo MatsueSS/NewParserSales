@@ -4,8 +4,6 @@
 #include "Models/ProbabilityModel.h"
 
 #include "Models/GeometricModel.h"
-#include "Models/MarkovChain1Model.h"
-#include "Models/MarkovChain2Model.h"
 #include "Models/LogisticRegressionModel.h"
 
 #include <memory>
@@ -17,10 +15,6 @@ public:
             case TypeModel::GEOMETRIC_MODEL:
                 return std::make_unique<GeometricModel>();
             case TypeModel::MARKOV_CHAIN_1_MODEL:
-                return std::make_unique<MarkovChain1Model>();
-            case TypeModel::MARKOV_CHAIN_2_MODEL:
-                return std::make_unique<MarkovChain2Model>();
-            case TypeModel::LOGISTIC_REGRESSION:
                 return std::make_unique<LogisticRegressionModel>();
             default:
                 throw BadTypeProbabilityModelException("Invalid Type for probability model");

@@ -8,6 +8,7 @@
 #include <functional>
 #include <vector>
 #include <exception>
+#include <string>
 
 class LogisticRegressionModel;
 

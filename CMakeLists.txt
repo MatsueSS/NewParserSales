@@ -32,8 +32,8 @@ add_executable(${PROJECT_NAME}
     src/Parsers/PyAutoClickParser.cpp
     src/Parsers/PyHTMLParser.cpp
     src/Models/GeometricModel.cpp
-    src/Models/MarkovChain1Model.cpp
-    src/Models/MarkovChain2Model.cpp
+    #src/Models/MarkovChain1Model.cpp
+    #src/Models/MarkovChain2Model.cpp
     src/Models/ModelSelector.cpp
     src/Forecast/ForecastCache.cpp
     src/ROC_AUC.cpp
