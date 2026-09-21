@@ -77,7 +77,7 @@ double ModelWrapper::get_probability() const
 
     for(int i = 0; i < count_signs; ++i){
         next_point[i].index = i+1;
-        next_point[i].value = features[i].last_norm;
+        next_point[i].value = features[i].norm_sample[n-1];
     }
 
     next_point[count_signs].index = -1;
@@ -165,4 +165,42 @@ double ModelWrapper::get_test_correct() const
 bool ModelWrapper::is_trained() const noexcept
 {
     return mw_ptr != nullptr;
+}
+
+double ModelWrapper::find_roc_auc() const 
+{
+    if(!mw_ptr) throw NoInitModelWrapperException("method train_model() wasn't called");
+
+    std::vector<double> tests_probability_ones;
+    for(int i = train_size; i < n; ++i){
+        std::vector<feature_node> test_point(count_signs+1);
+        for(int j = 0; j < count_signs; ++j){
+            test_point[j].index = j+1;
+            test_point[j].value = features[j].norm_sample[i];
+        }
+        test_point[count_signs].index = -1;
+        double prob_est[2];
+        predict_probability(mw_ptr.get(), test_point.data(), prob_est);
+        tests_probability_ones.push_back(prob_est[1]);
+    }
+
+    int pos_count = 0, neg_count = 0;
+    for(int i = train_size; i < n; ++i){
+        if(sample[i] == 1) pos_count++;
+        else neg_count++;
+    }
+
+    double correct_pairs = 0;
+    for(int i = train_size; i < n; ++i){
+        if(sample[i] != 1) continue;
+
+        for(int j = train_size; j < n; ++j){
+            if(sample[j] != 0) continue;
+
+            if(tests_probability_ones[i] > tests_probability_ones[j]) correct_pairs++;
+            else if(tests_probability_ones[i] == tests_probability_ones[j]) correct_pairs += 0.5;
+        }
+    }
+
+    return correct_pairs/(pos_count*neg_count);
 }

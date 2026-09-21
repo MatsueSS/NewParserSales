@@ -14,7 +14,7 @@ public:
         switch(type){
             case TypeModel::GEOMETRIC_MODEL:
                 return std::make_unique<GeometricModel>();
-            case TypeModel::MARKOV_CHAIN_1_MODEL:
+            case TypeModel::LOGISTIC_REGRESSION:
                 return std::make_unique<LogisticRegressionModel>();
             default:
                 throw BadTypeProbabilityModelException("Invalid Type for probability model");

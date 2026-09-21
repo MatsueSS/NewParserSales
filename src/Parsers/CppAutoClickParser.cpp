@@ -27,7 +27,7 @@ void CppAutoClickParser::pull_json(std::vector<ProductData>& pd, const std::stri
     system("ydotool mousemove 835 25");
     system("ydotool click 0xC0");
     // system(("google-chrome --new-tab \"" + url + "\"").c_str());
-    // std::this_thread::sleep_for(std::chrono::seconds(7));
+    // std::this_thread::sleep_for(std::chrono::seconds(7));   
     // system("ydotool mousemove 900 65");
     // system("ydotool click 0xC0");
     // system("ydotool mousemove 860 20");
@@ -64,50 +64,50 @@ void CppAutoClickParser::pull_json(std::vector<ProductData>& pd, const std::stri
 std::vector<ProductData> CppAutoClickParser::fetch_product() const
 {
     std::vector<std::string> urls = {
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12884/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51627/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51941/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51979/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51985/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51994/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52002/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52027/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52032/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52037/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12890/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12888/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13070/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13071/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13072/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13073/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13074/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13075/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13076/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12901/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52952/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52955/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52956/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52957/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52958/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52959/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52960/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52961/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52962/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52970/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12904/products?mode=delivery&include_restrict=true&limit=499&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12905/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56116/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56117/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56118/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56119/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56120/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12907/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C55984/products?mode=delivery&include_restrict=true&limit=400&offset=0",
-        "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C55982/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12884/products?mode=delivery&include_restrict=true&limit=400&offset=",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51627/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51941/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51979/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51985/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C51994/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52002/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52027/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52032/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52037/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12890/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12888/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13070/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13071/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13072/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13073/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13074/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13075/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C13076/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12901/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52952/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52955/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52956/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52957/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52958/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52959/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52960/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52961/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52962/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C52970/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12904/products?mode=delivery&include_restrict=true&limit=499&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12905/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56116/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56117/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56118/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56119/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C56120/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C12907/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C55984/products?mode=delivery&include_restrict=true&limit=400&offset=0",
+        // "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C55982/products?mode=delivery&include_restrict=true&limit=400&offset=0",
         "https://5d.5ka.ru/api/catalog/v2/stores/39KT/categories/251C55985/products?mode=delivery&include_restrict=true&limit=400&offset=0"
     };
 
-    int i = 0;
+    int i = 40;
     std::vector<ProductData> data;
     for(const auto& obj : urls){
         pull_json(data, obj, ++i);

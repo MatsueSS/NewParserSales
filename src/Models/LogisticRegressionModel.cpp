@@ -213,3 +213,8 @@ std::pair<double, double> LogisticRegressionModel::calculate_bic_with_prob(const
     double b = make_train(sample);
     return {mw.get_probability(), b};
 }
+
+double LogisticRegressionModel::get_roc_auc() const
+{
+    return mw.find_roc_auc();
+}

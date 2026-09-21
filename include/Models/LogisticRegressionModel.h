@@ -12,6 +12,8 @@ public:
 
     virtual void change_regular(double C) noexcept override;
 
+    double get_roc_auc() const;
+
 private:
     ModelWrapper mw;
 

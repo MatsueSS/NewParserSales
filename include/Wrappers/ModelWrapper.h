@@ -63,6 +63,8 @@ public:
     double get_test_correct() const;
     double get_train_correct() const;
 
+    double find_roc_auc() const;
+
     void set_signs(std::vector<result_normalize>&& signs, const std::vector<double>& sample, int train_size);
 
     //for use bic
