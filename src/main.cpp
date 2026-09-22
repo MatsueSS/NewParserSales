@@ -44,7 +44,7 @@ void print(std::vector<double> v){
 #include <vector>
 
 #include <BoostHistory.h>
-#include "Features_boost/FeatureCurrentPrice.h"
+#include "Features_boost/FeatureBoostCurrentPrice.h"
 
 int main(void)
 {
@@ -62,7 +62,7 @@ int main(void)
         bh.add_product(BoostProduct(std::stoi(obj[0]), std::stoi(obj[1]), ymd, obj[3].empty() ? std::nullopt : std::optional<uint32_t>(std::stoi(obj[3]))));
     }
 
-    std::cout << FeatureCurrentPrice::compute(bh) << '\n';
+    std::cout << FeatureBoostCurrentPrice::compute(bh) << '\n';
 
     // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 

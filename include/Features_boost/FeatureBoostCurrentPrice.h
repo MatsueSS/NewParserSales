@@ -1,11 +1,11 @@
-#ifndef FEATURE_CURRENT_PRICE_H
-#define FEATURE_CURRENT_PRICE_H
+#ifndef FEATURE_BOOST_CURRENT_PRICE_H
+#define FEATURE_BOOST_CURRENT_PRICE_H
 
 #include "FeatureBoost.h"
 
-class FeatureCurrentPrice : public FeatureBoost<FeatureCurrentPrice>{
+class FeatureBoostCurrentPrice : public FeatureBoost<FeatureBoostCurrentPrice>{
 private:
-    friend class FeatureBoost<FeatureCurrentPrice>;
+    friend class FeatureBoost<FeatureBoostCurrentPrice>;
 
     static type_feature_boost name_impl() noexcept{
         return type_feature_boost::current_price;
