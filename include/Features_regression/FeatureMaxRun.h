@@ -1,9 +1,9 @@
 #ifndef FEATURE_MAX_RUN_H
 #define FEATURE_MAX_RUN_H
 
-#include "Features_regression/Feature.h"
+#include "Features_regression/FeatureRegression.h"
 
-class FeatureMaxRun : public Feature<FeatureMaxRun>{
+class FeatureMaxRun : public FeatureRegression<FeatureMaxRun>{
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         if(window.empty()) return 0;
@@ -25,8 +25,8 @@ public:
         return max_run;
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::max_run;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::max_run;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {

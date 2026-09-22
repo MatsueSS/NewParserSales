@@ -1,5 +1,5 @@
-#ifndef FEATURE_FOR_REGRESSION_H
-#define FEATURE_FOR_REGRESSION_H
+#ifndef FEATURE_REGRESSION_H
+#define FEATURE_REGRESSION_H
 
 #include <vector>
 #include <algorithm>
@@ -7,7 +7,7 @@
 #include <numeric>
 #include <linear.h>
 
-enum class type_feature {
+enum class type_feature_regression {
     pattern00 = 0, kurtosis = 1, autocorr_lag2 = 2, min_run = 3, max_run = 4, lag1 = 5, 
     lag2 = 6, transitions01 = 7, transitions10 = 8, transitions11 = 9, sum = 10, weighted_sum = 11,
     mode = 12, entropy = 13
@@ -19,13 +19,13 @@ struct result_normalize {
 };
 
 template<typename Derived>
-class Feature{
+class FeatureRegression{
 public:
     static double compute(const std::vector<int>& window) noexcept {
         return Derived::compute_impl(window);
     }
 
-    static type_feature name() noexcept {
+    static type_feature_regression name() noexcept {
         return Derived::name_impl();
     }
 

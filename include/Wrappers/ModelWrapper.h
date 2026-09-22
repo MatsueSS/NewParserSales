@@ -1,7 +1,7 @@
 #ifndef MODEL_WRAPPER_H
 #define MODEL_WRAPPER_H
 
-#include "Features_regression/Feature.h"
+#include "Features_regression/FeatureRegression.h"
 
 #include <linear.h>
 #include <memory>

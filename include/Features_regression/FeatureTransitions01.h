@@ -1,9 +1,9 @@
 #ifndef FEATURE_TRANSITIONS_01_H
 #define FEATURE_TRANSITIONS_01_H
 
-#include "Features_regression/Feature.h"
+#include "Features_regression/FeatureRegression.h"
 
-class FeatureTransitions01 : public Feature<FeatureTransitions01>{
+class FeatureTransitions01 : public FeatureRegression<FeatureTransitions01>{
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         if(window.size() < 2) return 0;
@@ -16,8 +16,8 @@ public:
         return count;
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::transitions01;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::transitions01;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {

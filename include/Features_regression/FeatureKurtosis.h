@@ -1,9 +1,9 @@
 #ifndef FEATURE_KURTOSIS_H
 #define FEATURE_KURTOSIS_H
 
-#include "Feature.h"
+#include "FeatureRegression.h"
 
-class FeatureKurtosis : public Feature<FeatureKurtosis>{
+class FeatureKurtosis : public FeatureRegression<FeatureKurtosis>{
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         if(window.size() < 4) return 0.0;
@@ -25,8 +25,8 @@ public:
         return fourth_moment - 3.0;
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::kurtosis;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::kurtosis;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {

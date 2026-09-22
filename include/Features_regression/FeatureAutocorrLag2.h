@@ -1,9 +1,9 @@
 #ifndef FEATURE_AUTOCORR_LAG2_H
 #define FEATURE_AUTOCORR_LAG2_H
 
-#include "Features_regression/Feature.h"
+#include "Features_regression/FeatureRegression.h"
 
-class FeatureAutocorrLag2 : public Feature<FeatureAutocorrLag2>{
+class FeatureAutocorrLag2 : public FeatureRegression<FeatureAutocorrLag2>{
 public:
     static double compute_impl(const std::vector<int>& window) noexcept{
         if(window.size() < 4) return 0.0;
@@ -29,8 +29,8 @@ public:
         return cov/std::sqrt(var1*var2);
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::autocorr_lag2;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::autocorr_lag2;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {

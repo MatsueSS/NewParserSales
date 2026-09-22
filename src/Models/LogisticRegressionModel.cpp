@@ -60,7 +60,7 @@ std::vector<int> LogisticRegressionModel::find_tuple_features(int n, const std::
     if(n == 1){
         std::pair<double, int> result = {0, -1};
         for(int i = 0; i < features.size(); ++i){
-            double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i].norm_sample, mw.sample);
+            double corr = FeatureRegression<FeatureAutocorrLag2>::pearson_correlation(features[i].norm_sample, mw.sample);
             double ncorr = std::fabs(corr);
             if(result.first < ncorr){
                 result.first = ncorr;
@@ -74,7 +74,7 @@ std::vector<int> LogisticRegressionModel::find_tuple_features(int n, const std::
     std::vector<std::tuple<double, int, int>> correlations;
     for(int i = 0; i < features.size(); ++i){
         for(int j = i+1; j < features.size(); ++j){
-            double corr = Feature<FeatureAutocorrLag2>::pearson_correlation(features[i].norm_sample, features[j].norm_sample);
+            double corr = FeatureRegression<FeatureAutocorrLag2>::pearson_correlation(features[i].norm_sample, features[j].norm_sample);
             correlations.push_back(std::make_tuple(corr, i, j));
         }
     }

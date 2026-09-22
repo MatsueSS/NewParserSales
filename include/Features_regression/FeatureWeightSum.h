@@ -1,9 +1,9 @@
 #ifndef FEATURE_WEIGHT_SUM_H
 #define FEATURE_WEIGHT_SUM_H
 
-#include "Features_regression/Feature.h"
+#include "Features_regression/FeatureRegression.h"
 
-class FeatureWeightSum : public Feature<FeatureWeightSum> {
+class FeatureWeightSum : public FeatureRegression<FeatureWeightSum> {
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         int weighted_sum = 0;
@@ -13,8 +13,8 @@ public:
         return weighted_sum;
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::weighted_sum;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::weighted_sum;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {

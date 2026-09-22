@@ -1,9 +1,9 @@
 #ifndef FEATURE_PATTERN_00_H
 #define FEATURE_PATTERN_00_H
 
-#include "Feature.h"
+#include "FeatureRegression.h"
 
-class FeaturePattern00 : public Feature<FeaturePattern00>{
+class FeaturePattern00 : public FeatureRegression<FeaturePattern00>{
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         int count00 = 0;
@@ -13,8 +13,8 @@ public:
         return count00;
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::pattern00;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::pattern00;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {

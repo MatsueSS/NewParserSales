@@ -1,17 +1,17 @@
 #ifndef FEATURE_MODE_H
 #define FEATURE_MODE_H
 
-#include "Features_regression/Feature.h"
+#include "Features_regression/FeatureRegression.h"
 
-class FeatureMode : public Feature<FeatureMode> {
+class FeatureMode : public FeatureRegression<FeatureMode> {
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         int sum = accumulate(window.begin(), window.end(), 0);
         return sum > window.size()/2;
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::mode;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::mode;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {

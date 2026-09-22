@@ -1,16 +1,16 @@
 #ifndef FEATURE_SUM_H
 #define FEATURE_SUM_H
 
-#include "Features_regression/Feature.h"
+#include "Features_regression/FeatureRegression.h"
 
-class FeatureSum : public Feature<FeatureSum>{
+class FeatureSum : public FeatureRegression<FeatureSum>{
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         return std::accumulate(window.begin(), window.end(), 0);
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::sum;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::sum;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {

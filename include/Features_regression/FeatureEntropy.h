@@ -1,9 +1,9 @@
 #ifndef FEATURE_ENTROPY_H
 #define FEATURE_ENTROPY_H
 
-#include "Features_regression/Feature.h"
+#include "Features_regression/FeatureRegression.h"
 
-class FeatureEntropy : public Feature<FeatureEntropy> {
+class FeatureEntropy : public FeatureRegression<FeatureEntropy> {
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         double entropy = 0;
@@ -14,8 +14,8 @@ public:
         return entropy;
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::entropy;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::entropy;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {

@@ -1,9 +1,9 @@
 #ifndef FEATURE_MIN_RUN_H
 #define FEATURE_MIN_RUN_H
 
-#include "Features_regression/Feature.h"
+#include "Features_regression/FeatureRegression.h"
 
-class FeatureMinRun : public Feature<FeatureMinRun> {
+class FeatureMinRun : public FeatureRegression<FeatureMinRun> {
 public:
     static double compute_impl(const std::vector<int>& window) noexcept {
         if(window.empty()) return 0;
@@ -25,8 +25,8 @@ public:
         return min_run;
     }
 
-    static type_feature name_impl() noexcept {
-        return type_feature::min_run;
+    static type_feature_regression name_impl() noexcept {
+        return type_feature_regression::min_run;
     }
 
     static result_normalize normalize_impl(const std::vector<double>& sample, int train_size, const std::vector<int>& lasted_data) noexcept {
