@@ -49,6 +49,7 @@ add_executable(${PROJECT_NAME}
     src/Wrappers/ModelWrapper.cpp
     src/Models/LogisticRegressionModel.cpp
     src/BoostProduct.cpp
+    src/BoostHistory.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

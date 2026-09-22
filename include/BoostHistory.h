@@ -11,11 +11,11 @@
 template<typename T>
 concept ConceptBoostProduct = std::same_as<std::remove_cvref_t<T>, BoostProduct>;
 
+using CItBoostHistory = std::vector<BoostProduct>::const_iterator;
+
 class BoostHistory{
 private:
     std::vector<BoostProduct> history;
-
-    using CItBoostHistory = std::vector<BoostProduct>::const_iterator;
 
 public:
     BoostHistory() noexcept = default;
@@ -26,7 +26,7 @@ public:
     }
 
     std::size_t size() const noexcept;
-    bool empty() const noexcept;
+    bool empty() const noexcept;    
     const BoostProduct& operator[](std::size_t idx)const noexcept;
     const BoostProduct& front() const noexcept;
     const BoostProduct& back() const noexcept;

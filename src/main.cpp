@@ -44,12 +44,25 @@ void print(std::vector<double> v){
 #include <vector>
 
 #include <BoostHistory.h>
+#include "Features_boost/FeatureCurrentPrice.h"
 
 int main(void)
 {
     global_init();
 
-    
+    PostgresDB db;
+    db.connect(get_conn());
+
+    auto raw_sample = db.fetch(std::string("SELECT p1.id, t1.price, t1.date, t1.discount FROM (SELECT DISTINCT ON (date) * FROM cards WHERE title = 'Яблоки Голден' ORDER BY date ASC) t1 JOIN products p1 ON t1.title = p1.title;"), std::vector<std::string>{});
+    BoostHistory bh;
+    for(const auto& obj : raw_sample){
+        int y,m,d;
+        std::sscanf(obj[2].c_str(), "%d-%d-%d", &y, &m, &d);
+        std::chrono::year_month_day ymd{std::chrono::year{y}, std::chrono::month{static_cast<unsigned int>(m)}, std::chrono::day{static_cast<unsigned int>(d)}};
+        bh.add_product(BoostProduct(std::stoi(obj[0]), std::stoi(obj[1]), ymd, obj[3].empty() ? std::nullopt : std::optional<uint32_t>(std::stoi(obj[3]))));
+    }
+
+    std::cout << FeatureCurrentPrice::compute(bh) << '\n';
 
     // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 
