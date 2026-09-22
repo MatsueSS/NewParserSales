@@ -43,50 +43,57 @@ void print(std::vector<double> v){
 #include <string>
 #include <vector>
 
+#include <BoostHistory.h>
+
 int main() {
-    const std::string modelPath =
-        "../py_scripts/models_v2/catboost_classifier.cbm";
+    BoostHistory cbh;
+    std::chrono::year_month_day ymd(std::chrono::year{2020}, std::chrono::March, std::chrono::day{1});
+    BoostProduct pr(1, 1, ymd);
+    cbh.add_product(std::move(pr));
 
-    ModelCalcerWrapper classifier(modelPath);
+    // const std::string modelPath =
+    //     "../py_scripts/models_v2/catboost_classifier.cbm";
 
-    std::vector<float> features = {
-        95.0f,   // price
-        0.0f,    // price_change_1
-        0.0f,    // price_change_pct_1
-        97.5f,   // price_mean_4
-        2.89f,   // price_std_4
-        95.0f,   // price_min_4
-        100.0f,  // price_max_4
-        98.1f,   // price_mean_8
-        3.12f,   // price_std_8
-        99.0f,   // price_mean_12
-        3.54f,   // price_std_12
-        0.0f,    // discount_prev_week
-        2.0f,    // weeks_since_last_discount
-        1.0f,    // discount_count_last_4
-        2.0f,    // discount_count_last_8
-        3.0f,    // discount_count_last_12
-        0.25f,   // discount_frequency_4
-        0.25f,   // discount_frequency_8
-        0.25f,   // discount_frequency_12
-        2.0f,    // last_discount_interval
-        10.0f,   // discount_prev_value
-        37.0f,   // week_of_year
-        9.0f,    // month
-        3.0f     // quarter
-    };
+    // ModelCalcerWrapper classifier(modelPath);
 
-    float rawPrediction = classifier.CalcFlat(features);
-    double probability =
-        1.0 / (1.0 + std::exp(-rawPrediction));
+    // std::vector<float> features = {
+    //     95.0f,   // price
+    //     0.0f,    // price_change_1
+    //     0.0f,    // price_change_pct_1
+    //     97.5f,   // price_mean_4
+    //     2.89f,   // price_std_4
+    //     95.0f,   // price_min_4
+    //     100.0f,  // price_max_4
+    //     98.1f,   // price_mean_8
+    //     3.12f,   // price_std_8
+    //     99.0f,   // price_mean_12
+    //     3.54f,   // price_std_12
+    //     0.0f,    // discount_prev_week
+    //     2.0f,    // weeks_since_last_discount
+    //     1.0f,    // discount_count_last_4
+    //     2.0f,    // discount_count_last_8
+    //     3.0f,    // discount_count_last_12
+    //     0.25f,   // discount_frequency_4
+    //     0.25f,   // discount_frequency_8
+    //     0.25f,   // discount_frequency_12
+    //     2.0f,    // last_discount_interval
+    //     10.0f,   // discount_prev_value
+    //     37.0f,   // week_of_year
+    //     9.0f,    // month
+    //     3.0f     // quarter
+    // };
 
-    std::cout << "Raw prediction: "
-              << rawPrediction << '\n';
+    // float rawPrediction = classifier.CalcFlat(features);
+    // double probability =
+    //     1.0 / (1.0 + std::exp(-rawPrediction));
 
-    std::cout << "Probability of discount: "
-              << probability << '\n';
+    // std::cout << "Raw prediction: "
+    //           << rawPrediction << '\n';
 
-    return 0;
+    // std::cout << "Probability of discount: "
+    //           << probability << '\n';
+
+    // return 0;
 }
 
 // int main(void)

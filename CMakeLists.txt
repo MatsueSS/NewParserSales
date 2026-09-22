@@ -48,6 +48,7 @@ add_executable(${PROJECT_NAME}
     src/Forecast/ForecastManager.cpp
     src/Wrappers/ModelWrapper.cpp
     src/Models/LogisticRegressionModel.cpp
+    src/BoostProduct.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
