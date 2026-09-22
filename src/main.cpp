@@ -45,6 +45,7 @@ void print(std::vector<double> v){
 
 #include <BoostHistory.h>
 #include "Features_boost/FeatureBoostCurrentPrice.h"
+#include "Features_boost/FeatureBoostPriceChange1.h"
 
 int main(void)
 {
@@ -63,6 +64,7 @@ int main(void)
     }
 
     std::cout << FeatureBoostCurrentPrice::compute(bh) << '\n';
+    std::cout << FeateruBoostPriceChange1::compute(bh) << '\n';
 
     // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
 

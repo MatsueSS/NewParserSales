@@ -12,8 +12,8 @@ private:
     }
 
     template<ConceptBoostHistory T>
-    static std::uint32_t compute_impl(T&& sample) noexcept {
-        return sample.back().get_price();
+    static std::int32_t compute_impl(T&& sample) noexcept {
+        return static_cast<std::int32_t>(sample.back().get_price());
     }
 };
 
