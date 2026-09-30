@@ -14,7 +14,7 @@ public:
         return result;
     }
 
-    static std::vector<type_feature_regression> get_names() {
+    static std::vector<type_feature_regression> get_names() noexcept {
         std::vector<type_feature_regression> names;
         (names.push_back(FeaturesRegression::name()), ...);
         return names;

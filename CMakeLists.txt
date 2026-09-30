@@ -8,6 +8,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/CatBoostStatic.cmake)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined -fno-omit-frame-pointer -g -O1")
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 

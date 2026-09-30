@@ -33,45 +33,45 @@ std::vector<int> ForecastManager::build_dates_seasons(std::string str)
     switch (idx){
     case seasons::AUTUMN:
         try{
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (9, 10, 11) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (9, 10, 11) ORDER BY date ASC;", str);
         } catch (BadConnectionDBexception& e){
             db.connect(get_conn());
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (9, 10, 11) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (9, 10, 11) ORDER BY date ASC;", str);
         } catch (ErrorQueryResultDBexception& e){
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (9, 10, 11) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (9, 10, 11) ORDER BY date ASC;", str);
         }
         start = converte_string("2025-09-06");
         break;
     case seasons::WINTER:
         try{
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (12, 1, 2) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (12, 1, 2) ORDER BY date ASC;", str);
         } catch (BadConnectionDBexception& e){
             db.connect(get_conn());
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (12, 1, 2) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (12, 1, 2) ORDER BY date ASC;", str);
         } catch (ErrorQueryResultDBexception& e){
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (12, 1, 2) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (12, 1, 2) ORDER BY date ASC;", str);
         }
         start = converte_string("2025-12-06");
         break;
     case seasons::SPRING:
         try{
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (3, 4, 5) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (3, 4, 5) ORDER BY date ASC;", str);
         } catch (BadConnectionDBexception& e){
             db.connect(get_conn());
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (3, 4, 5) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (3, 4, 5) ORDER BY date ASC;", str);
         } catch (ErrorQueryResultDBexception& e){
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (3, 4, 5) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (3, 4, 5) ORDER BY date ASC;", str);
         }
         start = converte_string("2026-03-07");
         break;
     case seasons::SUMMER:
         try{
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (6, 7, 8) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (6, 7, 8) ORDER BY date ASC;", str);
         } catch (BadConnectionDBexception& e){
             db.connect(get_conn());
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (6, 7, 8) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (6, 7, 8) ORDER BY date ASC;", str);
         } catch (ErrorQueryResultDBexception& e){
-            query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (6, 7, 8) ORDER BY date ASC;"), std::vector<std::string>{str});
+            query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 AND discount IS NOT NULL AND EXTRACT(MONTH FROM date) IN (6, 7, 8) ORDER BY date ASC;", str);
         }
         start = converte_string("2026-06-06");
     }
@@ -99,17 +99,17 @@ std::vector<int> ForecastManager::build_dates_seasons(std::string str)
 
 std::vector<int> ForecastManager::build_dates_typical(std::string str)
 {
-    auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{str});
-    auto end_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date DESC LIMIT 1;"), std::vector<std::string>{str});
+    auto first_date = db.fetch("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;", str);
+    auto end_date = db.fetch("SELECT date FROM cards WHERE title = $1 ORDER BY date DESC LIMIT 1;", str);
     if(first_date.empty()) throw EmptySampleProbabilityModelException("empty sample");
     std::vector<std::vector<std::string>> query_result;
     try{
-        query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{str});
+        query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;", str);
     } catch (BadConnectionDBexception& e){
         db.connect(get_conn());
-        query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{str});
+        query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;", str);
     } catch (ErrorQueryResultDBexception& e){
-        query_result = db.fetch(std::string("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;"),  std::vector<std::string>{str});
+        query_result = db.fetch("SELECT DISTINCT date FROM cards WHERE title = $1 and discount IS NOT NULL ORDER BY date ASC;", str);
     }
     if(query_result.empty()) throw EmptySampleProbabilityModelException("empty sample");
     if(query_result.size() < 4) throw SmallSampleForecastManagerException("small sample");
@@ -152,7 +152,7 @@ std::vector<int> ForecastManager::build_dates_typical(std::string str)
 
 int ForecastManager::check_ish(const std::string& str)
 {
-    auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{str});
+    auto first_date = db.fetch("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;", str);
     if(first_date.empty()) throw EmptySampleProbabilityModelException("empty sample");
     int res_ish;
     try{

@@ -609,7 +609,7 @@ def train_classifier(
             [np.inf, -np.inf],
             np.nan,
         )
-        .fillna(-999)
+        .fillna(-2147483648)
     )
 
     y_train = (
@@ -627,7 +627,7 @@ def train_classifier(
             [np.inf, -np.inf],
             np.nan,
         )
-        .fillna(-999)
+        .fillna(-2147483648)
     )
 
     y_test = (
@@ -917,7 +917,7 @@ def train_regressor(
             [np.inf, -np.inf],
             np.nan,
         )
-        .fillna(-999)
+        .fillna(-2147483648)
     )
 
     y_train = (
@@ -934,7 +934,7 @@ def train_regressor(
             [np.inf, -np.inf],
             np.nan,
         )
-        .fillna(-999)
+        .fillna(-2147483648)
     )
 
     y_test = (
@@ -1223,5 +1223,38 @@ def main():
     )
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
+
+def get_product_features(df, product_id):
+    product_df = (
+        df[df["product_id"] == product_id]
+        .sort_values("date")
+        .copy()
+    )
+
+    product_df = create_features(product_df)
+
+    features = get_features()
+
+    return product_df[
+        ["product_id", "date"] + features
+    ]
+
+df = load_data()
+
+product_features = get_product_features(
+    df,
+    product_id=5480
+)
+
+print(product_features)
+
+last_point = product_features.tail(1)
+
+print(last_point)
+
+product_features.to_csv(
+    "product_123_features.csv",
+    index=False
+)

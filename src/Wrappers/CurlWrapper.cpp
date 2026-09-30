@@ -67,7 +67,8 @@ CURLcode CurlWrapper::read(const std::string& url)
 
     curl_easy_setopt(curl_ptr.get(), CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(curl_ptr.get(), CURLOPT_POST, 0L);
-    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDS, "");
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDS, nullptr);
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDSIZE, 0L);
     curl_easy_setopt(curl_ptr.get(), CURLOPT_URL, url.c_str());
 
     response.clear();
@@ -92,7 +93,8 @@ CURLcode CurlWrapper::write(const std::string& url, const std::string& info, con
     response.clear();
     CURLcode res = curl_easy_perform(curl_ptr.get());
 
-    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDS, "");
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDS, nullptr);
+    curl_easy_setopt(curl_ptr.get(), CURLOPT_POSTFIELDSIZE, 0L);
     curl_easy_setopt(curl_ptr.get(), CURLOPT_POST, 0L);
 
     return res;

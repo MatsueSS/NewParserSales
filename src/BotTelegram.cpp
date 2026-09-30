@@ -35,12 +35,12 @@ void BotTelegram::load_users_from_db()
     std::vector<std::vector<std::string>> res;
 
     try{
-        res = db.fetch(std::string("SELECT id FROM users;"), std::vector<std::string>{});
+        res = db.fetch("SELECT id FROM users;");
     } catch (BadConnectionDBexception& e){
         db.connect(conn);
-        res = db.fetch(std::string("SELECT id FROM users;"), std::vector<std::string>{});
+        res = db.fetch("SELECT id FROM users;");
     } catch (ErrorQueryResultDBexception& e){
-        res = db.fetch(std::string("SELECT id FROM users;"), std::vector<std::string>{});
+        res = db.fetch("SELECT id FROM users;");
     }
 
     for(const auto& cont : res){
@@ -51,12 +51,12 @@ void BotTelegram::load_users_from_db()
     res.clear();
 
     try{
-        res = db.fetch(std::string("SELECT id, preference FROM preferences;"), std::vector<std::string>{});
+        res = db.fetch("SELECT id, preference FROM preferences;");
     } catch (BadConnectionDBexception& e){
         db.connect(conn);
-        res = db.fetch(std::string("SELECT id, preference FROM preferences;"), std::vector<std::string>{});
+        res = db.fetch("SELECT id, preference FROM preferences;");
     } catch(ErrorQueryResultDBexception& e){
-        res = db.fetch(std::string("SELECT id, preference FROM preferences;"), std::vector<std::string>{});
+        res = db.fetch("SELECT id, preference FROM preferences;");
     }
 
     for(const auto& cont : res){
@@ -252,12 +252,12 @@ void BotTelegram::command_start(std::string&& id)
     PostgresDB db;
     db.connect(get_conn());
     try{
-        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
+        db.execute("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;", id);
     } catch (BadConnectionDBexception& e){
         db.connect(get_conn());
-        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
+        db.execute("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;", id);
     } catch (ErrorQueryResultDBexception& e){
-        db.execute(std::string("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;"), std::vector<std::string>{id});
+        db.execute("INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING;", id);
     }
 }
 
@@ -265,7 +265,7 @@ void BotTelegram::init_tree() noexcept
 {
     PostgresDB db;
     db.connect(get_conn());
-    std::vector<std::vector<std::string>> unique_card = db.fetch(std::string("SELECT title FROM products;"), std::vector<std::string>{});
+    std::vector<std::vector<std::string>> unique_card = db.fetch("SELECT title FROM products;");
     for(const auto& obj : unique_card){
         tree.add_word(obj[0]);
     }
@@ -293,12 +293,12 @@ void BotTelegram::command_has_discount(std::string&& id, std::string&& card)
         std::vector<std::vector<std::string>> res;
         try{
             db.connect(conn);
-            res = db.fetch(std::string("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)"), std::vector<std::string>{true_card, last_sat});
+            res = db.fetch("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)", true_card, last_sat);
         } catch (BadConnectionDBexception& e){
             db.connect(conn);
-            res = db.fetch(std::string("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)"), std::vector<std::string>{true_card, last_sat});
+            res = db.fetch("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)", true_card, last_sat);
         } catch (ErrorQueryResultDBexception& e){
-            res = db.fetch(std::string("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)"), std::vector<std::string>{true_card, last_sat});
+            res = db.fetch("SELECT EXISTS (SELECT DISTINCT ON(date) 1 FROM cards WHERE title = $1 AND date = $2 AND discount IS NOT NULL)", true_card, last_sat);
         }
 
         if(res[0][0] == "t"){
@@ -333,24 +333,24 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
             std::string temp = ptr_pc->get_title(obj).get_title();
             user->second.add_product(temp);
             try{
-                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, temp});
+                db.execute("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;", id, temp);
             } catch(BadConnectionDBexception& e){
                 db.connect(conn);
-                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, temp});
+                db.execute("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;", id, temp);
             } catch(ErrorQueryResultDBexception& e){
-                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, temp});
+                db.execute("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;", id, temp);
             }
         }
     }
     else{
         std::vector<std::vector<std::string>> result_query_found;
         try{
-            result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{data});
+            result_query_found = db.fetch("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);", data);
         } catch (BadConnectionDBexception& e){
             db.connect(conn);
-            result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{data});
+            result_query_found = db.fetch("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);", data);
         } catch (ErrorQueryResultDBexception& e){
-            result_query_found = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);"), std::vector<std::string>{data});
+            result_query_found = db.fetch("SELECT EXISTS (SELECT 1 FROM cards WHERE title = $1);", data);
         }
 
         if(result_query_found[0][0] == "f"){
@@ -359,12 +359,12 @@ void BotTelegram::command_add_card(std::string&& id, std::string&& data)
             found = true;
             user->second.add_product(std::string(data));
             try{
-                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, data});
+                db.execute("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;", id, data);
             } catch(BadConnectionDBexception& e){
                 db.connect(conn);
-                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, data});
+                db.execute("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;", id, data);
             } catch(ErrorQueryResultDBexception& e) {
-                db.execute(std::string("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;"), std::vector<std::string>{id, data});
+                db.execute("INSERT INTO preferences (id, preference) VALUES ($1, $2) ON CONFLICT (id, preference) DO NOTHING;", id, data);
             }
         }
     }
@@ -390,12 +390,12 @@ void BotTelegram::command_del_card(std::string&& id, std::string&& data)
     std::string conn = get_conn();
     try{
         db.connect(conn);
-        db.execute(std::string("DELETE FROM preferences WHERE id = $1 AND preference = $2;"), std::vector<std::string>{id, data});
+        db.execute("DELETE FROM preferences WHERE id = $1 AND preference = $2;", id, data);
     } catch(BadConnectionDBexception& e) {
         db.connect(conn);
-        db.execute(std::string("DELETE FROM preferences WHERE id = $1 AND preference = $2;"), std::vector<std::string>{id, data});
+        db.execute("DELETE FROM preferences WHERE id = $1 AND preference = $2;", id, data);
     } catch(ErrorQueryResultDBexception& e) {
-        db.execute(std::string("DELETE FROM preferences WHERE id = $1 AND preference = $2;"), std::vector<std::string>{id, data});
+        db.execute("DELETE FROM preferences WHERE id = $1 AND preference = $2;", id, data);
     }
 }
 
@@ -419,7 +419,7 @@ void BotTelegram::command_status(std::string&& id)
     PostgresDB db;
     db.connect(get_conn());
 
-    auto res = db.fetch(std::string("SELECT t1.preference FROM (SELECT * FROM preferences WHERE id = $1) t1 INNER JOIN (SELECT title FROM cards WHERE date = $2 AND discount IS NOT NULL) t2 ON t1.preference = t2.title;"), std::vector<std::string>{id, converte_ymd(get_previous_or_current_saturday())});
+    auto res = db.fetch("SELECT t1.preference FROM (SELECT * FROM preferences WHERE id = $1) t1 INNER JOIN (SELECT title FROM cards WHERE date = $2 AND discount IS NOT NULL) t2 ON t1.preference = t2.title;", id, converte_ymd(get_previous_or_current_saturday()));
     std::string result = "Ваши скидки:\n";
     for(const auto& obj : res){
         result += obj[0] + '\n';

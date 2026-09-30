@@ -46,31 +46,95 @@ void print(std::vector<double> v){
 #include <BoostHistory.h>
 #include "Features_boost/FeatureBoostCurrentPrice.h"
 #include "Features_boost/FeatureBoostPriceChange1.h"
+#include "Features_boost/FeatureBoostPriceChangePct1.h"
+#include "Features_boost/FeatureBoostPriceMean4.h"
+#include "Features_boost/FeatureBoostPriceMin4.h"
+#include "Features_boost/FeatureBoostPriceMax4.h"
+#include "Features_boost/FeatureBoostPriceMean8.h"
+#include "Features_boost/FeatureBoostPriceMean12.h"
+#include "Features_boost/FeatureBoostPrevDiscount.h"
+#include "Features_boost/FeatureBoostSinceLastDiscount.h"
+#include "Features_boost/FeatureBoostDiscountCount4.h"
+#include "Features_boost/FeatureBoostDiscountCount8.h"
+#include "Features_boost/FeatureBoostDiscountCount12.h"
+#include "Features_boost/FeatureBoostDiscountFreq4.h"
+#include "Features_boost/FeatureBoostDiscountFreq8.h"
+#include "Features_boost/FeatureBoostDiscountFreq12.h"
+#include "Features_boost/FeatureBoostLastDiscountInterval.h"
+#include "Features_boost/FeatureBoostDiscountPrevValue.h"
+#include "Features_boost/FeatureBoostWeek.h"
+#include "Features_boost/FeatureBoostMonth.h"
+#include "Features_boost/FeatureBoostQuarter.h"
+#include "Features_boost/FeatureBoostStd4.h"
+#include "Features_boost/FeatureBoostStd8.h"
+#include "Features_boost/FeatureBoostStd12.h"
+
+#include "Features_boost/FeatureBoostExtractor.h"
 
 int main(void)
 {
     global_init();
 
-    PostgresDB db;
-    db.connect(get_conn());
+    // PostgresDB db;
+    // db.connect(get_conn());
 
-    auto raw_sample = db.fetch(std::string("SELECT p1.id, t1.price, t1.date, t1.discount FROM (SELECT DISTINCT ON (date) * FROM cards WHERE title = 'Яблоки Голден' ORDER BY date ASC) t1 JOIN products p1 ON t1.title = p1.title;"), std::vector<std::string>{});
-    BoostHistory bh;
-    for(const auto& obj : raw_sample){
-        int y,m,d;
-        std::sscanf(obj[2].c_str(), "%d-%d-%d", &y, &m, &d);
-        std::chrono::year_month_day ymd{std::chrono::year{y}, std::chrono::month{static_cast<unsigned int>(m)}, std::chrono::day{static_cast<unsigned int>(d)}};
-        bh.add_product(BoostProduct(std::stoi(obj[0]), std::stoi(obj[1]), ymd, obj[3].empty() ? std::nullopt : std::optional<uint32_t>(std::stoi(obj[3]))));
-    }
+    // auto raw_sample = db.fetch(std::string("SELECT p1.id, t1.price, t1.date, t1.discount FROM (SELECT DISTINCT ON (date) * FROM cards WHERE title = 'Яблоки Голден' ORDER BY date ASC) t1 JOIN products p1 ON t1.title = p1.title;"), std::vector<std::string>{});
+    // BoostHistory bh;
+    // for(const auto& obj : raw_sample){
+    //     int y,m,d;
+    //     std::sscanf(obj[2].c_str(), "%d-%d-%d", &y, &m, &d);
+    //     std::chrono::year_month_day ymd{std::chrono::year{y}, std::chrono::month{static_cast<unsigned int>(m)}, std::chrono::day{static_cast<unsigned int>(d)}};
+    //     bh.add_product(BoostProduct(std::stoi(obj[0]), std::stoi(obj[1]), ymd, obj[3].empty() ? std::nullopt : std::optional<uint32_t>(std::stoi(obj[3]))));
+    // }
 
-    std::cout << FeatureBoostCurrentPrice::compute(bh) << '\n';
-    std::cout << FeateruBoostPriceChange1::compute(bh) << '\n';
+    // using MyExtractor = FeatureBoostExtractor<FeatureBoostCurrentPrice, FeatureBoostPriceChange1, FeatureBoostPriceChangePct1, FeatureBoostPriceMean4, FeatureBoostStd4, FeatureBoostPriceMin4, FeatureBoostPriceMax4, FeatureBoostPriceMean8, FeatureBoostStd8, FeatureBoostPriceMean12, FeatureBoostStd12, FeatureBoostPrevDiscount, FeatureBoostSinceLastDiscount, FeatureBoostDiscountCount4, FeatureBoostDiscountCount8, FeatureBoostDiscountCount12, FeatureBoostDiscountFreq4, FeatureBoostDiscountFreq8, FeatureBoostDiscountFreq12, FeatureBoostLastDiscountInterval, FeatureBoostDiscountPrevValue, FeatureBoostWeek, FeatureBoostMonth, FeatureBoostQuarter>;
+    
+    // auto ans = MyExtractor::extract(bh);
 
-    // Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+    // for(const auto& obj : ans){
+    //     for(float g : obj) std::cout << g << ' ';
+    //     std::cout << "------------\n-----------";
+    // }
 
-    // while(true){
-    //     inter.start_process();
-    // }   
+    // const std::string modelPath =
+    //     "../py_scripts/models_v2/catboost_classifier.cbm";
+
+    // std::cout << "Number of features: "
+    //           << ans.back().size()
+    //           << '\n';
+
+    // // Загружаем модель
+    // ModelCalcerWrapper model(modelPath);
+
+    // // Получаем raw prediction
+    // double rawPrediction = model.CalcFlat(ans.back());
+
+    // // Превращаем raw prediction в вероятность
+    // double probability =
+    //     1.0 / (1.0 + std::exp(-rawPrediction));
+
+    // // Класс при пороге 0.5
+    // int prediction = probability >= 0.5 ? 1 : 0;
+
+    // std::cout << "Raw prediction: "
+    //           << rawPrediction
+    //           << '\n';
+
+    // std::cout << "Probability: "
+    //           << probability
+    //           << '\n';
+
+    // std::cout << "Class: "
+    //           << prediction
+    //           << '\n';
+
+    // return 0;
+
+    Interface inter(get_last_offset(), RecType::MATRIX, ProdType::FILE_SEARCHER, TypeParses::PY_AUTOCLICK_PARSER);
+
+    while(true){
+        inter.start_process();
+    }   
 
     // std::vector<int> sample = {0,1,1,0,1,0,0,0,0,1,1,0,0,1,1,1,0,0,1,1,1,1,1,0,0,1,0,1,0,1,1,1,0,0,0,1,0,0,0,1};
 

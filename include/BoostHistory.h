@@ -26,7 +26,7 @@ public:
     }
 
     std::size_t size() const noexcept;
-    bool empty() const noexcept;    
+    bool empty() const noexcept;
     const BoostProduct& operator[](std::size_t idx)const noexcept;
     const BoostProduct& front() const noexcept;
     const BoostProduct& back() const noexcept;

@@ -52,7 +52,7 @@ void Interface::start_process() const {
         PostgresDB db;
         db.connect(get_conn());
 
-        auto discounts = db.fetch(std::string("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;"), std::vector<std::string>{get_date_str_now()});
+        auto discounts = db.fetch("SELECT title FROM cards WHERE date = $1 AND discount IS NOT NULL;", get_date_str_now());
 
         for(const auto& obj : discounts){
             ptr->notify_all(obj[0]);
@@ -74,16 +74,16 @@ std::string Interface::save_in_bd(std::vector<ProductData>&& obj) const
     std::string date = data["date"];
     for(const auto& obj : data["products"]){
         if(obj.contains("discount")){
-            db.execute(std::string("INSERT INTO cards (title, price, discount, date) VALUES ($1, $2, $3, $4);"), std::vector<std::string>{obj["title"], obj["price"], obj["discount"], date});
+            db.execute("INSERT INTO cards (title, price, discount, date) VALUES ($1, $2, $3, $4);", obj["title"].get<std::string>(), obj["price"].get<std::string>(), obj["discount"].get<std::string>(), date);
         }
         else{
-            db.execute(std::string("INSERT INTO cards (title, price, date) VALUES ($1, $2, $3);"), std::vector<std::string>{obj["title"], obj["price"], date});
+            db.execute("INSERT INTO cards (title, price, date) VALUES ($1, $2, $3);", obj["title"].get<std::string>(), obj["price"].get<std::string>(), date);
         }
 
-        auto res = db.fetch(std::string("SELECT EXISTS (SELECT 1 FROM products WHERE title = $1);"), std::vector<std::string>{obj["title"]});
+        auto res = db.fetch("SELECT EXISTS (SELECT 1 FROM products WHERE title = $1);", obj["title"].get<std::string>());
         if(res[0][0] == "f"){
             ptr_pc->add_product(obj["title"]);
-            db.execute(std::string("INSERT INTO products (title) VALUES ($1)"), std::vector<std::string>{obj["title"]});
+            db.execute("INSERT INTO products (title) VALUES ($1)", obj["title"].get<std::string>());
         }
     }
     return date;

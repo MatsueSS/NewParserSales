@@ -100,13 +100,13 @@ void check_independence_week()
 
     PostgresDB db;
     db.connect(get_conn());
-    std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT title FROM products;"), std::vector<std::string>{});
+    std::vector<std::vector<std::string>> result = db.fetch("SELECT title FROM products;");
     std::ofstream file("../sensetive_res/independence_for_week1.txt");
 
     int count = 0;
     for(const auto& vec : result){
         try{
-            auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{vec[0]});
+            auto first_date = db.fetch("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;", vec[0]);
             if(first_date.empty()) continue;
             if(first_date[0][0] == "2026-04-18") continue;
             bool r = iwh.check_hypothesis(vec[0], first_date[0][0], "2026-04-18", 0.95);
@@ -127,13 +127,13 @@ void check_independence_season()
 
     PostgresDB db;
     db.connect(get_conn());
-    std::vector<std::vector<std::string>> result = db.fetch(std::string("SELECT title FROM products;"), std::vector<std::string>{});
+    std::vector<std::vector<std::string>> result = db.fetch("SELECT title FROM products;");
     std::ofstream file("../sensetive_res/independence_for_season.txt");
 
     int count = 0;
     for(const auto& vec : result){
         try{
-            auto first_date = db.fetch(std::string("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;"), std::vector<std::string>{vec[0]});
+            auto first_date = db.fetch("SELECT date FROM cards WHERE title = $1 ORDER BY date ASC LIMIT 1;", vec[0]);
             if(first_date.empty()) continue;
             std::cout << vec[0] << '\n';
             bool r = ish.check_hypothesis(vec[0], first_date[0][0], "2026-05-31", 0.95);
