@@ -1,0 +1,387 @@
+#ifndef REF_COUNTED_INL_H_
+#error "Direct inclusion of this file is not allowed, include ref_counted.h"
+// For the sake of sane code completion.
+#include "ref_counted.h"
+#endif
+
+#include "tagged_ptr.h"
+
+#include <util/system/sanitizers.h>
+
+#ifdef YT_ENABLE_REF_COUNTED_SIGNATURE
+#include <util/system/types.h>
+#endif
+
+#include <stdlib.h>
+
+namespace NYT {
+
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef YT_ENABLE_REF_COUNTED_SIGNATURE
+
+namespace NDetail {
+
+// A distinctive marker held by a live signature (after address salting).
+constexpr ui64 RefCountedAliveSignatureMagic = 0xa11e0b1ec70a11e0ULL;
+
+// A distinct poison written into the signature once the object is destroyed.
+constexpr ui64 RefCountedDeadSignatureMagic = 0xdeadbeefdeadbeefULL;
+
+//! The alive signature for a signature word living at #address: the magic XOR-ed
+//! with the word's own address.
+//!
+//! The signature is embedded as the first word of every TRefCounter: the ctor
+//! stamps ComputeRefCountedAliveSignature(&signature) and strong-death overwrites
+//! it with RefCountedDeadSignatureMagic. A coredump walker tells a live object
+//! from freed-but-unreclaimed memory: for a word at address S,
+//! *S == ComputeRefCountedAliveSignature(S) means alive,
+//! *S == RefCountedDeadSignatureMagic means freed. The address salt keeps a
+//! signature from validating if copied verbatim elsewhere (it carries the old
+//! address) and makes a chance match of arbitrary memory a ~2^-64 event.
+Y_FORCE_INLINE ui64 ComputeRefCountedAliveSignature(const void* address) noexcept
+{
+    return RefCountedAliveSignatureMagic ^ reinterpret_cast<uintptr_t>(address);
+}
+
+} // namespace NDetail
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+
+// TODO(babenko): move to hazard pointers
+void RetireHazardPointer(
+    void* protectedPtr,
+    void* reclaimPtr,
+    void (*reclaimer)(void* reclaimPtr));
+
+////////////////////////////////////////////////////////////////////////////////
+
+namespace NDetail {
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T, class = void>
+struct TFreeMemory
+{
+    static void Do(void* ptr)
+    {
+#ifdef _win_
+        ::_aligned_free(ptr);
+#else
+        ::free(ptr);
+#endif
+    }
+};
+
+template <class T>
+struct TFreeMemory<T, std::void_t<typename T::TAllocator>>
+{
+    static void Do(void* ptr)
+    {
+        using TAllocator = typename T::TAllocator;
+        TAllocator::Free(ptr);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T, class = void>
+struct TMemoryReleaser
+{
+    static void Do(void* ptr, ui16 /*offset*/)
+    {
+        TFreeMemory<T>::Do(ptr);
+    }
+};
+
+template <class T>
+struct TMemoryReleaser<T, std::enable_if_t<T::EnableHazard>>
+{
+    static void Do(void* ptr, ui16 offset)
+    {
+        RetireHazardPointer(
+            static_cast<char*>(ptr) + offset,
+            ptr,
+            [] (void* reclaimPtr) {
+                TFreeMemory<T>::Do(reclaimPtr);
+        });
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+Y_FORCE_INLINE void DestroyRefCountedImpl(T* obj)
+{
+    // No standard way to statically calculate the base offset even if T is final.
+    // static_cast<TFinalDerived*>(virtualBasePtr) does not work.
+    auto* basePtr = static_cast<TRefCountedBase*>(obj);
+    auto offset = reinterpret_cast<uintptr_t>(basePtr) - reinterpret_cast<uintptr_t>(obj);
+    auto* refCounter = GetRefCounter(obj);
+
+    // No virtual call when T is final.
+    obj->~T();
+
+    // The ref-counter is a base subobject of *obj, so obj->~T() above poisons it
+    // under -fsanitize-memory-use-after-dtor. Unpoison before accessing it.
+    NSan::Unpoison(refCounter, sizeof(TRefCounter));
+
+    // Fast path. Weak refs cannot appear if there are neither strong nor weak refs.
+    if (refCounter->GetWeakRefCount() == 1) {
+        NYT::NDetail::TMemoryReleaser<T>::Do(obj, offset);
+        return;
+    }
+
+    YT_ASSERT(offset < (1ULL << PackedPtrTagBits));
+
+    static_assert(sizeof(TRefCountedBase) >= sizeof(TPackedPtr));
+    auto* vTablePtr = reinterpret_cast<TPackedPtr*>(basePtr);
+    *vTablePtr = TTaggedPtr<void(void*, ui16)>(&NYT::NDetail::TMemoryReleaser<T>::Do, offset).Pack();
+
+    if (refCounter->WeakUnref()) {
+        NYT::NDetail::TMemoryReleaser<T>::Do(obj, offset);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Specialization for final classes.
+template <class T, bool = std::derived_from<T, TRefCountedBase>>
+struct TRefCountedTraits
+{
+    static_assert(
+        std::is_final_v<T>,
+        "Ref-counted objects must be derived from TRefCountedBase or to be final");
+
+    static constexpr size_t RefCounterSpace = (sizeof(TRefCounter) + alignof(T) - 1) & ~(alignof(T) - 1);
+    static constexpr size_t RefCounterOffset = RefCounterSpace - sizeof(TRefCounter);
+
+    Y_FORCE_INLINE static const TRefCounter* GetRefCounter(const T* obj)
+    {
+        return reinterpret_cast<const TRefCounter*>(obj) - 1;
+    }
+
+    Y_FORCE_INLINE static void Destroy(const T* obj)
+    {
+        auto* refCounter = GetRefCounter(obj);
+
+        // No virtual call when T is final.
+        obj->~T();
+
+        char* ptr = reinterpret_cast<char*>(const_cast<TRefCounter*>(refCounter));
+
+        // Fast path. Weak refs cannot appear if there are neither strong nor weak refs.
+        if (refCounter->GetWeakRefCount() == 1) {
+            NYT::NDetail::TMemoryReleaser<T>::Do(ptr - RefCounterOffset, RefCounterSpace);
+            return;
+        }
+
+        if (refCounter->WeakUnref()) {
+            NYT::NDetail::TMemoryReleaser<T>::Do(ptr - RefCounterOffset, RefCounterSpace);
+        }
+    }
+
+    Y_FORCE_INLINE static void Deallocate(const T* obj)
+    {
+        char* ptr = reinterpret_cast<char*>(const_cast<TRefCounter*>(GetRefCounter(obj)));
+        NYT::NDetail::TMemoryReleaser<T>::Do(ptr - RefCounterOffset, RefCounterSpace);
+    }
+};
+
+// Specialization for classes derived from TRefCountedBase.
+template <class T>
+struct TRefCountedTraits<T, true>
+{
+    static_assert(
+        sizeof(T) < (1ULL << PackedPtrTagBits),
+        "Ref counted object derived from TRefCountedBase exceedes max size");
+
+    Y_FORCE_INLINE static const TRefCounter* GetRefCounter(const T* obj)
+    {
+        return obj;
+    }
+
+    Y_FORCE_INLINE static void Destroy(const TRefCountedBase* obj)
+    {
+        const_cast<TRefCountedBase*>(obj)->DestroyRefCounted();
+    }
+
+    Y_FORCE_INLINE static void Deallocate(const TRefCountedBase* obj)
+    {
+        static_assert(sizeof(TRefCountedBase) >= sizeof(TPackedPtr));
+        auto* ptr = reinterpret_cast<TPackedPtr*>(const_cast<TRefCountedBase*>(obj));
+        auto [ptrToDeleter, offset] = TTaggedPtr<void(void*, ui16)>::Unpack(*ptr);
+
+        // The most derived type is erased here. So we cannot call TMemoryReleaser with derived type.
+        ptrToDeleter(reinterpret_cast<char*>(ptr) - offset, offset);
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+} // namespace NDetail
+
+////////////////////////////////////////////////////////////////////////////////
+
+Y_FORCE_INLINE int TRefCounter::GetRefCount() const noexcept
+{
+    return StrongCount_.load(std::memory_order::acquire);
+}
+
+#ifdef YT_ENABLE_REF_COUNTED_SIGNATURE
+
+Y_FORCE_INLINE TRefCounter::TRefCounter() noexcept
+    : Signature_(NDetail::ComputeRefCountedAliveSignature(this))
+{ }
+
+Y_FORCE_INLINE ui64 TRefCounter::GetSignature() const noexcept
+{
+    return Signature_;
+}
+
+#endif
+
+Y_FORCE_INLINE void TRefCounter::Ref(int n) const noexcept
+{
+    YT_ASSERT(n >= 0);
+
+    // It is safe to use relaxed here, since new reference is always created from another live reference.
+    auto value = StrongCount_.fetch_add(n, std::memory_order::relaxed);
+    YT_ASSERT(value > 0);
+    YT_ASSERT(value <= std::numeric_limits<TRefCount>::max() - n);
+
+    YT_ASSERT(WeakCount_.load(std::memory_order::relaxed) > 0);
+}
+
+Y_FORCE_INLINE void TRefCounter::DangerousRef(int n) const noexcept
+{
+    YT_ASSERT(n >= 0);
+
+    // Relaxed is fine as per lukyan@, the caller guarantees object liveness.
+    auto value = StrongCount_.fetch_add(n, std::memory_order::relaxed);
+    YT_ASSERT(value >= 0);
+    YT_ASSERT(value <= std::numeric_limits<TRefCount>::max() - n);
+
+    YT_ASSERT(WeakCount_.load(std::memory_order::relaxed) > 0);
+}
+
+Y_FORCE_INLINE bool TRefCounter::TryRef() const noexcept
+{
+    auto value = StrongCount_.load(std::memory_order::relaxed);
+    YT_ASSERT(value >= 0 && value < std::numeric_limits<TRefCount>::max());
+    YT_ASSERT(WeakCount_.load(std::memory_order::relaxed) > 0);
+
+    while (value != 0 && !StrongCount_.compare_exchange_weak(value, value + 1));
+    return value != 0;
+}
+
+Y_FORCE_INLINE bool TRefCounter::Unref(int n) const
+{
+    YT_ASSERT(n >= 0);
+
+    // We must properly synchronize last access to object with it destruction.
+    // Otherwise compiler might reorder access to object past this decrement.
+    //
+    // See http://www.boost.org/doc/libs/1_55_0/doc/html/atomic/usage_examples.html#boost_atomic.usage_examples.example_reference_counters
+    //
+    auto oldStrongCount = StrongCount_.fetch_sub(n, std::memory_order::release);
+    YT_ASSERT(oldStrongCount >= n);
+    if (oldStrongCount == n) {
+        std::atomic_thread_fence(std::memory_order::acquire);
+        NSan::Acquire(&StrongCount_);
+#ifdef YT_ENABLE_REF_COUNTED_SIGNATURE
+        // Last strong ref gone: the object is about to be destroyed. Poison now so
+        // a core walker sees freed-but-unreclaimed memory as dead.
+        Signature_ = NDetail::RefCountedDeadSignatureMagic;
+#endif
+        return true;
+    } else {
+        return false;
+    }
+}
+
+Y_FORCE_INLINE int TRefCounter::GetWeakRefCount() const noexcept
+{
+    return WeakCount_.load(std::memory_order::acquire);
+}
+
+Y_FORCE_INLINE void TRefCounter::WeakRef() const noexcept
+{
+    auto oldWeakCount = WeakCount_.fetch_add(1, std::memory_order::relaxed);
+    YT_ASSERT(oldWeakCount > 0);
+}
+
+Y_FORCE_INLINE bool TRefCounter::WeakUnref() const
+{
+    auto oldWeakCount = WeakCount_.fetch_sub(1, std::memory_order::release);
+    YT_ASSERT(oldWeakCount > 0);
+    if (oldWeakCount == 1) {
+        std::atomic_thread_fence(std::memory_order::acquire);
+        NSan::Acquire(&WeakCount_);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+Y_FORCE_INLINE const TRefCounter* GetRefCounter(const T* obj)
+{
+    return NYT::NDetail::TRefCountedTraits<T>::GetRefCounter(obj);
+}
+
+template <class T>
+Y_FORCE_INLINE void DestroyRefCounted(const T* obj)
+{
+    NYT::NDetail::TRefCountedTraits<T>::Destroy(obj);
+}
+
+template <class T>
+Y_FORCE_INLINE void DeallocateRefCounted(const T* obj)
+{
+    NYT::NDetail::TRefCountedTraits<T>::Deallocate(obj);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class T>
+Y_FORCE_INLINE void Ref(T* obj, int n)
+{
+    GetRefCounter(obj)->Ref(n);
+}
+
+template <class T>
+Y_FORCE_INLINE void Unref(T* obj, int n)
+{
+    if (GetRefCounter(obj)->Unref(n)) {
+        DestroyRefCounted(obj);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+Y_FORCE_INLINE void TRefCounted::Unref() const
+{
+    ::NYT::Unref(this);
+}
+
+Y_FORCE_INLINE void TRefCounted::WeakUnref() const
+{
+    if (TRefCounter::WeakUnref()) {
+        DeallocateRefCounted(this);
+    }
+}
+
+template <class T>
+void TRefCounted::DestroyRefCountedImpl(T* obj)
+{
+    NYT::NDetail::DestroyRefCountedImpl<T>(obj);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+} // namespace NYT

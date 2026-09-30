@@ -1,0 +1,205 @@
+#include "string.h"
+
+#include <library/cpp/yt/assert/assert.h>
+
+#include <library/cpp/yt/misc/variant.h>
+
+#include <library/cpp/yt/memory/new.h>
+
+namespace NYT::NYson {
+
+////////////////////////////////////////////////////////////////////////////////
+
+TYsonStringBuf::TYsonStringBuf()
+{
+    Type_ = EYsonType::Node; // fake
+    Null_ = true;
+}
+
+TYsonStringBuf::TYsonStringBuf(const TYsonString& ysonString)
+{
+    if (ysonString) {
+        Data_ = ysonString.AsStringBuf();
+        Type_ = ysonString.GetType();
+        Null_ = false;
+    } else {
+        Type_ = EYsonType::Node; // fake
+        Null_ = true;
+    }
+}
+
+TYsonStringBuf::TYsonStringBuf(const TString& data, EYsonType type)
+    : TYsonStringBuf(TStringBuf(data), type)
+{ }
+
+TYsonStringBuf::TYsonStringBuf(TStringBuf data, EYsonType type)
+    : Data_(data)
+    , Type_(type)
+    , Null_(false)
+{ }
+
+TYsonStringBuf::TYsonStringBuf(const char* data, EYsonType type)
+    : TYsonStringBuf(TStringBuf(data), type)
+{ }
+
+TYsonStringBuf::operator bool() const
+{
+    return !Null_;
+}
+
+TStringBuf TYsonStringBuf::AsStringBuf() const
+{
+    YT_VERIFY(*this);
+    return Data_;
+}
+
+EYsonType TYsonStringBuf::GetType() const
+{
+    YT_VERIFY(*this);
+    return Type_;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+TYsonString::TYsonString(const TYsonStringBuf& ysonStringBuf)
+{
+    if (ysonStringBuf) {
+        auto data = ysonStringBuf.AsStringBuf();
+        auto holder = NDetail::TYsonStringHolder::Allocate(data.length());
+        ::memcpy(holder->GetData(), data.data(), data.length());
+        Begin_ = holder->GetData();
+        Size_ = data.size();
+        Type_ = ysonStringBuf.GetType();
+        Payload_ = std::move(holder);
+    } else {
+        Begin_ = nullptr;
+        Size_ = 0;
+        Type_ = EYsonType::Node; // fake
+    }
+}
+
+TYsonString::TYsonString(
+    TStringBuf data,
+    EYsonType type)
+    : TYsonString(TYsonStringBuf(data, type))
+{ }
+
+TYsonString::TYsonString(
+    const TString& data,
+    EYsonType type)
+    : TYsonString(TCowString(data), type)
+{ }
+
+TYsonString::TYsonString(
+    TCowString data,
+    EYsonType type)
+    : Payload_(std::move(data))
+    , Begin_(std::get<TCowString>(Payload_).data())
+    , Size_(std::get<TCowString>(Payload_).length())
+    , Type_(type)
+{ }
+
+TYsonString::TYsonString(
+    std::string data,
+    EYsonType type)
+    : TYsonString(TCowString(std::move(data)), type)
+{ }
+
+TYsonString::TYsonString(
+    const TSharedRef& data,
+    EYsonType type)
+    : Payload_(data.GetHolder())
+    , Begin_(data.Begin())
+    , Size_(data.Size())
+    , Type_(type)
+{ }
+
+TYsonString::operator bool() const
+{
+    return !std::holds_alternative<TNullPayload>(Payload_);
+}
+
+EYsonType TYsonString::GetType() const
+{
+    YT_VERIFY(*this);
+    return Type_;
+}
+
+TStringBuf TYsonString::AsStringBuf() const
+{
+    YT_VERIFY(*this);
+    return TStringBuf(Begin_, Begin_ + Size_);
+}
+
+TString TYsonString::ToString() const
+{
+    return Visit(
+        Payload_,
+        [] (const TNullPayload&) -> TString {
+            YT_ABORT();
+        },
+        [&] (const TSharedRangeHolderPtr&) {
+            return TString(AsStringBuf());
+        },
+        [] (const TCowString& payload) {
+            return TString(payload);
+        });
+}
+
+TSharedRef TYsonString::ToSharedRef() const
+{
+    return Visit(
+        Payload_,
+        [] (const TNullPayload&) -> TSharedRef {
+            YT_ABORT();
+        },
+        [&] (const TSharedRangeHolderPtr& holder) {
+            return TSharedRef(Begin_, Size_, holder);
+        },
+        [&] (const TCowString& payload) {
+            return TSharedRef(Begin_, Size_, MakeSharedRangeHolder(payload));
+        });
+}
+
+size_t TYsonString::ComputeHash() const
+{
+    return THash<TStringBuf>()(TStringBuf(Begin_, Begin_ + Size_));
+}
+
+void TYsonString::Save(IOutputStream* s) const
+{
+    EYsonType type = Type_;
+    if (*this) {
+        ::SaveMany(s, type, ToSharedRef());
+    } else {
+        ::SaveMany(s, type, TString());
+    }
+}
+
+void TYsonString::Load(IInputStream* s)
+{
+    EYsonType type;
+    TString data;
+    ::LoadMany(s, type, data);
+    if (data) {
+        *this = TYsonString(data, type);
+    } else {
+        *this = TYsonString();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void FormatValue(TStringBuilderBase* builder, const TYsonString& yson, TStringBuf spec)
+{
+    FormatValue(builder, yson.ToString(), spec);
+}
+
+void FormatValue(TStringBuilderBase* builder, const TYsonStringBuf& yson, TStringBuf spec)
+{
+    FormatValue(builder, yson.AsStringBuf(), spec);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+} // namespace NYT::NYson

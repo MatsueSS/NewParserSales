@@ -1,0 +1,483 @@
+#include "completer.h"
+#include "completer_command.h"
+#include "last_getopt.h"
+#include "modchooser.h"
+
+#include <library/cpp/colorizer/colors.h>
+
+#include <util/folder/path.h>
+#include <util/stream/output.h>
+#include <util/generic/yexception.h>
+#include <util/generic/ptr.h>
+#include <util/string/builder.h>
+
+class PtrWrapper: public TMainClass {
+public:
+    explicit PtrWrapper(const TMainFunctionPtr& main)
+        : Main(main)
+    {
+    }
+
+    int operator()(const int argc, const char** argv) override {
+        return Main(argc, argv);
+    }
+
+private:
+    TMainFunctionPtr Main;
+};
+
+class PtrvWrapper: public TMainClass {
+public:
+    explicit PtrvWrapper(const TMainFunctionPtrV& main)
+        : Main(main)
+    {
+    }
+
+    int operator()(const int argc, const char** argv) override {
+        TVector<TString> nargv(argv, argv + argc);
+        return Main(nargv);
+    }
+
+private:
+    TMainFunctionPtrV Main;
+};
+
+class ClassWrapper: public TMainClass {
+public:
+    explicit ClassWrapper(TMainClassV* main)
+        : Main(main)
+    {
+    }
+
+    int operator()(const int argc, const char** argv) override {
+        TVector<TString> nargv(argv, argv + argc);
+        return (*Main)(nargv);
+    }
+
+private:
+    TMainClassV* Main;
+};
+
+void TMainClass::SetSubcommandPath(TVector<TString> parts) {
+    SubcommandPath_ = std::move(parts);
+}
+
+const TVector<TString>& TMainClass::GetSubcommandPath() const {
+    return SubcommandPath_;
+}
+
+TModChooser::TMode::TMode(const TString& name, TMainClass* main, const TString& descr, bool hidden, bool noCompletion)
+    : Name(name)
+    , Main(main)
+    , Description(descr)
+    , Hidden(hidden)
+    , NoCompletion(noCompletion)
+{
+}
+
+TModChooser::TModChooser()
+    : ModesHelpOption("-?") // Default help option in last_getopt
+    , VersionHandler(nullptr)
+    , ShowSeparated(true)
+    , SvnRevisionOptionDisabled(false)
+    , PrintShortCommandInUsage(false)
+{
+}
+
+TModChooser::~TModChooser() = default;
+
+void TModChooser::AddMode(const TString& mode, const TMainFunctionRawPtr func, const TString& description, bool hidden, bool noCompletion) {
+    AddMode(mode, TMainFunctionPtr(func), description, hidden, noCompletion);
+}
+
+void TModChooser::AddMode(const TString& mode, const TMainFunctionRawPtrV func, const TString& description, bool hidden, bool noCompletion) {
+    AddMode(mode, TMainFunctionPtrV(func), description, hidden, noCompletion);
+}
+
+void TModChooser::AddMode(const TString& mode, const TMainFunctionPtr func, const TString& description, bool hidden, bool noCompletion) {
+    Wrappers.push_back(MakeHolder<PtrWrapper>(func));
+    AddMode(mode, Wrappers.back().Get(), description, hidden, noCompletion);
+}
+
+void TModChooser::AddMode(const TString& mode, const TMainFunctionPtrV func, const TString& description, bool hidden, bool noCompletion) {
+    Wrappers.push_back(MakeHolder<PtrvWrapper>(func));
+    AddMode(mode, Wrappers.back().Get(), description, hidden, noCompletion);
+}
+
+void TModChooser::AddMode(const TString& mode, TMainClass* func, const TString& description, bool hidden, bool noCompletion) {
+    if (Modes.FindPtr(mode)) {
+        ythrow yexception() << "TMode '" << mode << "' already exists in TModChooser.";
+    }
+
+    Modes[mode] = UnsortedModes.emplace_back(MakeHolder<TMode>(mode, func, description, hidden, noCompletion)).Get();
+}
+
+void TModChooser::AddMode(const TString& mode, TMainClassV* func, const TString& description, bool hidden, bool noCompletion) {
+    Wrappers.push_back(MakeHolder<ClassWrapper>(func));
+    AddMode(mode, Wrappers.back().Get(), description, hidden, noCompletion);
+}
+
+void TModChooser::AddGroupModeDescription(const TString& description, bool hidden, bool noCompletion) {
+    UnsortedModes.push_back(MakeHolder<TMode>(TString(), nullptr, description.data(), hidden, noCompletion));
+}
+
+void TModChooser::SetDefaultMode(const TString& mode) {
+    Y_ENSURE(!std::holds_alternative<TMainClass*>(DefaultBehaviour), "Default mode and default action are mutually exclusive.");
+    DefaultBehaviour = mode.empty() ? TDefaultBehaviour{std::monostate{}} : TDefaultBehaviour{mode};
+}
+
+void TModChooser::SetDefaultAction(TMainClass* action) {
+    Y_ENSURE(action != nullptr, "Default action must not be null.");
+    Y_ENSURE(!std::holds_alternative<TString>(DefaultBehaviour), "Default mode and default action are mutually exclusive.");
+    DefaultBehaviour = action;
+}
+
+void TModChooser::AddAlias(const TString& alias, const TString& mode) {
+    if (!Modes.FindPtr(mode)) {
+        ythrow yexception() << "TMode '" << mode << "' not found in TModChooser.";
+    }
+
+    Modes[mode]->Aliases.push_back(alias);
+    Modes[alias] = Modes[mode];
+}
+
+void TModChooser::SetDescription(const TString& descr) {
+    Description = descr;
+}
+
+void TModChooser::SetCmdLineDescription(const TString& description) {
+    CmdLineDescription = description;
+}
+
+void TModChooser::SetModesTitle(const TString& title) {
+    ModesTitle = title;
+}
+
+void TModChooser::SetModeName(const TString& name, const TString& usageName) {
+    ModeName = name;
+    ModeUsageName = usageName;
+}
+
+void TModChooser::SetExamples(const TString& examples) {
+    Examples = examples;
+}
+
+void TModChooser::SetModesHelpOption(const TString& helpOption) {
+    ModesHelpOption = helpOption;
+}
+
+void TModChooser::SetVersionHandler(TVersionHandlerPtr handler) {
+    VersionHandler = handler;
+}
+
+void TModChooser::SetSeparatedMode(bool separated) {
+    ShowSeparated = separated;
+}
+
+void TModChooser::SetSeparationString(const TString& str) {
+    SeparationString = str;
+}
+
+void TModChooser::SetPrintShortCommandInUsage(bool printShortCommandInUsage = false) {
+    PrintShortCommandInUsage = printShortCommandInUsage;
+}
+
+void TModChooser::DisableSvnRevisionOption() {
+    SvnRevisionOptionDisabled = true;
+}
+
+void TModChooser::AddCompletions(TString progName, const TString& name, bool hidden, bool noCompletion) {
+    AddCompletions(
+        NLastGetopt::TCompletionConfig{
+            .Command = std::move(progName),
+        },
+        name,
+        hidden,
+        noCompletion);
+}
+
+void TModChooser::AddCompletions(
+    NLastGetopt::TCompletionConfig config,
+    const TString& name,
+    bool hidden,
+    bool noCompletion)
+{
+    if (CompletionsGenerator == nullptr) {
+        TString description;
+        if (config.EnableInstaller) {
+            description = "Generate and install shell completion scripts";
+        } else if (!config.CommandAliases.empty() || !config.YaToolName.empty()) {
+            description = "Generate shell completion scripts";
+        } else {
+            description = "generate autocompletion files";
+        }
+        config.ModName = name;
+        CompletionsGenerator = NLastGetopt::MakeCompletionMod(this, std::move(config));
+        AddMode(name, CompletionsGenerator.Get(), description, hidden, noCompletion);
+    }
+}
+
+void TModChooser::SetSubcommandPath(const TVector<TString>& subcommandPath) const {
+    SubcommandPath_ = subcommandPath;
+}
+
+const TVector<TString>& TModChooser::GetSubcommandPath() const {
+    return SubcommandPath_;
+}
+
+int TModChooser::Run(const int argc, const char** argv) const {
+    Y_ENSURE(argc, "Can't run TModChooser with empty list of arguments.");
+
+    const auto* defaultMode = std::get_if<TString>(&DefaultBehaviour);
+    const auto* defaultAction = std::get_if<TMainClass*>(&DefaultBehaviour);
+    bool shiftArgs = true;
+    TString modeName;
+    if (argc == 1) {
+        if (defaultMode != nullptr) {
+            modeName = *defaultMode;
+            shiftArgs = false;
+        } else if (defaultAction == nullptr) {
+            PrintHelp(argv[0], HelpAlwaysToStdErr);
+            return 0;
+        }
+    } else {
+        modeName = argv[1];
+    }
+
+    if (modeName == "-h" || modeName == "--help" || modeName == "-?") {
+        PrintHelp(argv[0], HelpAlwaysToStdErr);
+        return 0;
+    }
+    if (VersionHandler && (modeName == "-v" || modeName == "--version")) {
+        VersionHandler();
+        return 0;
+    }
+    if (!SvnRevisionOptionDisabled && modeName == "--svnrevision") {
+        NLastGetopt::PrintVersionAndExit(nullptr);
+    }
+
+    auto modeIter = Modes.find(modeName);
+    if (modeIter == Modes.end()) {
+        if (defaultAction != nullptr) {
+            (*defaultAction)->SetSubcommandPath(SubcommandPath_);
+            return (**defaultAction)(argc, argv);
+        }
+        if (defaultMode != nullptr) {
+            modeIter = Modes.find(*defaultMode);
+            shiftArgs = false;
+        }
+    }
+
+    if (modeIter == Modes.end()) {
+        Cerr << "Unknown mode " << modeName.Quote() << "." << Endl;
+        PrintHelp(argv[0], true);
+        return 1;
+    }
+
+    TVector<TString> subcommandPath = SubcommandPath_;
+    subcommandPath.push_back(modeIter->second->Name);
+    modeIter->second->Main->SetSubcommandPath(std::move(subcommandPath));
+
+    if (shiftArgs) {
+        TString firstArg;
+        TVector<const char*> nargv(Reserve(argc));
+
+        if (PrintShortCommandInUsage) {
+            firstArg = modeIter->second->Name;
+        } else {
+            firstArg = argv[0] + TString(" ") + modeIter->second->Name;
+        }
+
+        nargv.push_back(firstArg.data());
+
+        for (int i = 2; i < argc; ++i) {
+            nargv.push_back(argv[i]);
+        }
+        // According to the standard, "argv[argc] shall be a null pointer" (5.1.2.2.1).
+        // http://www.open-std.org/JTC1/SC22/WG14/www/docs/n1336
+        nargv.push_back(nullptr);
+
+        return (*modeIter->second->Main)(nargv.size() - 1, nargv.data());
+    } else {
+        return (*modeIter->second->Main)(argc, argv);
+    }
+}
+
+int TModChooser::Run(const TVector<TString>& argv) const {
+    TVector<const char*> nargv(Reserve(argv.size() + 1));
+    for (auto& arg : argv) {
+        nargv.push_back(arg.c_str());
+    }
+    // According to the standard, "argv[argc] shall be a null pointer" (5.1.2.2.1).
+    // http://www.open-std.org/JTC1/SC22/WG14/www/docs/n1336
+    nargv.push_back(nullptr);
+
+    return Run(nargv.size() - 1, nargv.data());
+}
+
+size_t TModChooser::TMode::CalculateFullNameLen() const {
+    size_t len = Name.size();
+    if (Aliases) {
+        len += 2;
+        for (auto& alias : Aliases) {
+            len += alias.size() + 1;
+        }
+    }
+    return len;
+}
+
+TString TModChooser::TMode::FormatFullName(size_t pad, const NColorizer::TColors& colors) const {
+    TStringBuilder name;
+    if (Aliases) {
+        name << "{";
+    }
+
+    name << colors.GreenColor();
+    name << Name;
+    name << colors.OldColor();
+
+    if (Aliases) {
+        for (const auto& alias : Aliases) {
+            name << "|" << colors.GreenColor() << alias << colors.OldColor();
+        }
+        name << "}";
+    }
+
+    auto len = CalculateFullNameLen();
+    if (pad > len) {
+        name << TString(" ") * (pad - len);
+    }
+
+    return name;
+}
+
+void TModChooser::PrintHelp(const TString& progName, bool toStdErr) const {
+    PrintHelpImpl(progName, toStdErr, false);
+}
+
+void TModChooser::PrintBriefHelp(const TString& progName, bool toStdErr) const {
+    PrintHelpImpl(progName, toStdErr, true);
+}
+
+void TModChooser::PrintHelpImpl(const TString& progName, bool toStdErr, bool brief) const {
+    auto baseName = TFsPath(progName).Basename();
+    auto& out = toStdErr ? Cerr : Cout;
+    const auto& colors = toStdErr ? NColorizer::StdErr() : NColorizer::StdOut();
+    out << Description << Endl << Endl;
+    out << colors.BoldColor() << "Usage" << colors.OldColor() << ": " << baseName << " "
+        << (CmdLineDescription ? CmdLineDescription : "MODE [MODE_OPTIONS]") << Endl;
+    out << Endl;
+    if (brief) {
+        out << "Run '" << baseName << " --help' for full help." << Endl;
+    } else {
+        out << colors.BoldColor() << (ModesTitle ? ModesTitle : "Modes") << colors.OldColor() << ":" << Endl;
+        size_t maxModeLen = 0;
+        for (const auto& [name, mode] : Modes) {
+            if (name != mode->Name) {
+                continue; // this is an alias
+            }
+            maxModeLen = Max(maxModeLen, mode->CalculateFullNameLen());
+        }
+
+        if (ShowSeparated) {
+            for (const auto& unsortedMode : UnsortedModes) {
+                if (unsortedMode->Hidden) {
+                    continue;
+                }
+                if (unsortedMode->Name.empty()) {
+                    out << SeparationString << Endl;
+                    out << unsortedMode->Description << Endl;
+                    continue;
+                }
+                out << "  " << unsortedMode->FormatFullName(maxModeLen + 4, colors)
+                    << unsortedMode->Description << Endl;
+            }
+        } else {
+            for (const auto& [name, mode] : Modes) {
+                if (name == mode->Name && !mode->Hidden) {
+                    out << "  " << mode->FormatFullName(maxModeLen + 4, colors) << mode->Description << Endl;
+                }
+            }
+        }
+
+        out << Endl;
+        if (ModeName) {
+            out << "Run '" << baseName << " " << ModeUsageName << " " << ModesHelpOption
+                << "' for help with a specific "
+                << ModeName << "." << Endl;
+        } else {
+            out << "To get help for specific mode type '" << baseName << " MODE " << ModesHelpOption << "'" << Endl;
+        }
+        if (VersionHandler) {
+            out << "To print program version type '" << baseName << " --version'" << Endl;
+        }
+        if (!SvnRevisionOptionDisabled) {
+            out << "To print svn revision type '" << baseName << " --svnrevision'" << Endl;
+        }
+    }
+    if (Examples) {
+        out << Endl;
+        out << colors.BoldColor() << "Examples" << colors.OldColor() << ":" << Endl;
+        out << Examples << Endl;
+    }
+}
+
+TVersionHandlerPtr TModChooser::GetVersionHandler() const {
+    return VersionHandler;
+}
+
+bool TModChooser::IsSvnRevisionOptionDisabled() const {
+    return SvnRevisionOptionDisabled;
+}
+
+int TMainClassArgs::Run(int argc, const char** argv) {
+    NLastGetopt::TOptsParseResult res(&GetOptions(), argc, argv);
+    if (!GetSubcommandPath().empty()) {
+        res.SetProgramSubcommandPath(GetSubcommandPath());
+    }
+    return DoRun(std::move(res));
+}
+
+const NLastGetopt::TOpts& TMainClassArgs::GetOptions() {
+    if (Opts_.Empty()) {
+        Opts_ = NLastGetopt::TOpts();
+        RegisterOptions(Opts_.GetRef());
+    }
+
+    return Opts_.GetRef();
+}
+
+void TMainClassArgs::RegisterOptions(NLastGetopt::TOpts& opts) {
+    opts.AddHelpOption('h');
+}
+
+int TMainClassArgs::operator()(const int argc, const char** argv) {
+    return Run(argc, argv);
+}
+
+int TMainClassModes::operator()(const int argc, const char** argv) {
+    return Run(argc, argv);
+}
+
+int TMainClassModes::Run(int argc, const char** argv) {
+    auto& chooser = GetSubModes();
+    chooser.SetSubcommandPath(GetSubcommandPath());
+    return chooser.Run(argc, argv);
+}
+
+TModChooser& TMainClassModes::GetSubModes() {
+    if (Modes_.Empty()) {
+        Modes_.ConstructInPlace();
+        RegisterModes(Modes_.GetRef());
+    }
+
+    return Modes_.GetRef();
+}
+
+const TModChooser& TMainClassModes::GetSubModes() const {
+    return const_cast<TMainClassModes*>(this)->GetSubModes();
+}
+
+void TMainClassModes::RegisterModes(TModChooser& modes) {
+    modes.SetModesHelpOption("-h");
+}

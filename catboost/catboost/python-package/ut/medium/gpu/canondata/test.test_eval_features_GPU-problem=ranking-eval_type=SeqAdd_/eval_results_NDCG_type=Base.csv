@@ -1,0 +1,6 @@
+,PValue,Score,Quantile 0.005,Quantile 0.995,Decision,Overfit iter diff,Overfit iter pValue
+Features: 20,0.5,-3.62463698642,-4.4365885875,-2.81268538533,UNKNOWN,-3.0,0.5
+Features: 23,0.5,0.0,0.0,0.0,UNKNOWN,0.0,0.5
+Features: 25,0.5,0.0,0.0,0.0,UNKNOWN,0.0,0.5
+Features: 26,0.5,0.0,0.0,0.0,UNKNOWN,0.0,0.5
+Features: 22,1.0,0.0888634143142,-2.70345089381,2.88117772244,UNKNOWN,-2.0,1.0

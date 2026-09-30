@@ -1,0 +1,643 @@
+#pragma once
+
+#include <util/generic/noncopyable.h>
+#include <util/generic/ylimits.h>
+#include <util/system/compiler.h>
+#include <util/system/datetime.h>
+#include <util/system/guard.h>
+#include <util/system/spinlock.h>
+#include <util/system/yassert.h>
+
+#include <atomic>
+#include <type_traits>
+#include <utility>
+
+#if defined(_MSC_VER) && !defined(__clang__)
+    #include <intrin.h>
+#endif
+
+namespace NThreading {
+    ////////////////////////////////////////////////////////////////////////////////
+    // Platform helpers
+
+#if !defined(PLATFORM_CACHE_LINE)
+    #define PLATFORM_CACHE_LINE 64
+#endif
+
+#if !defined(PLATFORM_PAGE_SIZE)
+    #define PLATFORM_PAGE_SIZE (4 * 1024)
+#endif
+
+    template <typename T, size_t PadSize = PLATFORM_CACHE_LINE>
+    struct alignas(PadSize) TPadded: public T {
+        char Pad[PadSize - sizeof(T) % PadSize];
+
+        TPadded() {
+            static_assert(sizeof(*this) % PadSize == 0, "padding does not work");
+            Y_UNUSED(Pad);
+        }
+
+        template <typename... Args>
+        TPadded(Args&&... args)
+            : T(std::forward<Args>(args)...)
+        {
+            static_assert(sizeof(*this) % PadSize == 0, "padding does not work");
+            Y_UNUSED(Pad);
+        }
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // One producer/one consumer chunked queue.
+
+    template <typename T, size_t ChunkSize = PLATFORM_PAGE_SIZE>
+    class TOneOneQueue: private TNonCopyable {
+        // std::atomic_ref, or a minimal fallback for toolchains whose STL
+        // lacks it (e.g. CUDA builds with old libc++)
+#if defined(__cpp_lib_atomic_ref) && __cpp_lib_atomic_ref >= 201806L
+        template <typename TT>
+        using TAtomicRef = std::atomic_ref<TT>;
+#else
+        template <typename TT>
+        class TAtomicRef {
+            static_assert(std::is_trivially_copyable<TT>::value, "TAtomicRef requires a trivially copyable type");
+            static_assert(std::atomic<TT>::is_always_lock_free, "TAtomicRef requires a lock-free std::atomic<TT>");
+            static_assert(
+                !std::is_const<TT>::value && !std::is_volatile<TT>::value,
+                "TAtomicRef cannot be used with cv-qualified types");
+            static_assert(alignof(TT) == sizeof(TT), "TT must have natural alignment");
+            static_assert(
+                (sizeof(TT) == 1) || (sizeof(TT) == 2) || (sizeof(TT) == 4) || (sizeof(TT) == 8),
+                "sizeof(TT) different from 1, 2, 4 or 8 is not supported");
+    #if !defined(_MSC_VER) || defined(__clang__)
+            static_assert(static_cast<int>(std::memory_order_release) == __ATOMIC_RELEASE);
+            static_assert(static_cast<int>(std::memory_order_acquire) == __ATOMIC_ACQUIRE);
+            static_assert(static_cast<int>(std::memory_order_relaxed) == __ATOMIC_RELAXED);
+    #endif
+
+        public:
+            explicit TAtomicRef(TT& obj) noexcept
+                : Obj_(&obj)
+            {
+                Y_ASSERT(reinterpret_cast<uintptr_t>(Obj_) % alignof(TT) == 0);
+            }
+
+            TT load(std::memory_order order) const noexcept {
+    #if defined(_MSC_VER) && !defined(__clang__)
+                Y_ABORT_IF(
+                    order == std::memory_order_acq_rel || order == std::memory_order_release,
+                    "load: Invalid memory order");
+
+                if (order == std::memory_order_seq_cst) {
+                    if constexpr (sizeof(TT) == 1) {
+                        return (TT)_InterlockedCompareExchange8((volatile char*)Obj_, 0, 0);
+                    } else if constexpr (sizeof(TT) == 2) {
+                        return (TT)_InterlockedCompareExchange16((volatile short*)Obj_, 0, 0);
+                    } else if constexpr (sizeof(TT) == 4) {
+                        return (TT)_InterlockedCompareExchange((volatile long*)Obj_, 0, 0);
+                    } else if constexpr (sizeof(TT) == 8) {
+                        return (TT)_InterlockedCompareExchange64((volatile __int64*)Obj_, 0, 0);
+                    }
+                }
+
+        #if defined(_M_ARM64)
+                if (order == std::memory_order_relaxed) {
+                    // Plain load is atomic if aligned and size ≤ 8
+                    return *(volatile TT*)Obj_;
+                } else if (order == std::memory_order_acquire || order == std::memory_order_consume) {
+                    if constexpr (sizeof(TT) == 1) {
+                        return (TT)_InterlockedCompareExchange8_acq((volatile char*)Obj_, 0, 0);
+                    } else if constexpr (sizeof(TT) == 2) {
+                        return (TT)_InterlockedCompareExchange16_acq((volatile short*)Obj_, 0, 0);
+                    } else if constexpr (sizeof(TT) == 4) {
+                        return (TT)_InterlockedCompareExchange_acq((volatile long*)Obj_, 0, 0);
+                    } else if constexpr (sizeof(TT) == 8) {
+                        return (TT)_InterlockedCompareExchange64_acq((volatile __int64*)Obj_, 0, 0);
+                    }
+                }
+                Y_UNREACHABLE();
+        #else // x86_64
+                std::atomic_signal_fence(std::memory_order_seq_cst);
+                TT val = *(volatile TT*)Obj_;
+                std::atomic_signal_fence(std::memory_order_seq_cst);
+                return val;
+        #endif
+
+    #else
+                return __atomic_load_n(Obj_, static_cast<int>(order));
+    #endif
+            }
+
+            void store(TT desired, std::memory_order order) noexcept {
+    #if defined(_MSC_VER) && !defined(__clang__)
+                Y_ABORT_IF(
+                    order == std::memory_order_acq_rel || order == std::memory_order_consume || order == std::memory_order_acquire,
+                    "store: Invalid memory order");
+
+                if (order == std::memory_order_seq_cst) {
+                    if constexpr (sizeof(TT) == 1) {
+                        _InterlockedExchange8((char volatile*)Obj_, (char)desired);
+                    } else if constexpr (sizeof(TT) == 2) {
+                        _InterlockedExchange16((short volatile*)Obj_, (short)desired);
+                    } else if constexpr (sizeof(TT) == 4) {
+                        _InterlockedExchange((long volatile*)Obj_, (long)desired);
+                    } else if constexpr (sizeof(TT) == 8) {
+                        _InterlockedExchange64((__int64 volatile*)Obj_, (__int64)desired);
+                    }
+                    return;
+                }
+
+        #if defined(_M_ARM64)
+                if (order == std::memory_order_relaxed) {
+                    *(volatile TT*)Obj_ = desired;
+                } else if (order == std::memory_order_release) {
+                    if constexpr (sizeof(TT) == 1) {
+                        _InterlockedExchange8_rel((char volatile*)Obj_, (char)desired);
+                    } else if constexpr (sizeof(TT) == 2) {
+                        _InterlockedExchange16_rel((short volatile*)Obj_, (short)desired);
+                    } else if constexpr (sizeof(TT) == 4) {
+                        _InterlockedExchange_rel((long volatile*)Obj_, (long)desired);
+                    } else if constexpr (sizeof(TT) == 8) {
+                        _InterlockedExchange64_rel((__int64 volatile*)Obj_, (__int64)desired);
+                    }
+                }
+        #else // x86_64
+                std::atomic_signal_fence(std::memory_order_release);
+                *(volatile TT*)Obj_ = desired;
+                std::atomic_signal_fence(std::memory_order_release);
+        #endif
+
+    #else
+                __atomic_store_n(Obj_, desired, static_cast<int>(order));
+    #endif
+            }
+
+        private:
+            TT* Obj_;
+        };
+#endif
+
+        struct TChunk;
+
+        struct TChunkHeader {
+            // Incremented by the producer (release) after writing an entry, read by
+            // the consumer (acquire) — publishes the entry data written so far.
+            // Plain field on purpose: only the producer ever writes it, and the
+            // producer also reads it back (see PrepareWrite/CompleteWrite) — this
+            // lets the compiler keep the write position in a register. All
+            // cross-thread accesses go through std::atomic_ref.
+            size_t Count = 0;
+            // Set by the producer (release) when the chunk is exhausted, read by the
+            // consumer (acquire) — publishes the next chunk and makes it safe for the
+            // consumer to delete the exhausted one.
+            TChunk* Next = nullptr;
+        };
+
+        struct TChunk: public TChunkHeader {
+            // Offset of Entries inside TChunk: the header size rounded up to the
+            // alignment of T, so that every slot is properly aligned.
+            static constexpr size_t EntriesOffset = (sizeof(TChunkHeader) + alignof(T) - 1) / alignof(T) * alignof(T);
+            static constexpr size_t MaxCount = ChunkSize > EntriesOffset ? (ChunkSize - EntriesOffset) / sizeof(T) : 0;
+            static_assert(MaxCount > 0, "ChunkSize is too small to hold at least one element of T");
+
+            alignas(T) char Entries[MaxCount * sizeof(T)];
+
+            TChunk() {
+                Y_UNUSED(Entries); // uninitialized
+            }
+
+            // No concurrent access: the chunk is destroyed after the producer
+            // finished with it (or in the queue destructor). Called
+            // unconditionally: for trivially destructible T the destructor
+            // calls are no-ops and the whole loop is optimized away.
+            void DestroyRangeFrom(size_t start) {
+                const size_t end = this->Count;
+                Y_ASSERT(start <= end);
+                T* const endPtr = GetPtr(end);
+
+                for (T* ptr = GetPtr(start); ptr != endPtr; ++ptr) {
+                    ptr->~T();
+                }
+            }
+
+            T* GetPtr(size_t i) {
+                return reinterpret_cast<T*>(Entries) + i;
+            }
+        };
+
+        struct TWriterState {
+            TChunk* Chunk = nullptr;
+        };
+
+        struct TReaderState {
+            TChunk* Chunk = nullptr;
+            size_t Count = 0;
+        };
+
+    private:
+        TPadded<TWriterState> Writer;
+        TPadded<TReaderState> Reader;
+
+    public:
+        using TItem = T;
+
+        TOneOneQueue() {
+            Writer.Chunk = Reader.Chunk = new TChunk();
+        }
+
+        ~TOneOneQueue() {
+            DestroyChunks(Reader.Chunk, Reader.Count);
+        }
+
+        template <typename TT>
+        void Enqueue(TT&& value) {
+            T* ptr = PrepareWrite();
+            Y_ASSERT(ptr);
+            new (ptr) T(std::forward<TT>(value));
+            CompleteWrite();
+        }
+
+        bool Dequeue(T& value) {
+            if (T* ptr = PrepareRead(); ptr) {
+                value = std::move(*ptr);
+                ptr->~T();
+                CompleteRead();
+                return true;
+            }
+            return false;
+        }
+
+        bool IsEmpty() {
+            return !PrepareRead();
+        }
+
+    protected:
+        T* PrepareWrite() {
+            Y_ASSERT(Writer.Chunk);
+
+            // Only the producer touches Count of the current chunk, so this
+            // load cannot be stale. Keeping it a plain read lets the compiler
+            // forward the store from CompleteWrite() into it and keep the
+            // write position in a register instead of memory (an atomic load
+            // here makes clang merge load+store in CompleteWrite() into a
+            // memory RMW and spills the write position to the stack).
+            if (Writer.Chunk->Count == TChunk::MaxCount) [[unlikely]] {
+                TChunk* const next = new TChunk();
+                // Release-publishes the new chunk to the consumer
+                TAtomicRef<TChunk*>{Writer.Chunk->Next}.store(next, std::memory_order_release);
+                Writer.Chunk = next;
+            }
+            return Writer.Chunk->GetPtr(Writer.Chunk->Count);
+        }
+
+        void CompleteWrite() {
+            // Release-publishes the entry written by the preceding PrepareWrite().
+            // A store suffices: Count of the current chunk is only ever written
+            // by the (single) producer, so an atomic RMW (fetch_add) is not
+            // needed — and would cost ~5x throughput (lock xadd on x86).
+            // Note: a *relaxed* fetch_add would also be formally insufficient,
+            // as it does not publish the entry data to the consumer.
+            TChunk* chunk = Writer.Chunk;
+            TAtomicRef<size_t> count{chunk->Count};
+            count.store(chunk->Count + 1, std::memory_order_release);
+        }
+
+        T* PrepareRead() {
+            TChunk* chunk = Reader.Chunk;
+            Y_ASSERT(chunk);
+
+            const size_t writerCount = TAtomicRef<size_t>{chunk->Count}.load(std::memory_order_acquire);
+            if (Reader.Count != writerCount) {
+                return chunk->GetPtr(Reader.Count);
+            }
+
+            if (writerCount == TChunk::MaxCount) {
+                if (TChunk* next = TAtomicRef<TChunk*>{chunk->Next}.load(std::memory_order_acquire); next) {
+                    delete chunk;
+                    Reader.Chunk = next;
+                    Reader.Count = 0;
+                    // The next chunk may already contain published entries. It
+                    // cannot be exhausted itself: the reader has consumed
+                    // nothing from it yet.
+                    if (TAtomicRef<size_t>{next->Count}.load(std::memory_order_acquire) != 0) {
+                        return next->GetPtr(0);
+                    }
+                }
+            }
+            return nullptr;
+        }
+
+        void CompleteRead() {
+            ++Reader.Count;
+        }
+
+        // Destroys the chunk chain starting at chunk, beginning with the
+        // entries from offset `start` of the first chunk. Static and taking
+        // only values (not the queue object) — see the destructor comment.
+        static void DestroyChunks(TChunk* chunk, size_t start) {
+            while (chunk) {
+                chunk->DestroyRangeFrom(start);
+                start = 0;
+                TChunk* next = chunk->Next;
+                delete chunk;
+                chunk = next;
+            }
+        }
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Multiple producers/single consumer partitioned queue.
+    // Provides FIFO guaranties for each producer.
+
+    template <typename T, size_t Concurrency = 4, size_t ChunkSize = PLATFORM_PAGE_SIZE>
+    class TManyOneQueue: private TNonCopyable {
+        struct TEntry {
+            T Value;
+            ui64 Tag;
+        };
+
+        struct TQueueType: public TOneOneQueue<TEntry, ChunkSize> {
+            TPadded<TSpinLock> WriteLock;
+
+            using TOneOneQueue<TEntry, ChunkSize>::PrepareWrite;
+            using TOneOneQueue<TEntry, ChunkSize>::CompleteWrite;
+
+            using TOneOneQueue<TEntry, ChunkSize>::PrepareRead;
+            using TOneOneQueue<TEntry, ChunkSize>::CompleteRead;
+        };
+
+    private:
+        TPadded<std::atomic<ui64>> WriteTag{1};
+        TQueueType Queues[Concurrency];
+
+    public:
+        using TItem = T;
+
+        template <typename TT>
+        void Enqueue(TT&& value) {
+            ui64 tag = NextTag();
+            while (!TryEnqueue(std::forward<TT>(value), tag)) {
+                SpinLockPause();
+            }
+        }
+
+        bool Dequeue(T& value) {
+            size_t index = 0;
+            if (TEntry* entry = PrepareRead(index)) {
+                T* valuePtr = &entry->Value;
+                value = std::move(*valuePtr);
+                valuePtr->~T();
+                Queues[index].CompleteRead();
+                return true;
+            }
+            return false;
+        }
+
+        bool IsEmpty() {
+            for (size_t i = 0; i < Concurrency; ++i) {
+                if (!Queues[i].IsEmpty()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+    private:
+        ui64 NextTag() {
+            // TODO: can we avoid synchronization here? it costs 1.5x performance penalty
+            // return GetCycleCount();
+            return WriteTag.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        template <typename TT>
+        bool TryEnqueue(TT&& value, ui64 tag) {
+            const size_t reminder = tag % Concurrency;
+            for (size_t i = reminder; i < Concurrency + reminder; ++i) {
+                TQueueType& queue = Queues[i % Concurrency];
+                if (queue.WriteLock.IsLocked()) {
+                    continue;
+                }
+                TTryGuard guard{queue.WriteLock};
+                if (!guard) {
+                    continue;
+                }
+                TEntry* entry = queue.PrepareWrite();
+                Y_ASSERT(entry);
+                new (&entry->Value) T(std::forward<TT>(value));
+                entry->Tag = tag;
+                queue.CompleteWrite();
+                return true;
+            }
+            return false;
+        }
+
+        TEntry* PrepareRead(size_t& index) {
+            TEntry* entry = nullptr;
+            ui64 tag = Max();
+
+            for (size_t i = 0; i < Concurrency; ++i) {
+                TEntry* e = Queues[i].PrepareRead();
+                if (e && e->Tag < tag) {
+                    index = i;
+                    entry = e;
+                    tag = e->Tag;
+                }
+            }
+
+            if (entry) {
+                // need second pass to catch updates within already scanned range
+                size_t candidate = index;
+                for (size_t i = 0; i < candidate; ++i) {
+                    TEntry* e = Queues[i].PrepareRead();
+                    if (e && e->Tag < tag) {
+                        index = i;
+                        entry = e;
+                        tag = e->Tag;
+                    }
+                }
+            }
+
+            return entry;
+        }
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Concurrent many-many queue with strong FIFO guaranties.
+    // Writers will not block readers (and vice versa), but will block each other.
+
+    template <typename T, size_t ChunkSize = PLATFORM_PAGE_SIZE, typename TLock = TAdaptiveLock>
+    class TManyManyQueue: private TNonCopyable {
+    private:
+        TPadded<TLock> WriteLock;
+        TPadded<TLock> ReadLock;
+
+        TOneOneQueue<T, ChunkSize> Queue;
+
+    public:
+        using TItem = T;
+
+        template <typename TT>
+        void Enqueue(TT&& value) {
+            with_lock (WriteLock) {
+                Queue.Enqueue(std::forward<TT>(value));
+            }
+        }
+
+        bool Dequeue(T& value) {
+            with_lock (ReadLock) {
+                return Queue.Dequeue(value);
+            }
+        }
+
+        bool IsEmpty() {
+            with_lock (ReadLock) {
+                return Queue.IsEmpty();
+            }
+        }
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Multiple producers/single consumer partitioned queue.
+    // Because of random partitioning reordering possible - FIFO not guaranteed!
+
+    template <typename T, size_t Concurrency = 4, size_t ChunkSize = PLATFORM_PAGE_SIZE>
+    class TRelaxedManyOneQueue: private TNonCopyable {
+        struct TQueueType: public TOneOneQueue<T, ChunkSize> {
+            TPadded<TSpinLock> WriteLock;
+        };
+
+    private:
+        union {
+            size_t ReadPos = 0;
+            char Pad[PLATFORM_CACHE_LINE];
+        };
+
+        TQueueType Queues[Concurrency];
+
+    public:
+        using TItem = T;
+
+        template <typename TT>
+        void Enqueue(TT&& value) {
+            while (!TryEnqueue(std::forward<TT>(value))) {
+                SpinLockPause();
+            }
+        }
+
+        bool Dequeue(T& value) {
+            for (size_t i = 0; i < Concurrency; ++i) {
+                TQueueType& queue = Queues[ReadPos++ % Concurrency];
+                if (queue.Dequeue(value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        bool IsEmpty() {
+            for (size_t i = 0; i < Concurrency; ++i) {
+                if (!Queues[i].IsEmpty()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+    private:
+        template <typename TT>
+        bool TryEnqueue(TT&& value) {
+            size_t writePos = GetCycleCount();
+            for (size_t i = 0; i < Concurrency; ++i) {
+                TQueueType& queue = Queues[writePos++ % Concurrency];
+                if (queue.WriteLock.IsLocked()) {
+                    continue;
+                }
+                TTryGuard guard{queue.WriteLock};
+                if (!guard) {
+                    continue;
+                }
+                queue.Enqueue(std::forward<TT>(value));
+                return true;
+            }
+            return false;
+        }
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Concurrent many-many partitioned queue.
+    // Because of random partitioning reordering possible - FIFO not guaranteed!
+
+    template <typename T, size_t Concurrency = 4, size_t ChunkSize = PLATFORM_PAGE_SIZE>
+    class TRelaxedManyManyQueue: private TNonCopyable {
+        struct TQueueType: public TOneOneQueue<T, ChunkSize> {
+            TPadded<TSpinLock> WriteLock;
+            TPadded<TSpinLock> ReadLock;
+        };
+
+    private:
+        TQueueType Queues[Concurrency];
+
+    public:
+        using TItem = T;
+
+        template <typename TT>
+        void Enqueue(TT&& value) {
+            while (!TryEnqueue(std::forward<TT>(value))) {
+                SpinLockPause();
+            }
+        }
+
+        bool Dequeue(T& value) {
+            size_t readPos = GetCycleCount();
+            for (size_t i = 0; i < Concurrency; ++i) {
+                TQueueType& queue = Queues[readPos++ % Concurrency];
+                if (queue.ReadLock.IsLocked()) {
+                    continue;
+                }
+                TTryGuard guard{queue.ReadLock};
+                if (!guard) {
+                    continue;
+                }
+                if (queue.Dequeue(value)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        bool IsEmpty() {
+            for (size_t i = 0; i < Concurrency; ++i) {
+                TQueueType& queue = Queues[i];
+                if (queue.ReadLock.IsLocked()) {
+                    continue;
+                }
+                TTryGuard guard{queue.ReadLock};
+                if (!guard) {
+                    continue;
+                }
+                if (!queue.IsEmpty()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+    private:
+        template <typename TT>
+        bool TryEnqueue(TT&& value) {
+            size_t writePos = GetCycleCount();
+            for (size_t i = 0; i < Concurrency; ++i) {
+                TQueueType& queue = Queues[writePos++ % Concurrency];
+                if (queue.WriteLock.IsLocked()) {
+                    continue;
+                }
+                TTryGuard guard{queue.WriteLock};
+                if (!guard) {
+                    continue;
+                }
+                queue.Enqueue(std::forward<TT>(value));
+                return true;
+            }
+            return false;
+        }
+    };
+} // namespace NThreading
